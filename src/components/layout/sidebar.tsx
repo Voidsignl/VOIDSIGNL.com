@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Newspaper, Trophy, Users, BarChart3,
-  Film, MessageCircle, User, ChevronLeft, ChevronRight
+  Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -18,6 +18,8 @@ const NAV_ITEMS = [
   { href: '/clips', icon: Film, label: 'Clips' },
   { href: '/messages', icon: MessageCircle, label: 'Messages' },
   { href: '/profile', icon: User, label: 'Profile' },
+  { divider: true },
+  { href: '/admin', icon: Shield, label: 'Admin' },
 ] as const
 
 export function Sidebar() {
