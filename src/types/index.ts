@@ -96,6 +96,39 @@ export interface Notification {
   created_at: string
 }
 
+export interface Clip {
+  id: string
+  user_id: string
+  title: string
+  video_url: string
+  thumbnail_url: string | null
+  game_id: string | null
+  is_pinned: boolean
+  is_cotw: boolean
+  like_count: number
+  view_count: number
+  comment_count: number
+  created_at: string
+  profile?: Profile
+  game?: Game
+}
+
+export interface ClipComment {
+  id: string
+  clip_id: string
+  user_id: string
+  content: string
+  created_at: string
+  profile?: Profile
+}
+
+export interface ClipLike {
+  id: string
+  user_id: string
+  clip_id: string
+  created_at: string
+}
+
 export type Level = {
   level: number
   name: string
