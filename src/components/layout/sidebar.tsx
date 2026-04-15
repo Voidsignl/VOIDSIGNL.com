@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Newspaper, Trophy, Users, BarChart3,
-  Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield
+  Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield, Award
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: '/rankings', icon: BarChart3, label: 'Rankings' },
   { divider: true },
   { href: '/clips', icon: Film, label: 'Clips' },
+  { href: '/achievements', icon: Award, label: 'Achievements' },
   { href: '/messages', icon: MessageCircle, label: 'Messages' },
   { href: '/profile', icon: User, label: 'Profile' },
   { divider: true },
