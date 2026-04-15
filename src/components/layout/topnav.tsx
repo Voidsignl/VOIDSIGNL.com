@@ -5,16 +5,20 @@ import { VoidsignlLogo } from '@/components/ui/logo'
 import { Search, Bell, Globe } from 'lucide-react'
 import Link from 'next/link'
 import type { Profile } from '@/types'
+import { useLang } from '@/lib/lang-context'
 
 interface TopnavProps {
   profile: Profile | null
   notificationCount?: number
-  lang?: 'en' | 'nl'
-  onLangToggle?: () => void
 }
 
-export function Topnav({ profile, notificationCount = 0, lang = 'en', onLangToggle }: TopnavProps) {
+export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
   const [searchQuery, setSearchQuery] = useState('')
+  const { lang, setLang, t } = useLang()
+
+  function toggleLang() {
+    setLang(lang === 'en' ? 'nl' : 'en')
+  }
 
   return (
     <nav className="h-[52px] bg-surface border-b border-border flex items-center justify-between px-5 shrink-0 z-50">
@@ -31,14 +35,14 @@ export function Topnav({ profile, notificationCount = 0, lang = 'en', onLangTogg
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={profile ? 'Search members, games, clips...' : 'Search...'}
+          placeholder={profile ? t('nav.search') : 'Search...'}
           className="bg-transparent text-sm text-text placeholder-text-dim outline-none w-full"
         />
       </div>
 
       <div className="flex items-center gap-4">
         <button
-          onClick={onLangToggle}
+          onClick={toggleLang}
           className="flex items-center gap-1.5 text-xs text-text-dim hover:text-text-muted transition-colors"
         >
           <Globe size={13} />
