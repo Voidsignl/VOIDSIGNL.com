@@ -12,6 +12,7 @@ import {
   Calendar, Gamepad2, Monitor, Clock, ChevronDown, ExternalLink,
   Settings, Globe, Lock, Play
 } from 'lucide-react'
+import { ImageUpload } from '@/components/ui/image-upload'
 
 type ProfileTab = 'posts' | 'clips' | 'games'
 
@@ -283,24 +284,55 @@ export default function ProfilePage() {
       {/* Profile Header */}
       <div className="vs-card mb-5 overflow-hidden">
         {/* Banner */}
-        <div className="h-28 bg-gradient-to-br from-purple/20 via-surface-2 to-cyan/10 relative">
-          {profile.banner_url && (
-            <img src={profile.banner_url} alt="" className="w-full h-full object-cover" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
-        </div>
+        {isOwn ? (
+          <ImageUpload
+            bucket="banners"
+            userId={profile.id}
+            currentUrl={profile.banner_url}
+            onUpload={(url) => setProfile(prev => prev ? { ...prev, banner_url: url } : null)}
+            type="banner"
+          />
+        ) : (
+          <div className="h-28 bg-gradient-to-br from-purple/20 via-surface-2 to-cyan/10 relative">
+            {profile.banner_url && (
+              <img src={profile.banner_url} alt="" className="w-full h-full object-cover" />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
+          </div>
+        )}
 
         <div className="px-5 pb-5 -mt-10 relative">
           <div className="flex items-end gap-4 mb-4">
             {/* Avatar */}
-            <div className="w-20 h-20 rounded-xl bg-purple/30 border-4 border-surface flex items-center justify-center text-2xl font-bold text-purple shrink-0 relative">
-              {profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()}
-              {profile.is_founding_member && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-purple flex items-center justify-center">
-                  <Star size={10} className="text-white" fill="white" />
-                </div>
-              )}
-            </div>
+            {isOwn ? (
+              <div className="relative">
+                <ImageUpload
+                  bucket="avatars"
+                  userId={profile.id}
+                  currentUrl={profile.avatar_url}
+                  onUpload={(url) => setProfile(prev => prev ? { ...prev, avatar_url: url } : null)}
+                  type="avatar"
+                />
+                {profile.is_founding_member && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-purple flex items-center justify-center z-10">
+                    <Star size={10} className="text-white" fill="white" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-20 h-20 rounded-xl bg-purple/30 border-4 border-surface flex items-center justify-center text-2xl font-bold text-purple shrink-0 relative overflow-hidden">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()
+                )}
+                {profile.is_founding_member && (
+                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-purple flex items-center justify-center">
+                    <Star size={10} className="text-white" fill="white" />
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
