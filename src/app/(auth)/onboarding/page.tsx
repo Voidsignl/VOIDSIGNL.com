@@ -93,33 +93,48 @@ export default function OnboardingPage() {
 
   async function finishOnboarding() {
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
 
-    await supabase
-      .from('profiles')
-      .update({
-        username,
-        display_name: displayName || username,
-        avatar_url: selectedAvatar || null,
-        platforms,
-        is_onboarded: true,
-      })
-      .eq('id', user.id)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          username,
+          display_name: displayName || username,
+          avatar_url: selectedAvatar || null,
+          platforms,
+          is_onboarded: true,
+        })
+        .eq('id', user.id)
 
-    if (selectedGames.length > 0) {
-      const userGames = selectedGames.map((gameId, i) => ({
-        user_id: user.id,
-        game_id: gameId,
-        is_main: i === 0,
-      }))
-      await supabase.from('user_games').insert(userGames)
+      if (profileError) {
+        setError(profileError.message)
+        setLoading(false)
+        return
+      }
+
+      if (selectedGames.length > 0) {
+        // Delete existing games first, then insert fresh
+        await supabase.from('user_games').delete().eq('user_id', user.id)
+
+        const userGames = selectedGames.map((gameId, i) => ({
+          user_id: user.id,
+          game_id: gameId,
+          is_main: i === 0,
+        }))
+        await supabase.from('user_games').insert(userGames)
+      }
+
+      // XP reward — ignore errors if it fails
+      try { await supabase.rpc('add_xp', { user_uuid: user.id, amount: 10 }) } catch {}
+
+      setStep('done')
+      setTimeout(() => router.push('/dashboard'), 1500)
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+      setLoading(false)
     }
-
-    await supabase.rpc('add_xp', { user_uuid: user.id, amount: 10 })
-
-    setStep('done')
-    setTimeout(() => router.push('/dashboard'), 1500)
   }
 
   const steps = [
