@@ -30,10 +30,11 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
                      request.nextUrl.pathname.startsWith('/register')
   const isOnboarding = request.nextUrl.pathname.startsWith('/onboarding')
-  const isProtected = request.nextUrl.pathname.startsWith('/dashboard') ||
-                      request.nextUrl.pathname.startsWith('/feed') ||
-                      request.nextUrl.pathname.startsWith('/profile') ||
-                      request.nextUrl.pathname.startsWith('/messages')
+  const isPublic = request.nextUrl.pathname === '/' || 
+                   request.nextUrl.pathname.startsWith('/auth/')
+  const isProtected = !isAuthPage && !isOnboarding && !isPublic && 
+                      !request.nextUrl.pathname.startsWith('/_next') &&
+                      !request.nextUrl.pathname.startsWith('/favicon')
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
