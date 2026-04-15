@@ -205,7 +205,7 @@ export default function RankingsPage() {
 
       {/* Top 3 podium */}
       {!loading && users.length >= 3 && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {/* 2nd place */}
           <div className="vs-card text-center pt-8 pb-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-300/40 to-transparent" />
@@ -268,7 +268,7 @@ export default function RankingsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-[1fr_260px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-5">
         {/* Main leaderboard */}
         <div>
           {/* Tab bar + search */}

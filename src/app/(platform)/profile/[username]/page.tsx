@@ -518,7 +518,7 @@ export default function ProfilePage() {
           )}
 
           {/* Stats bar */}
-          <div className="flex items-center gap-5 mt-4 pt-4 border-t border-border">
+          <div className="flex flex-wrap items-center gap-4 md:gap-5 mt-4 pt-4 border-t border-border">
             <div className="text-center">
               <p className="text-lg font-medium text-purple">{level.name}</p>
               <p className="text-[10px] text-text-dim tracking-wide">LEVEL {level.level}</p>
@@ -559,7 +559,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_260px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-5">
         {/* Main content */}
         <div>
           {/* Tabs */}

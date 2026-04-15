@@ -254,7 +254,7 @@ export default function AdminPage() {
       {/* Overview */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { label: 'Total Members', value: stats.members, icon: Users, color: 'text-cyan' },
               { label: 'Total Posts', value: stats.posts, icon: Newspaper, color: 'text-purple' },

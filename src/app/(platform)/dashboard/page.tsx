@@ -105,7 +105,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div className="vs-card">
           <p className="vs-label mb-1">YOUR LEVEL</p>
           <p className="text-xl font-medium text-purple">{level.name}</p>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_240px] gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-5">
         {/* Feed */}
         <div>
           <div className="flex items-center gap-2 mb-4">

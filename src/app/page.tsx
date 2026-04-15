@@ -156,7 +156,7 @@ export default function HomePage() {
 
       {/* Stats bar */}
       <section className="border-y border-white/[0.04] bg-surface/50">
-        <div className="max-w-5xl mx-auto px-8 py-6 grid grid-cols-4 gap-6">
+        <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {[
             { value: stats.members, label: 'Members' },
             { value: stats.tournaments, label: 'Tournaments' },
@@ -181,7 +181,7 @@ export default function HomePage() {
             Everything a competitive gaming community needs. Built for all games, all platforms, all levels.
           </p>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               { icon: Newspaper, label: 'Community', title: 'Social Feed', desc: 'Posts, clips, game channels. Your crew, your content, your space.', color: 'purple' },
               { icon: Trophy, label: 'Competitive', title: 'Tournaments', desc: 'Organized brackets, registration, results. Clean competition.', color: 'cyan' },
@@ -212,7 +212,7 @@ export default function HomePage() {
             The first members receive permanent founder status. Listed first, recognized always.
           </p>
 
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {FOUNDERS.map((f, i) => (
               <div key={f.name} className="bg-[#16161c] border border-white/[0.04] rounded-xl p-5 text-center hover:border-purple/20 transition-all">
                 <div className="w-14 h-14 rounded-xl bg-purple/15 border border-purple/20 flex items-center justify-center text-sm font-bold text-purple mx-auto mb-3">
