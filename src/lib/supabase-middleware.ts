@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
                       !request.nextUrl.pathname.startsWith('/_next') &&
                       !request.nextUrl.pathname.startsWith('/favicon')
 
-  if (!user && isProtected) {
+  if (!user && (isProtected || isOnboarding)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

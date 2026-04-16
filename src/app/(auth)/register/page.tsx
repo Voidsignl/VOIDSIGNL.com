@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -19,6 +20,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setSuccess('')
 
     if (username.length < 3) {
       setError('Username must be at least 3 characters')
@@ -26,33 +28,48 @@ export default function RegisterPage() {
       return
     }
 
-    const { data: existing } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('username', username)
-      .single()
+    try {
+      // Check username availability
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle()
 
-    if (existing) {
-      setError('Username already taken')
-      setLoading(false)
-      return
-    }
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username, display_name: username }
+      if (existing) {
+        setError('Username already taken')
+        setLoading(false)
+        return
       }
-    })
 
-    if (error) {
-      setError(error.message)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username, display_name: username },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        }
+      })
+
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      // If session is returned, email confirmation is disabled - go straight to onboarding
+      if (data.session) {
+        router.push('/onboarding')
+        return
+      }
+
+      // Otherwise email confirmation is required
+      setSuccess(`Check your email (${email}) to confirm your account. After confirming, you can sign in.`)
       setLoading(false)
-      return
+    } catch (err: any) {
+      setError(err?.message || 'Something went wrong. Please try again.')
+      setLoading(false)
     }
-
-    router.push('/onboarding')
   }
 
   async function handleDiscordRegister() {
@@ -83,6 +100,12 @@ export default function RegisterPage() {
           {error && (
             <div className="bg-danger/10 border border-danger/20 rounded-lg px-4 py-3 text-sm text-danger">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-success/10 border border-success/20 rounded-lg px-4 py-3 text-sm text-success">
+              {success}
             </div>
           )}
 

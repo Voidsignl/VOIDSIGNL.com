@@ -22,12 +22,34 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      setError(error.message)
+      if (error.message.toLowerCase().includes('email not confirmed')) {
+        setError('Please confirm your email first. Check your inbox for the confirmation link.')
+      } else if (error.message.toLowerCase().includes('invalid login credentials')) {
+        setError('Wrong email or password')
+      } else {
+        setError(error.message)
+      }
       setLoading(false)
       return
     }
 
-    router.push('/dashboard')
+    // Check if user has completed onboarding
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_onboarded')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.is_onboarded) {
+        router.push('/dashboard')
+      } else {
+        router.push('/onboarding')
+      }
+    } else {
+      router.push('/dashboard')
+    }
   }
 
   async function handleDiscordLogin() {
