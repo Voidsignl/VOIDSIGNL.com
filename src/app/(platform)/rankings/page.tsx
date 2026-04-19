@@ -66,70 +66,19 @@ export default function RankingsPage() {
   async function loadRankings() {
     setLoading(true)
 
-    if (activeTab === 'xp') {
-      const { data, count } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url, xp, level, level_name, is_founding_member, is_verified, is_coach', { count: 'exact' })
-        .eq('is_onboarded', true)
-        .order('xp', { ascending: false })
-        .limit(100)
+    const orderField = activeTab === 'xp' ? 'xp' :
+                       activeTab === 'posts' ? 'post_count' :
+                       activeTab === 'clips' ? 'clip_count' : 'follower_count'
 
-      if (data) setUsers(data as RankedUser[])
-      setTotalMembers(count || 0)
+    const { data, count } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, avatar_url, xp, level, level_name, is_founding_member, is_verified, is_coach, post_count, clip_count, follower_count', { count: 'exact' })
+      .eq('is_onboarded', true)
+      .order(orderField, { ascending: false })
+      .limit(100)
 
-    } else if (activeTab === 'posts') {
-      // Get users with most posts
-      const { data: postCounts } = await supabase
-        .rpc('get_post_rankings')
-        .limit(100)
-
-      if (postCounts) {
-        setUsers(postCounts as RankedUser[])
-      } else {
-        // Fallback: just load by XP
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url, xp, level, level_name, is_founding_member, is_verified, is_coach')
-          .eq('is_onboarded', true)
-          .order('xp', { ascending: false })
-          .limit(100)
-        if (data) setUsers(data as RankedUser[])
-      }
-
-    } else if (activeTab === 'clips') {
-      const { data: clipCounts } = await supabase
-        .rpc('get_clip_rankings')
-        .limit(100)
-
-      if (clipCounts) {
-        setUsers(clipCounts as RankedUser[])
-      } else {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url, xp, level, level_name, is_founding_member, is_verified, is_coach')
-          .eq('is_onboarded', true)
-          .order('xp', { ascending: false })
-          .limit(100)
-        if (data) setUsers(data as RankedUser[])
-      }
-
-    } else if (activeTab === 'followers') {
-      const { data: followerCounts } = await supabase
-        .rpc('get_follower_rankings')
-        .limit(100)
-
-      if (followerCounts) {
-        setUsers(followerCounts as RankedUser[])
-      } else {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url, xp, level, level_name, is_founding_member, is_verified, is_coach')
-          .eq('is_onboarded', true)
-          .order('xp', { ascending: false })
-          .limit(100)
-        if (data) setUsers(data as RankedUser[])
-      }
-    }
+    if (data) setUsers(data as RankedUser[])
+    setTotalMembers(count || 0)
 
     setLoading(false)
   }
