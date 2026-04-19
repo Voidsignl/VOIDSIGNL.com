@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { Topnav } from '@/components/layout/topnav'
 import { Sidebar } from '@/components/layout/sidebar'
+import { useHeartbeat } from '@/hooks/use-heartbeat'
 import type { Profile } from '@/types'
 
 export default function PlatformLayout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [notifCount, setNotifCount] = useState(0)
   const supabase = createClient()
+
+  // Keep online status alive
+  useHeartbeat()
 
   useEffect(() => {
     loadProfile()

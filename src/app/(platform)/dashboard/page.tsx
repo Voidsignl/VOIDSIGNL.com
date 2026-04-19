@@ -7,6 +7,7 @@ import { Plus, Upload, Users, TrendingUp, Trophy, Zap, Calendar } from 'lucide-r
 import { getLevelFromXP, getXPProgress } from '@/types'
 import type { Profile, Post, Game } from '@/types'
 import Link from 'next/link'
+import { OnlineFriends } from '@/components/ui/online-friends'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -243,6 +244,9 @@ export default function DashboardPage() {
 
         {/* Right sidebar */}
         <div className="space-y-4">
+          {/* Online friends */}
+          {profile && <OnlineFriends userId={profile.id} />}
+
           {/* Your games */}
           <div className="vs-card">
             <p className="vs-label mb-3">YOUR GAMES</p>

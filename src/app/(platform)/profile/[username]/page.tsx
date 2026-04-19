@@ -337,6 +337,23 @@ export default function ProfilePage() {
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-lg font-semibold">{profile.display_name || profile.username}</h1>
+                {/* Online status */}
+                {!isOwn && (profile as any).last_seen_at && (
+                  Date.now() - new Date((profile as any).last_seen_at).getTime() < 5 * 60 * 1000 ? (
+                    <span className="flex items-center gap-1 text-[9px] text-success">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" /> Online
+                    </span>
+                  ) : (
+                    <span className="text-[9px] text-text-dim">
+                      Last seen {(() => {
+                        const diff = Date.now() - new Date((profile as any).last_seen_at).getTime()
+                        if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m ago`
+                        if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h ago`
+                        return `${Math.floor(diff / 86400_000)}d ago`
+                      })()}
+                    </span>
+                  )
+                )}
                 {profile.is_founding_member && (
                   <span className="vs-badge vs-badge-purple text-[9px]">
                     <Star size={8} /> Founder
