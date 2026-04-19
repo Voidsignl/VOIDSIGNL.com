@@ -184,17 +184,25 @@ export default function ProfilePage() {
 
   async function sendBuddyRequest() {
     if (!currentUserId || !profile) return
-    await supabase.from('buddy_requests').insert({ sender_id: currentUserId, receiver_id: profile.id })
+    const { error } = await supabase.from('buddy_requests').insert({ sender_id: currentUserId, receiver_id: profile.id })
+    if (error) {
+      console.error('Buddy request error:', error)
+      return
+    }
     setBuddyStatus('pending_sent')
   }
 
   async function acceptBuddyRequest() {
     if (!currentUserId || !profile) return
-    await supabase
+    const { error } = await supabase
       .from('buddy_requests')
       .update({ status: 'accepted' })
       .eq('sender_id', profile.id)
       .eq('receiver_id', currentUserId)
+    if (error) {
+      console.error('Buddy accept error:', error)
+      return
+    }
     setBuddyStatus('accepted')
   }
 

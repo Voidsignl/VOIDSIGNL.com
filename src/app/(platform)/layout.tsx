@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { Topnav } from '@/components/layout/topnav'
 import { Sidebar } from '@/components/layout/sidebar'
+import { NotificationToast } from '@/components/ui/notification-toast'
 import { useHeartbeat } from '@/hooks/use-heartbeat'
 import type { Profile } from '@/types'
 
@@ -18,6 +19,9 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
   useEffect(() => {
     loadProfile()
     loadNotifications()
+    // Refresh notification count every 15 seconds
+    const interval = setInterval(loadNotifications, 15_000)
+    return () => clearInterval(interval)
   }, [])
 
   async function loadProfile() {
@@ -56,6 +60,8 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
           {children}
         </main>
       </div>
+      {/* Notification popups */}
+      {profile && <NotificationToast userId={profile.id} />}
     </div>
   )
 }
