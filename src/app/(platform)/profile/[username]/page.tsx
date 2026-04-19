@@ -55,6 +55,74 @@ export default function ProfilePage() {
   const [editSocials, setEditSocials] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   
+  // Post interactions
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set())
+  const [expandedComments, setExpandedComments] = useState<string | null>(null)
+  const [postComments, setPostComments] = useState<Record<string, any[]>>({})
+  const [commentText, setCommentText] = useState('')
+  const [submittingComment, setSubmittingComment] = useState(false)
+
+  // Load liked state when posts change
+  useEffect(() => {
+    if (currentUserId && posts.length > 0) loadLikedState()
+  }, [posts, currentUserId])
+
+  async function loadLikedState() {
+    if (!currentUserId || posts.length === 0) return
+    const { data } = await supabase
+      .from('likes')
+      .select('post_id')
+      .eq('user_id', currentUserId)
+      .in('post_id', posts.map(p => p.id))
+    if (data) setLikedPosts(new Set(data.map(l => l.post_id)))
+  }
+
+  async function toggleLike(postId: string) {
+    if (!currentUserId) return
+    const liked = likedPosts.has(postId)
+    
+    if (liked) {
+      await supabase.from('likes').delete().eq('user_id', currentUserId).eq('post_id', postId)
+      setLikedPosts(prev => { const n = new Set(prev); n.delete(postId); return n })
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, like_count: Math.max(0, p.like_count - 1) } : p))
+    } else {
+      await supabase.from('likes').insert({ user_id: currentUserId, post_id: postId })
+      setLikedPosts(prev => new Set(prev).add(postId))
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, like_count: p.like_count + 1 } : p))
+    }
+  }
+
+  async function loadComments(postId: string) {
+    if (expandedComments === postId) {
+      setExpandedComments(null)
+      return
+    }
+    const { data } = await supabase
+      .from('comments')
+      .select('*, profile:profiles(username, display_name, avatar_url)')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true })
+      .limit(20)
+    if (data) setPostComments(prev => ({ ...prev, [postId]: data }))
+    setExpandedComments(postId)
+  }
+
+  async function submitComment(postId: string) {
+    if (!currentUserId || !commentText.trim()) return
+    setSubmittingComment(true)
+    const { data } = await supabase
+      .from('comments')
+      .insert({ user_id: currentUserId, post_id: postId, content: commentText.trim() })
+      .select('*, profile:profiles(username, display_name, avatar_url)')
+      .single()
+    if (data) {
+      setPostComments(prev => ({ ...prev, [postId]: [...(prev[postId] || []), data] }))
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, comment_count: p.comment_count + 1 } : p))
+    }
+    setCommentText('')
+    setSubmittingComment(false)
+  }
+
   // Personalization
   const [editAccentColor, setEditAccentColor] = useState('#6B3FE0')
   const [editNameColor, setEditNameColor] = useState('')
@@ -796,10 +864,60 @@ export default function ProfilePage() {
                         <img src={post.image_url} alt="" className="w-full max-h-[300px] object-cover" />
                       </div>
                     )}
-                    <div className="flex gap-4 mt-3 text-xs text-text-dim">
-                      <span className="flex items-center gap-1"><Heart size={12} /> {post.like_count}</span>
-                      <span className="flex items-center gap-1"><MessageCircle size={12} /> {post.comment_count}</span>
+                    {/* Interactive like/comment */}
+                    <div className="flex gap-4 mt-3 text-xs">
+                      <button onClick={() => toggleLike(post.id)}
+                        className={`flex items-center gap-1 transition-colors ${likedPosts.has(post.id) ? 'text-danger' : 'text-text-dim hover:text-danger'}`}>
+                        <Heart size={13} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} /> {post.like_count}
+                      </button>
+                      <button onClick={() => loadComments(post.id)}
+                        className={`flex items-center gap-1 transition-colors ${expandedComments === post.id ? 'text-cyan' : 'text-text-dim hover:text-cyan'}`}>
+                        <MessageCircle size={13} /> {post.comment_count}
+                      </button>
                     </div>
+
+                    {/* Comments section */}
+                    {expandedComments === post.id && (
+                      <div className="mt-3 pt-3 border-t border-border space-y-2">
+                        {(postComments[post.id] || []).map((c: any) => (
+                          <div key={c.id} className="flex gap-2">
+                            <div className="w-6 h-6 rounded-full bg-purple/20 flex items-center justify-center text-[8px] font-bold text-purple shrink-0 mt-0.5">
+                              {c.profile?.avatar_url ? (
+                                <img src={c.profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                              ) : (
+                                (c.profile?.display_name || c.profile?.username || '?')[0].toUpperCase()
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <Link href={`/profile/${c.profile?.username}`} className="text-[11px] font-medium hover:text-purple transition-colors">
+                                  {c.profile?.display_name || c.profile?.username}
+                                </Link>
+                                <span className="text-[9px] text-text-dim">{timeAgo(c.created_at)}</span>
+                              </div>
+                              <p className="text-xs text-text/80">{c.content}</p>
+                            </div>
+                          </div>
+                        ))}
+                        {/* Comment input */}
+                        {currentUserId && (
+                          <div className="flex gap-2 pt-1">
+                            <input
+                              value={commentText}
+                              onChange={e => setCommentText(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(post.id) } }}
+                              placeholder="Write a comment..."
+                              className="vs-input text-xs py-1.5 flex-1"
+                              maxLength={500}
+                            />
+                            <button onClick={() => submitComment(post.id)} disabled={!commentText.trim() || submittingComment}
+                              className="vs-btn vs-btn-primary text-[10px] px-3 py-1.5 disabled:opacity-40 shrink-0">
+                              Post
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
