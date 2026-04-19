@@ -131,6 +131,11 @@ export default function ProfilePage() {
   const [editShowXpBar, setEditShowXpBar] = useState(true)
   const [editProfileEffect, setEditProfileEffect] = useState('none')
 
+  // Followers/Following modal
+  const [showListModal, setShowListModal] = useState<'followers' | 'following' | null>(null)
+  const [listUsers, setListUsers] = useState<any[]>([])
+  const [loadingList, setLoadingList] = useState(false)
+
   useEffect(() => {
     loadProfile()
   }, [username])
@@ -280,6 +285,29 @@ export default function ProfilePage() {
       return
     }
     setBuddyStatus('accepted')
+  }
+
+  async function openFollowersList(type: 'followers' | 'following') {
+    if (!profile) return
+    setShowListModal(type)
+    setLoadingList(true)
+    
+    if (type === 'followers') {
+      const { data } = await supabase
+        .from('follows')
+        .select('follower:profiles!follower_id(id, username, display_name, avatar_url, level_name, is_founding_member)')
+        .eq('following_id', profile.id)
+        .limit(50)
+      setListUsers(data?.map((d: any) => d.follower).filter(Boolean) || [])
+    } else {
+      const { data } = await supabase
+        .from('follows')
+        .select('following:profiles!following_id(id, username, display_name, avatar_url, level_name, is_founding_member)')
+        .eq('follower_id', profile.id)
+        .limit(50)
+      setListUsers(data?.map((d: any) => d.following).filter(Boolean) || [])
+    }
+    setLoadingList(false)
   }
 
   function startEditing() {
@@ -770,7 +798,7 @@ export default function ProfilePage() {
           {/* Stats bar */}
           <div className="flex flex-wrap items-center gap-4 md:gap-5 mt-4 pt-4 border-t border-border">
             <div className="text-center">
-              <p className="text-lg font-medium text-purple">{level.name}</p>
+              <p className="text-lg font-medium" style={{ color: accentColor }}>{level.name}</p>
               <p className="text-[10px] text-text-dim tracking-wide">LEVEL {level.level}</p>
             </div>
             <div className="h-8 w-px bg-border" />
@@ -779,32 +807,34 @@ export default function ProfilePage() {
               <p className="text-[10px] text-text-dim tracking-wide">XP</p>
             </div>
             <div className="h-8 w-px bg-border" />
-            <div className="text-center">
+            <button onClick={() => openFollowersList('followers')} className="text-center hover:opacity-80 transition-opacity">
               <p className="text-lg font-medium">{followerCount}</p>
               <p className="text-[10px] text-text-dim tracking-wide">FOLLOWERS</p>
-            </div>
+            </button>
             <div className="h-8 w-px bg-border" />
-            <div className="text-center">
+            <button onClick={() => openFollowersList('following')} className="text-center hover:opacity-80 transition-opacity">
               <p className="text-lg font-medium">{followingCount}</p>
               <p className="text-[10px] text-text-dim tracking-wide">FOLLOWING</p>
-            </div>
+            </button>
             <div className="h-8 w-px bg-border" />
-            <div className="text-center">
+            <button onClick={() => setActiveTab('posts')} className="text-center hover:opacity-80 transition-opacity">
               <p className="text-lg font-medium">{postCount}</p>
               <p className="text-[10px] text-text-dim tracking-wide">POSTS</p>
-            </div>
+            </button>
             <div className="h-8 w-px bg-border" />
-            <div className="text-center">
+            <button onClick={() => setActiveTab('clips')} className="text-center hover:opacity-80 transition-opacity">
               <p className="text-lg font-medium">{clipCount}</p>
               <p className="text-[10px] text-text-dim tracking-wide">CLIPS</p>
-            </div>
+            </button>
             {/* XP progress */}
-            <div className="flex-1">
-              <div className="h-1.5 bg-void rounded-full overflow-hidden">
-                <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor }} />
+            {showXpBar && (
+              <div className="flex-1 min-w-[100px]">
+                <div className="h-1.5 bg-void rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor }} />
+                </div>
+                <p className="text-[9px] text-text-dim mt-1 text-right">{profile.xp}/{xpProgress.next} XP</p>
               </div>
-              <p className="text-[9px] text-text-dim mt-1 text-right">{profile.xp}/{xpProgress.next} XP</p>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -1055,7 +1085,7 @@ export default function ProfilePage() {
           <div className="vs-card">
             <p className="vs-label mb-3">RANK</p>
             <div className="text-center">
-              <p className="text-2xl font-bold text-purple">{level.name}</p>
+              <p className="text-2xl font-bold" style={{ color: accentColor }}>{level.name}</p>
               <p className="text-xs text-text-dim mt-1">Level {level.level} · {profile.xp.toLocaleString()} XP</p>
               <div className="h-1.5 bg-void rounded-full overflow-hidden mt-3">
                 <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor }} />
@@ -1065,6 +1095,60 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Followers/Following Modal */}
+      {showListModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowListModal(null)}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 max-h-[70vh] flex flex-col animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+              <h3 className="text-sm font-medium">
+                {showListModal === 'followers' ? `Followers (${followerCount})` : `Following (${followingCount})`}
+              </h3>
+              <button onClick={() => setShowListModal(null)} className="text-text-dim hover:text-text"><X size={16} /></button>
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {loadingList ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-text-dim text-xs animate-pulse">Loading...</div>
+                </div>
+              ) : listUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users size={24} className="mx-auto text-text-dim opacity-40 mb-2" />
+                  <p className="text-xs text-text-dim">
+                    {showListModal === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {listUsers.map((user: any) => (
+                    <Link
+                      key={user.id}
+                      href={`/profile/${user.username}`}
+                      onClick={() => setShowListModal(null)}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2/50 transition-colors"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-purple/20 flex items-center justify-center text-[10px] font-bold text-purple shrink-0 overflow-hidden">
+                        {user.avatar_url ? (
+                          <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          (user.display_name || user.username)[0].toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium truncate">{user.display_name || user.username}</p>
+                          {user.is_founding_member && <Star size={9} className="text-purple shrink-0" fill="currentColor" />}
+                        </div>
+                        <p className="text-[10px] text-text-dim">@{user.username} · {user.level_name}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
