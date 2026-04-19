@@ -313,7 +313,7 @@ export default function BuddyCoachPage() {
               <p className="text-xs text-text-dim mt-1">Turn on "Looking for buddy" and check back later</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {buddyMatches.map(match => (
                 <div key={match.id} className="vs-card hover:border-cyan/20 transition-all">
                   <div className="flex items-center gap-3 mb-3">
@@ -506,7 +506,7 @@ export default function BuddyCoachPage() {
 
               <div>
                 <label className="vs-label block mb-2">SESSION TIER</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {Object.entries(TIERS).map(([key, val]) => (
                     <button key={key} onClick={() => setBookingTier(key)}
                       className={`py-3 rounded-lg text-center border transition-all ${bookingTier === key ? 'border-purple bg-purple/10 text-purple' : 'border-border bg-surface text-text-dim hover:border-border-hover'}`}>
@@ -525,7 +525,7 @@ export default function BuddyCoachPage() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="vs-label block mb-1">DATE</label>
                   <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} className="vs-input text-sm" />

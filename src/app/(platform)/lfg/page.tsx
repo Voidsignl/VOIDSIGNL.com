@@ -310,7 +310,7 @@ export default function LfgPage() {
                 <label className="vs-label block mb-1">DESCRIPTION</label>
                 <textarea value={formDesc} onChange={e => setFormDesc(e.target.value)} className="vs-input text-sm resize-none min-h-[60px]" placeholder="What are you looking for?" maxLength={500} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="vs-label block mb-1">GAME *</label>
                   <select value={formGame} onChange={e => setFormGame(e.target.value)} className="vs-input text-sm appearance-none">
@@ -329,7 +329,7 @@ export default function LfgPage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="vs-label block mb-1">REGION</label>
                   <select value={formRegion} onChange={e => setFormRegion(e.target.value)} className="vs-input text-sm appearance-none">

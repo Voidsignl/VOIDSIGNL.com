@@ -87,17 +87,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-void text-text" style={{ fontFamily: 'var(--font-body)' }}>
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-void/85 backdrop-blur-xl border-b border-white/[0.04] flex items-center justify-between px-8">
-        <a href="#" className="flex items-center gap-3">
-          <VoidsignlLogo size={24} className="text-text" />
-          <span className="text-sm font-semibold tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>VOIDSIGNL</span>
+      <nav className="fixed top-0 left-0 right-0 z-50 h-[52px] bg-void/85 backdrop-blur-xl border-b border-white/[0.04] flex items-center justify-between px-4 md:px-8">
+        <a href="#" className="flex items-center gap-2 md:gap-3">
+          <VoidsignlLogo size={22} className="text-text" />
+          <span className="text-xs md:text-sm font-semibold tracking-[2px] md:tracking-[3px] hidden sm:block" style={{ fontFamily: 'var(--font-display)' }}>VOIDSIGNL</span>
         </a>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 md:gap-6">
           <a href="#features" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide hidden md:block">Features</a>
           <a href="#founders" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide hidden md:block">Founders</a>
           <a href="#rankings" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide hidden md:block">Rankings</a>
           <Link href="/login" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide">Sign in</Link>
-          <Link href="/register" className="text-xs bg-purple hover:bg-purple-light text-white px-5 py-2 rounded-lg transition-colors tracking-wide">
+          <Link href="/register" className="text-[10px] md:text-xs bg-purple hover:bg-purple-light text-white px-3 md:px-5 py-2 rounded-lg transition-colors tracking-wide">
             Request access
           </Link>
         </div>
@@ -138,7 +138,7 @@ export default function HomePage() {
           <div className={`mt-12 transition-all duration-700 ease-out ${phase >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
             <Link
               href="/register"
-              className="inline-flex items-center gap-3 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] px-8 py-3 rounded-lg text-sm tracking-[2px] text-text transition-all group"
+              className="inline-flex items-center gap-3 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] hover:border-white/[0.15] px-4 md:px-8 py-3 rounded-lg text-sm tracking-[2px] text-text transition-all group"
             >
               Enter the void
               <ArrowRight size={15} className="opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
@@ -172,7 +172,7 @@ export default function HomePage() {
       </section>
 
       {/* Features — inspired by brandguide section 05 */}
-      <section className="py-24 px-8" id="features">
+      <section className="py-16 md:py-24 px-4 md:px-8" id="features">
         <div className="max-w-5xl mx-auto">
           <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>01</span>
           <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">Platform</h2>
@@ -203,7 +203,7 @@ export default function HomePage() {
       </section>
 
       {/* Founding Members */}
-      <section className="py-24 px-8 border-t border-white/[0.04]" id="founders">
+      <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04]" id="founders">
         <div className="max-w-5xl mx-auto">
           <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>02</span>
           <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">Founding Members</h2>
@@ -244,7 +244,7 @@ export default function HomePage() {
       </section>
 
       {/* Rankings */}
-      <section className="py-24 px-8 border-t border-white/[0.04]" id="rankings">
+      <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04]" id="rankings">
         <div className="max-w-5xl mx-auto">
           <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>03</span>
           <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">Global Rankings</h2>
@@ -252,10 +252,10 @@ export default function HomePage() {
 
           <div className="bg-[#16161c] border border-white/[0.04] rounded-xl overflow-hidden">
             {/* Table header */}
-            <div className="grid grid-cols-[60px_1fr_120px_100px] px-6 py-3 border-b border-white/[0.04] text-[10px] text-text-dim tracking-[1.5px] uppercase">
+            <div className="grid grid-cols-[30px_1fr_60px] md:grid-cols-[60px_1fr_120px_100px] px-3 md:px-6 py-3 border-b border-white/[0.04] text-[10px] text-text-dim tracking-[1.5px] uppercase">
               <span>#</span>
               <span>Player</span>
-              <span>Status</span>
+              <span className="hidden md:block">Status</span>
               <span className="text-right">Score</span>
             </div>
 
@@ -267,23 +267,23 @@ export default function HomePage() {
               level_name: 'Recruit',
               is_founding_member: true,
             }))).map((player, i) => (
-              <div key={i} className="grid grid-cols-[60px_1fr_120px_100px] px-6 py-4 border-b border-white/[0.03] items-center hover:bg-white/[0.02] transition-colors">
+              <div key={i} className="grid grid-cols-[30px_1fr_60px] md:grid-cols-[60px_1fr_120px_100px] px-3 md:px-6 py-3 md:py-4 border-b border-white/[0.03] items-center hover:bg-white/[0.02] transition-colors">
                 <span className="text-xs text-text-dim" style={{ fontFamily: 'var(--font-display)' }}>
                   {String(i + 1).padStart(3, '0')}
                 </span>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple/15 flex items-center justify-center text-[10px] font-bold text-purple">
+                <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-lg bg-purple/15 flex items-center justify-center text-[9px] md:text-[10px] font-bold text-purple shrink-0">
                     {((player as any).display_name || (player as any).username || '?').slice(0, 2).toUpperCase()}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{(player as any).display_name || (player as any).username}</p>
-                    <p className="text-[10px] text-text-dim">@{(player as any).username}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs md:text-sm font-medium truncate">{(player as any).display_name || (player as any).username}</p>
+                    <p className="text-[9px] md:text-[10px] text-text-dim truncate">@{(player as any).username}</p>
                   </div>
                 </div>
-                <span className={`text-[10px] ${(player as any).is_founding_member ? 'text-purple' : 'text-text-dim'}`}>
+                <span className={`hidden md:block text-[10px] ${(player as any).is_founding_member ? 'text-purple' : 'text-text-dim'}`}>
                   {(player as any).is_founding_member ? 'Founding' : (player as any).level_name}
                 </span>
-                <span className="text-sm text-right" style={{ fontFamily: 'var(--font-display)' }}>
+                <span className="text-xs md:text-sm text-right" style={{ fontFamily: 'var(--font-display)' }}>
                   {(player as any).xp > 0 ? (player as any).xp.toLocaleString() : '—'}
                 </span>
               </div>
@@ -299,13 +299,13 @@ export default function HomePage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-24 px-8 border-t border-white/[0.04] text-center">
+      <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04] text-center">
         <div className="max-w-lg mx-auto">
           <h2 className="text-3xl font-semibold tracking-tight mb-3">Join the signal.</h2>
           <p className="text-text-muted text-sm mb-8">Founding members · Priority access · Permanent status</p>
           <Link
             href="/register"
-            className="inline-flex items-center gap-3 bg-purple hover:bg-purple-light text-white px-8 py-3 rounded-lg text-sm tracking-[2px] transition-all group"
+            className="inline-flex items-center gap-3 bg-purple hover:bg-purple-light text-white px-4 md:px-8 py-3 rounded-lg text-sm tracking-[2px] transition-all group"
           >
             Request access
             <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />

@@ -271,7 +271,7 @@ export default function AdminPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="vs-card">
               <p className="vs-label mb-1">NEW MEMBERS (7D)</p>
               <p className="text-xl font-semibold text-success flex items-center gap-2">
@@ -313,11 +313,11 @@ export default function AdminPage() {
           </div>
 
           <div className="bg-surface rounded-xl border border-border overflow-hidden">
-            <div className="grid grid-cols-[1fr_100px_100px_80px_120px] px-4 py-2.5 border-b border-border text-[10px] text-text-dim tracking-wider uppercase">
-              <span>User</span><span>Role</span><span>Level</span><span>XP</span><span>Actions</span>
+            <div className="grid grid-cols-[1fr_80px_80px] md:grid-cols-[1fr_100px_100px_80px_120px] px-4 py-2.5 border-b border-border text-[10px] text-text-dim tracking-wider uppercase">
+              <span>User</span><span>Role</span><span className="hidden md:block">Level</span><span className="hidden md:block">XP</span><span className="hidden md:block">Actions</span>
             </div>
             {filteredUsers.map(user => (
-              <div key={user.id} className="grid grid-cols-[1fr_100px_100px_80px_120px] px-4 py-3 border-b border-border/50 items-center hover:bg-surface-2/50 transition-colors">
+              <div key={user.id} className="grid grid-cols-[1fr_80px_80px] md:grid-cols-[1fr_100px_100px_80px_120px] px-4 py-3 border-b border-border/50 items-center hover:bg-surface-2/50 transition-colors">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-purple/15 flex items-center justify-center text-[10px] font-bold text-purple shrink-0">
                     {(user.display_name || user.username)[0].toUpperCase()}
@@ -344,9 +344,9 @@ export default function AdminPage() {
                     <span className="text-[10px] text-text-dim">{(user as any).role || 'member'}</span>
                   )}
                 </div>
-                <span className="text-[10px] text-text-dim">{user.level_name}</span>
-                <span className="text-[10px] text-cyan">{user.xp}</span>
-                <div className="flex items-center gap-1">
+                <span className="text-[10px] text-text-dim hidden md:block">{user.level_name}</span>
+                <span className="text-[10px] text-cyan hidden md:block">{user.xp}</span>
+                <div className="hidden md:flex items-center gap-1">
                   {isAdmin && (
                     <button onClick={() => toggleFounder(user.id, user.is_founding_member)}
                       className={`p-1.5 rounded text-[10px] transition-colors ${user.is_founding_member ? 'text-purple bg-purple/10' : 'text-text-dim hover:text-purple'}`}
@@ -454,19 +454,19 @@ export default function AdminPage() {
           </div>
 
           <div className="bg-surface rounded-xl border border-border overflow-hidden">
-            <div className="grid grid-cols-[1fr_120px_80px_80px] px-4 py-2.5 border-b border-border text-[10px] text-text-dim tracking-wider uppercase">
-              <span>Game</span><span>Slug</span><span>Status</span><span>Actions</span>
+            <div className="grid grid-cols-[1fr_80px_60px] md:grid-cols-[1fr_120px_80px_80px] px-4 py-2.5 border-b border-border text-[10px] text-text-dim tracking-wider uppercase">
+              <span>Game</span><span className="hidden md:block">Slug</span><span>Status</span><span className="hidden md:block">Actions</span>
             </div>
             {games.map(game => (
-              <div key={game.id} className="grid grid-cols-[1fr_120px_80px_80px] px-4 py-3 border-b border-border/50 items-center hover:bg-surface-2/50 transition-colors">
-                <span className="text-sm font-medium">{game.name}</span>
-                <span className="text-xs text-text-dim font-mono">{game.slug}</span>
+              <div key={game.id} className="grid grid-cols-[1fr_80px_60px] md:grid-cols-[1fr_120px_80px_80px] px-4 py-3 border-b border-border/50 items-center hover:bg-surface-2/50 transition-colors">
+                <span className="text-xs md:text-sm font-medium truncate">{game.name}</span>
+                <span className="text-xs text-text-dim font-mono hidden md:block">{game.slug}</span>
                 <button onClick={() => toggleGameApproval(game.id, game.is_approved)}
                   className={`text-[10px] px-2 py-0.5 rounded ${game.is_approved ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'}`}>
                   {game.is_approved ? 'Approved' : 'Hidden'}
                 </button>
                 <button onClick={() => { if (confirm(`Delete ${game.name}?`)) deleteGame(game.id) }}
-                  className="text-text-dim hover:text-danger transition-colors"><Trash2 size={12} /></button>
+                  className="text-text-dim hover:text-danger transition-colors hidden md:block"><Trash2 size={12} /></button>
               </div>
             ))}
           </div>

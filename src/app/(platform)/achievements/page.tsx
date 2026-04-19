@@ -139,7 +139,7 @@ export default function AchievementsPage() {
       {/* Progress card */}
       <div className="vs-card mb-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple/40 to-transparent" />
-        <div className="flex items-center gap-8">
+        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
           {/* Circular progress */}
           <div className="relative w-20 h-20 shrink-0">
             <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
@@ -154,7 +154,7 @@ export default function AchievementsPage() {
           </div>
 
           <div className="flex-1">
-            <div className="flex items-center gap-6 mb-3">
+            <div className="flex flex-wrap items-center gap-4 md:gap-6 mb-3">
               <div>
                 <p className="text-2xl font-bold">{totalUnlocked}<span className="text-text-dim font-normal text-sm">/{achievements.length}</span></p>
                 <p className="text-[10px] text-text-dim tracking-wider">UNLOCKED</p>
@@ -176,7 +176,7 @@ export default function AchievementsPage() {
           </div>
 
           {/* Rarity breakdown */}
-          <div className="flex gap-3 shrink-0">
+          <div className="flex flex-wrap gap-3 shrink-0">
             {['common', 'uncommon', 'rare', 'epic', 'legendary'].map(r => {
               const total = achievements.filter(a => a.rarity === r).length
               const unlocked = achievements.filter(a => a.rarity === r && a.unlocked_at).length
@@ -193,7 +193,7 @@ export default function AchievementsPage() {
       </div>
 
       {/* Category filter */}
-      <div className="flex items-center gap-2 mb-5">
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
         {(Object.entries(CATEGORY_LABELS) as [CategoryFilter, typeof CATEGORY_LABELS[string]][]).map(([key, val]) => (
           <button
             key={key}
@@ -218,7 +218,7 @@ export default function AchievementsPage() {
           <p className="vs-label mb-3 flex items-center gap-2">
             <Sparkles size={12} className="text-purple" /> UNLOCKED ({unlockedFiltered.length})
           </p>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {unlockedFiltered.map(a => {
               const Icon = ICON_MAP[a.icon] || Award
               const style = RARITY_STYLES[a.rarity]
@@ -251,7 +251,7 @@ export default function AchievementsPage() {
           <p className="vs-label mb-3 flex items-center gap-2">
             <Lock size={12} className="text-text-dim" /> LOCKED ({lockedFiltered.length})
           </p>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {lockedFiltered.map(a => {
               const Icon = ICON_MAP[a.icon] || Award
               const style = RARITY_STYLES[a.rarity]

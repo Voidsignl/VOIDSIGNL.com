@@ -281,9 +281,9 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-52px)] flex -m-6">
+    <div className="h-[calc(100vh-52px)] flex -m-4 md:-m-6">
       {/* Conversation list */}
-      <div className={`w-80 border-r border-border flex flex-col shrink-0 bg-[#12121a] ${activeConv ? 'hidden md:flex' : 'flex'}`}>
+      <div className={`w-full md:w-80 border-r border-border flex flex-col shrink-0 bg-[#12121a] ${activeConv ? 'hidden md:flex' : 'flex'}`}>
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">

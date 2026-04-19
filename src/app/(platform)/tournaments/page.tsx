@@ -337,7 +337,7 @@ export default function TournamentsPage() {
             <div className="p-4 space-y-4">
               {activeTournament.description && <p className="text-sm text-text-muted leading-relaxed">{activeTournament.description}</p>}
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="vs-card py-2.5 text-center">
                   <p className="text-[10px] text-text-dim">STARTS</p>
                   <p className="text-sm font-medium mt-0.5">{formatDate(activeTournament.starts_at)}</p>
@@ -424,7 +424,7 @@ export default function TournamentsPage() {
                 <label className="vs-label block mb-1">DESCRIPTION</label>
                 <textarea value={formDesc} onChange={e => setFormDesc(e.target.value)} className="vs-input text-sm resize-none min-h-[60px]" placeholder="Tournament details..." maxLength={1000} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="vs-label block mb-1">GAME</label>
                   <select value={formGame} onChange={e => setFormGame(e.target.value)} className="vs-input text-sm appearance-none">
@@ -442,7 +442,7 @@ export default function TournamentsPage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="vs-label block mb-1">TEAM SIZE</label>
                   <select value={formTeamSize} onChange={e => setFormTeamSize(Number(e.target.value))} className="vs-input text-sm appearance-none">
@@ -465,7 +465,7 @@ export default function TournamentsPage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="vs-label block mb-1">START DATE *</label>
                   <input type="date" value={formStartDate} onChange={e => setFormStartDate(e.target.value)} className="vs-input text-sm" />

@@ -272,8 +272,8 @@ export default function RankingsPage() {
         {/* Main leaderboard */}
         <div>
           {/* Tab bar + search */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center bg-surface rounded-lg border border-border overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+            <div className="flex items-center bg-surface rounded-lg border border-border overflow-x-auto shrink-0">
               {[
                 { id: 'xp' as RankTab, label: 'XP', icon: Zap },
                 { id: 'posts' as RankTab, label: 'Posts', icon: TrendingUp },

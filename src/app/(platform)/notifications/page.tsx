@@ -133,7 +133,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 mb-5">
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
         {[
           { id: 'all' as NotifFilter, label: 'All' },
           { id: 'unread' as NotifFilter, label: `Unread (${unreadCount})` },
