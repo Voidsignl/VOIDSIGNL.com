@@ -9,7 +9,7 @@ import {
   Shield, Users, Newspaper, Film, Trophy, Flag, Gamepad2,
   BarChart3, Search, ChevronDown, Check, X, Ban, Star,
   AlertTriangle, Eye, Trash2, UserCog, Settings, TrendingUp,
-  MessageCircle, Clock
+  MessageCircle, Clock, Zap
 } from 'lucide-react'
 
 type AdminTab = 'overview' | 'users' | 'content' | 'reports' | 'games' | 'tournaments'
@@ -62,6 +62,12 @@ export default function AdminPage() {
   // Tournaments
   const [tournaments, setTournaments] = useState<any[]>([])
 
+  // XP Grant
+  const [xpModal, setXpModal] = useState<{ userId: string; username: string } | null>(null)
+  const [xpAmount, setXpAmount] = useState(10)
+  const [xpReason, setXpReason] = useState('')
+  const [grantingXp, setGrantingXp] = useState(false)
+
   useEffect(() => { checkAccess() }, [])
   useEffect(() => { if (authorized) loadTabData() }, [activeTab, authorized])
 
@@ -75,7 +81,7 @@ export default function AdminPage() {
       .eq('id', user.id)
       .single()
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator')) {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator' && !profile.is_founding_member)) {
       router.push('/dashboard')
       return
     }
@@ -192,6 +198,31 @@ export default function AdminPage() {
     setTournaments(prev => prev.map(t => t.id === tournamentId ? { ...t, status } : t))
   }
 
+  async function grantXP() {
+    if (!xpModal || xpAmount <= 0) return
+    setGrantingXp(true)
+    
+    const { error } = await supabase.rpc('add_xp', { user_uuid: xpModal.userId, amount: xpAmount })
+    
+    if (!error) {
+      // Send notification to user
+      await supabase.from('notifications').insert({
+        user_id: xpModal.userId,
+        type: 'xp',
+        title: `You received +${xpAmount} XP!`,
+        body: xpReason.trim() || `Granted by ${currentUser?.display_name || currentUser?.username}`,
+        link: '/achievements',
+      })
+      
+      // Refresh user list
+      setUsers(prev => prev.map(u => u.id === xpModal.userId ? { ...u, xp: u.xp + xpAmount } as any : u))
+      setXpModal(null)
+      setXpAmount(10)
+      setXpReason('')
+    }
+    setGrantingXp(false)
+  }
+
   function timeAgo(date: string) {
     const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
     if (s < 60) return 'just now'
@@ -207,6 +238,7 @@ export default function AdminPage() {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="text-text-dim text-sm animate-pulse">Checking access...</div></div>
 
   const isAdmin = (currentUser as any)?.role === 'admin'
+  const canGrantXP = isAdmin || (currentUser as any)?.is_founding_member
 
   const TABS: { id: AdminTab; label: string; icon: any; adminOnly?: boolean }[] = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -347,6 +379,13 @@ export default function AdminPage() {
                 <span className="text-[10px] text-text-dim hidden md:block">{user.level_name}</span>
                 <span className="text-[10px] text-cyan hidden md:block">{user.xp}</span>
                 <div className="hidden md:flex items-center gap-1">
+                  {canGrantXP && (
+                    <button onClick={() => setXpModal({ userId: user.id, username: user.display_name || user.username })}
+                      className="p-1.5 rounded text-[10px] text-cyan hover:text-cyan hover:bg-cyan/10 transition-colors"
+                      title="Grant XP">
+                      <Zap size={11} />
+                    </button>
+                  )}
                   {isAdmin && (
                     <button onClick={() => toggleFounder(user.id, user.is_founding_member)}
                       className={`p-1.5 rounded text-[10px] transition-colors ${user.is_founding_member ? 'text-purple bg-purple/10' : 'text-text-dim hover:text-purple'}`}
@@ -501,6 +540,81 @@ export default function AdminPage() {
             </div>
           ))}
           {tournaments.length === 0 && <div className="vs-card text-center py-8"><p className="text-sm text-text-dim">No tournaments</p></div>}
+        </div>
+      )}
+
+      {/* XP Grant Modal */}
+      {xpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setXpModal(null)}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <Zap size={16} className="text-cyan" /> Grant XP
+              </h3>
+              <button onClick={() => setXpModal(null)} className="text-text-dim hover:text-text"><X size={16} /></button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div className="text-center pb-3 border-b border-border">
+                <p className="text-sm">Grant XP to <span className="font-semibold text-purple">{xpModal.username}</span></p>
+              </div>
+
+              {/* Quick amounts */}
+              <div>
+                <label className="vs-label block mb-2">AMOUNT</label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {[5, 10, 25, 50].map(n => (
+                    <button key={n} onClick={() => setXpAmount(n)}
+                      className={`py-2 rounded-lg text-sm font-medium border transition-all ${
+                        xpAmount === n ? 'border-cyan bg-cyan/10 text-cyan' : 'border-border bg-surface text-text-dim hover:border-border-hover'
+                      }`}>
+                      +{n}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[100, 250, 500, 1000].map(n => (
+                    <button key={n} onClick={() => setXpAmount(n)}
+                      className={`py-2 rounded-lg text-sm font-medium border transition-all ${
+                        xpAmount === n ? 'border-cyan bg-cyan/10 text-cyan' : 'border-border bg-surface text-text-dim hover:border-border-hover'
+                      }`}>
+                      +{n}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  value={xpAmount}
+                  onChange={e => setXpAmount(Math.max(1, parseInt(e.target.value) || 0))}
+                  className="vs-input text-sm text-center"
+                  min={1}
+                  max={10000}
+                />
+              </div>
+
+              <div>
+                <label className="vs-label block mb-1">REASON (OPTIONAL)</label>
+                <input
+                  type="text"
+                  value={xpReason}
+                  onChange={e => setXpReason(e.target.value)}
+                  className="vs-input text-sm"
+                  placeholder="e.g. Won community event, great contribution..."
+                  maxLength={200}
+                />
+              </div>
+
+              <button onClick={grantXP} disabled={grantingXp || xpAmount <= 0}
+                className="vs-btn vs-btn-primary w-full disabled:opacity-40">
+                {grantingXp ? (
+                  <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Zap size={14} /> Grant +{xpAmount} XP
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
