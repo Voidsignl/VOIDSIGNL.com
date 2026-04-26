@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { OnlineFriends } from '@/components/ui/online-friends'
 import { ActivityWidget } from '@/components/ui/activity-widget'
 import { StreakWidget } from '@/components/ui/streak-widget'
+import { TournamentWidget } from '@/components/ui/tournament-widget'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -290,6 +291,9 @@ export default function DashboardPage() {
               lastDate={profile.last_streak_date}
             />
           )}
+
+          {/* Next tournament countdown */}
+          <TournamentWidget />
 
           {/* Online friends */}
           {profile && <OnlineFriends userId={profile.id} />}

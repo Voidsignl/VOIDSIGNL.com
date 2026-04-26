@@ -62,6 +62,29 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
   const [open, setOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [recentQueries, setRecentQueries] = useState<string[]>([])
+
+  // Load recent searches on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('voidsignl:recent-searches')
+      if (raw) setRecentQueries(JSON.parse(raw) as string[])
+    } catch { /* ignore */ }
+  }, [])
+
+  function pushRecent(q: string) {
+    if (!q.trim() || q.length < 2) return
+    setRecentQueries(prev => {
+      const next = [q, ...prev.filter(x => x.toLowerCase() !== q.toLowerCase())].slice(0, 6)
+      try { localStorage.setItem('voidsignl:recent-searches', JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }
+
+  function clearRecent() {
+    setRecentQueries([])
+    try { localStorage.removeItem('voidsignl:recent-searches') } catch { /* ignore */ }
+  }
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifs, setNotifs] = useState<NotifPreview[]>([])
   const [loadingNotifs, setLoadingNotifs] = useState(false)
@@ -221,11 +244,17 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
   }
 
   function handleSelect(result: SearchResult) {
+    pushRecent(query)
     setQuery('')
     setResults([])
     setOpen(false)
     setMobileSearchOpen(false)
     router.push(result.link)
+  }
+
+  function handleRecentClick(q: string) {
+    setQuery(q)
+    handleChange(q)
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -264,7 +293,7 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
             type="text"
             value={query}
             onChange={(e) => handleChange(e.target.value)}
-            onFocus={() => { if (results.length > 0) setOpen(true) }}
+            onFocus={() => { if (results.length > 0 || recentQueries.length > 0) setOpen(true) }}
             onKeyDown={handleKeyDown}
             placeholder={profile ? t('nav.search') : 'Search...'}
             className="bg-transparent text-sm text-text placeholder-text-dim outline-none w-full"
@@ -279,6 +308,30 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
         {/* Dropdown */}
         {open && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-xl shadow-black/30 overflow-hidden z-50 max-h-[400px] overflow-y-auto">
+            {/* Recent searches when query is empty */}
+            {!query.trim() && recentQueries.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+                  <span className="vs-counter text-[9px] text-text-dim tabular-nums">RECENT</span>
+                  <button
+                    onClick={clearRecent}
+                    className="text-[10px] text-text-dim hover:text-danger transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+                {recentQueries.map(q => (
+                  <button
+                    key={q}
+                    onClick={() => handleRecentClick(q)}
+                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-surface-2 transition-colors text-left"
+                  >
+                    <Search size={11} className="text-text-dim shrink-0" />
+                    <span className="text-xs text-text-muted truncate">{q}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {results.map((r, i) => {
               const Icon = r.type === 'page' ? (PAGE_ICONS[r.id] || Newspaper) :
                            r.type === 'game' ? Gamepad2 : User

@@ -16,6 +16,7 @@ import { ImageUpload } from '@/components/ui/image-upload'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScopeSpinner } from '@/components/ui/loader'
+import { ProfileQR } from '@/components/ui/profile-qr'
 
 type ProfileTab = 'posts' | 'clips' | 'games'
 
@@ -539,9 +540,12 @@ export default function ProfilePage() {
             <div className="flex items-center gap-2 shrink-0">
               {isOwn ? (
                 !editing ? (
-                  <button onClick={startEditing} className="vs-btn vs-btn-ghost text-xs">
-                    <Edit3 size={13} /> Edit Profile
-                  </button>
+                  <>
+                    <ProfileQR username={profile.username} displayName={profile.display_name} />
+                    <button onClick={startEditing} className="vs-btn vs-btn-ghost text-xs">
+                      <Edit3 size={13} /> Edit Profile
+                    </button>
+                  </>
                 ) : (
                   <div className="flex gap-2">
                     <button onClick={() => setEditing(false)} className="vs-btn vs-btn-ghost text-xs">
@@ -554,6 +558,7 @@ export default function ProfilePage() {
                 )
               ) : currentUserId && (
                 <>
+                  <ProfileQR username={profile.username} displayName={profile.display_name} />
                   <button
                     onClick={toggleFollow}
                     className={`vs-btn text-xs ${isFollowing ? 'vs-btn-ghost' : 'vs-btn-primary'}`}

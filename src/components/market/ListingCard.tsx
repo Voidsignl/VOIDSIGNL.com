@@ -68,7 +68,6 @@ export function ListingCard({ listing, size = 'default', savable = false, saved 
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            unoptimized
           />
         ) : (
           <div className={`w-full h-full flex items-center justify-center ${accent.bg}`}>

@@ -117,7 +117,7 @@ export function OrderCard({ order, perspective, onConfirmed }: OrderCardProps) {
           className="relative w-20 sm:w-28 aspect-[4/3] rounded-lg overflow-hidden bg-surface-2 shrink-0"
         >
           {listing.images?.[0] ? (
-            <Image src={listing.images[0]} alt={listing.title} fill className="object-cover" sizes="120px" unoptimized />
+            <Image src={listing.images[0]} alt={listing.title} fill className="object-cover" sizes="120px" />
           ) : (
             <div className={`w-full h-full flex items-center justify-center ${accent?.bg ?? ''}`}>
               {Icon && <Icon size={20} className={accent?.text} />}

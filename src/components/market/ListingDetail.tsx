@@ -152,7 +152,6 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
                 fill
                 sizes="(max-width: 768px) 100vw, 60vw"
                 className="object-cover"
-                unoptimized
               />
             ) : (
               <div className={`w-full h-full flex items-center justify-center ${accent.bg}`}>
@@ -189,7 +188,7 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
                     i === galleryIdx ? 'border-purple-light' : 'border-transparent opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <Image src={src} alt="" fill className="object-cover" sizes="64px" unoptimized />
+                  <Image src={src} alt="" fill className="object-cover" sizes="64px" />
                 </button>
               ))}
             </div>
@@ -272,7 +271,7 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
                   className="vs-card p-2 hover:border-purple/40 transition-colors">
                   <div className="aspect-[4/3] rounded bg-surface-2 mb-2 overflow-hidden relative">
                     {r.images?.[0] ? (
-                      <Image src={r.images[0]} alt={r.title} fill sizes="200px" className="object-cover" unoptimized />
+                      <Image src={r.images[0]} alt={r.title} fill sizes="200px" className="object-cover" />
                     ) : (
                       <div className={`w-full h-full flex items-center justify-center ${categoryAccent(r.category).bg}`}>
                         <ShoppingBag size={20} className={categoryAccent(r.category).text} />
