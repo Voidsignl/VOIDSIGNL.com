@@ -6,6 +6,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Download, X } from 'lucide-react'
+import { useLang } from '@/lib/lang-context'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -15,6 +16,7 @@ interface BeforeInstallPromptEvent extends Event {
 export function PWAProvider() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null)
   const [bannerVisible, setBannerVisible] = useState(false)
+  const { t } = useLang()
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return
@@ -74,9 +76,9 @@ export function PWAProvider() {
           <Download size={18} className="text-purple-light" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium">Install VOIDSIGNL</p>
+          <p className="text-sm font-medium">{t('pwa.install')}</p>
           <p className="text-[11px] text-text-muted mt-0.5 leading-tight">
-            Get quicker access + push notifications when you&apos;re away.
+            {t('pwa.installDesc')}
           </p>
         </div>
         <button onClick={dismiss} className="text-text-dim hover:text-text shrink-0 p-1 -m-1">
@@ -84,9 +86,9 @@ export function PWAProvider() {
         </button>
       </div>
       <div className="flex gap-2 mt-3">
-        <button onClick={dismiss} className="vs-btn vs-btn-ghost text-xs flex-1">Later</button>
+        <button onClick={dismiss} className="vs-btn vs-btn-ghost text-xs flex-1">{t('pwa.later')}</button>
         <button onClick={install} className="vs-btn vs-btn-primary text-xs flex-1">
-          <Download size={12} /> Install
+          <Download size={12} /> {t('pwa.installBtn')}
         </button>
       </div>
     </div>

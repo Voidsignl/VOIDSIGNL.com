@@ -4,7 +4,7 @@
  */
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShieldCheck, AlertTriangle, Heart } from 'lucide-react'
+import { ShieldCheck, AlertTriangle, Heart, Zap } from 'lucide-react'
 import { useState } from 'react'
 import type { MarketListing } from '@/types'
 import { MARKET_CATEGORIES } from '@/types'
@@ -26,6 +26,7 @@ export function ListingCard({ listing, size = 'default', savable = false, saved 
   const Icon = CATEGORY_ICONS[listing.category]
   const thumb = listing.images?.[0]
   const isCompact = size === 'compact'
+  const isBoosted = listing.boosted_until && new Date(listing.boosted_until).getTime() > Date.now()
   const supabase = createClient()
   const [isSaved, setIsSaved] = useState(saved)
   const [savePending, setSavePending] = useState(false)
@@ -55,7 +56,9 @@ export function ListingCard({ listing, size = 'default', savable = false, saved 
   return (
     <Link
       href={`/market/listing/${listing.id}`}
-      className={`vs-brackets group relative flex flex-col rounded-xl bg-surface border border-border overflow-hidden transition-all hover:border-purple/50 hover:shadow-[0_0_20px_rgba(107,63,224,0.18)] ${
+      className={`vs-brackets group relative flex flex-col rounded-xl bg-surface overflow-hidden transition-all hover:border-purple/50 hover:shadow-[0_0_20px_rgba(107,63,224,0.18)] ${
+        isBoosted ? 'border border-warning/30 shadow-[0_0_16px_rgba(239,159,39,0.18)]' : 'border border-border'
+      } ${
         isCompact ? 'w-60 shrink-0' : ''
       }`}
     >
@@ -75,10 +78,17 @@ export function ListingCard({ listing, size = 'default', savable = false, saved 
           </div>
         )}
 
-        {/* Top-left: category */}
-        <span className={`absolute top-2 left-2 vs-badge text-[9px] ${accent.bg} ${accent.text} border ${accent.border}`}>
-          {cat.tag}
-        </span>
+        {/* Top-left: category + boost */}
+        <div className="absolute top-2 left-2 flex gap-1">
+          <span className={`vs-badge text-[9px] ${accent.bg} ${accent.text} border ${accent.border}`}>
+            {cat.tag}
+          </span>
+          {isBoosted && (
+            <span className="vs-badge text-[9px] bg-warning/20 text-warning border border-warning/40">
+              <Zap size={9} fill="currentColor" /> FEATURED
+            </span>
+          )}
+        </div>
 
         {/* Top-right: badges + heart */}
         <div className="absolute top-2 right-2 flex gap-1 items-start">

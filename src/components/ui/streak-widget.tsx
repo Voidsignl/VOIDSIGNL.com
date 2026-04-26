@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Flame } from 'lucide-react'
+import { useLang } from '@/lib/lang-context'
 
 interface StreakWidgetProps {
   current: number
@@ -26,6 +27,7 @@ function hoursUntilMidnight() {
 
 export function StreakWidget({ current, best, lastDate }: StreakWidgetProps) {
   const [hoursLeft, setHoursLeft] = useState(hoursUntilMidnight())
+  const { t } = useLang()
 
   useEffect(() => {
     const interval = setInterval(() => setHoursLeft(hoursUntilMidnight()), 60_000)
@@ -55,17 +57,17 @@ export function StreakWidget({ current, best, lastDate }: StreakWidgetProps) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="vs-counter text-[10px] tabular-nums text-text-dim">
-          STREAK · {String(current).padStart(2, '0')} {current === 1 ? 'DAY' : 'DAYS'}
+          {t('streak.label')} · {String(current).padStart(2, '0')} {current === 1 ? t('streak.day') : t('streak.days')}
         </p>
         {current === 0 ? (
-          <p className="text-xs text-text-muted mt-1">Log in daily to start a streak.</p>
+          <p className="text-xs text-text-muted mt-1">{t('streak.startNow')}</p>
         ) : aboutToBreak ? (
           <p className="text-xs text-warning mt-1 leading-tight">
-            <span className="tabular-nums">{hoursLeft}h</span> to keep your streak alive
+            <span className="tabular-nums">{hoursLeft}h</span> {t('streak.aboutToBreak')}
           </p>
         ) : (
           <p className="text-xs text-text-muted mt-1 leading-tight">
-            Best: <span className="tabular-nums text-purple-light">{best}</span>
+            {t('streak.best')}: <span className="tabular-nums text-purple-light">{best}</span>
             {checkedInToday && current >= 7 && current % 7 === 0 && (
               <span className="ml-2 text-cyan">+{current * 5} XP bonus!</span>
             )}

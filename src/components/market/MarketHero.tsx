@@ -1,8 +1,10 @@
+'use client'
 /**
  * Het is groot, het is donker, het is een bank-vault deur.
  * Hero komt op homepage en bovenaan elke category page.
  */
 import { LockKeyhole } from 'lucide-react'
+import { useLang } from '@/lib/lang-context'
 
 interface MarketHeroProps {
   title?: string
@@ -12,10 +14,13 @@ interface MarketHeroProps {
 }
 
 export function MarketHero({
-  title = 'THE VOID MARKET',
-  subtitle = 'Only for those who know.',
+  title,
+  subtitle,
   compact = false,
 }: MarketHeroProps) {
+  const { t } = useLang()
+  const finalTitle = title ?? t('market.title')
+  const finalSubtitle = subtitle ?? t('market.subtitle')
   return (
     <section
       className={`vs-scanlines relative overflow-hidden rounded-2xl border border-border bg-[#0a0a0e] mb-6 ${
@@ -40,7 +45,7 @@ export function MarketHero({
       <div className="relative z-10 max-w-3xl">
         <div className="flex items-center gap-2 mb-3">
           <span className="w-2 h-2 rounded-full bg-cyan animate-pulse" />
-          <p className="vs-counter text-[10px] text-cyan tracking-[3px]">SECURE · MEMBERS-ONLY · ESCROWED</p>
+          <p className="vs-counter text-[10px] text-cyan tracking-[3px]">{t('market.secureMembers')}</p>
         </div>
         <h1
           className={`tracking-[2px] md:tracking-[4px] font-bold text-white ${
@@ -48,11 +53,11 @@ export function MarketHero({
           }`}
           style={{ fontFamily: 'var(--font-display)' }}
         >
-          {title}
+          {finalTitle}
         </h1>
         <p className="text-text-muted mt-3 text-sm md:text-base flex items-center gap-2">
           <LockKeyhole size={14} className="text-purple-light shrink-0" />
-          {subtitle}
+          {finalSubtitle}
         </p>
       </div>
     </section>

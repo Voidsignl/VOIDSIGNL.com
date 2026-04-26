@@ -170,6 +170,7 @@ export interface MarketListing {
   stock: number
   commission_rate: number
   void_verified: boolean
+  boosted_until?: string | null
   created_at: string
   updated_at: string
   seller?: MarketSeller & { profile?: Profile }

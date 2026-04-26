@@ -14,8 +14,9 @@ import type { Game, MarketListing, MarketSeller } from '@/types'
 import { MARKET_CATEGORIES } from '@/types'
 import {
   ShieldCheck, Clock, AlertCircle, Plus, Trash2, EyeOff, Eye,
-  Lock, ShoppingBag,
+  Lock, ShoppingBag, Zap,
 } from 'lucide-react'
+import { Sheet } from '@/components/ui/sheet'
 import { ScopeSpinner } from '@/components/ui/loader'
 import { EmptyState } from '@/components/ui/empty-state'
 import { CreateListingForm } from '@/components/market/CreateListingForm'
@@ -29,6 +30,28 @@ export default function SellPage() {
   const [myListings, setMyListings] = useState<MarketListing[]>([])
   const [games, setGames] = useState<Game[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [boostListingId, setBoostListingId] = useState<string | null>(null)
+  const [boostHours, setBoostHours] = useState<24 | 72 | 168>(24)
+  const [boosting, setBoosting] = useState(false)
+  const [boostError, setBoostError] = useState<string | null>(null)
+
+  // Bundles
+  interface BundlePricing {
+    id: string
+    name: string
+    description: string | null
+    discount_pct: number
+    item_count: number
+    total_price: number
+    bundle_price: number
+  }
+  const [bundles, setBundles] = useState<BundlePricing[]>([])
+  const [bundleFormOpen, setBundleFormOpen] = useState(false)
+  const [bundleName, setBundleName] = useState('')
+  const [bundleDiscount, setBundleDiscount] = useState(15)
+  const [bundleSelected, setBundleSelected] = useState<Set<string>>(new Set())
+  const [bundleSubmitting, setBundleSubmitting] = useState(false)
+  const [bundleError, setBundleError] = useState<string | null>(null)
 
   // Application state
   const [applicationNote, setApplicationNote] = useState('')
@@ -62,17 +85,67 @@ export default function SellPage() {
     setSeller((sellerRow as MarketSeller) ?? null)
 
     if ((sellerRow as MarketSeller | null)?.verified_at) {
-      const [{ data: listings }, { data: g }] = await Promise.all([
+      const sId = (sellerRow as MarketSeller).id
+      const [{ data: listings }, { data: g }, { data: bnd }] = await Promise.all([
         supabase
           .from('market_listings')
           .select('*, game:games(id,name)')
-          .eq('seller_id', (sellerRow as MarketSeller).id)
+          .eq('seller_id', sId)
           .order('created_at', { ascending: false }),
         supabase.from('games').select('*').eq('is_approved', true).order('name'),
+        supabase
+          .from('market_bundles_pricing')
+          .select('*')
+          .eq('seller_id', sId)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false }),
       ])
       setMyListings((listings || []) as unknown as MarketListing[])
       setGames((g || []) as Game[])
+      setBundles((bnd || []) as BundlePricing[])
     }
+  }
+
+  async function createBundle() {
+    if (!seller) return
+    setBundleSubmitting(true)
+    setBundleError(null)
+    try {
+      const name = bundleName.trim()
+      if (name.length < 3) throw new Error('Name needs ≥3 chars')
+      if (bundleSelected.size < 2) throw new Error('Select at least 2 listings')
+
+      const { data: bundle, error: e } = await supabase
+        .from('market_bundles')
+        .insert({
+          seller_id: seller.id,
+          name,
+          discount_pct: bundleDiscount,
+        })
+        .select('id')
+        .single()
+      if (e || !bundle) throw e || new Error('Insert failed')
+
+      const items = [...bundleSelected].map(listing_id => ({ bundle_id: bundle.id, listing_id }))
+      await supabase.from('market_bundle_items').insert(items)
+
+      // Reset + reload
+      setBundleName('')
+      setBundleSelected(new Set())
+      setBundleDiscount(15)
+      setBundleFormOpen(false)
+      if (authed) await loadSellerState(authed)
+    } catch (e) {
+      setBundleError(e instanceof Error ? e.message : 'Could not create bundle')
+    } finally {
+      setBundleSubmitting(false)
+    }
+  }
+
+  async function deleteBundle(id: string) {
+    if (!confirm('Delete this bundle? Items remain available individually.')) return
+    await supabase.from('market_bundles').update({ status: 'removed' }).eq('id', id)
+    setBundles(prev => prev.filter(b => b.id !== id))
   }
 
   async function applyAsSeller(e: React.FormEvent) {
@@ -114,6 +187,28 @@ export default function SellPage() {
     await supabase.from('market_listings').delete().eq('id', id)
     setMyListings(prev => prev.filter(l => l.id !== id))
   }
+
+  async function applyBoost() {
+    if (!boostListingId) return
+    setBoosting(true)
+    setBoostError(null)
+    try {
+      const { data, error } = await supabase.rpc('boost_listing', {
+        p_listing_id: boostListingId,
+        p_hours: boostHours,
+      })
+      if (error) throw error
+      const until = data as string
+      setMyListings(prev => prev.map(l => l.id === boostListingId ? { ...l, boosted_until: until } : l))
+      setBoostListingId(null)
+    } catch (e) {
+      setBoostError(e instanceof Error ? e.message : 'Boost failed')
+    } finally {
+      setBoosting(false)
+    }
+  }
+
+  const boostCost = (h: 24 | 72 | 168) => h === 24 ? 100 : h === 72 ? 240 : 500
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><ScopeSpinner size={28} /></div>
@@ -249,6 +344,52 @@ export default function SellPage() {
         </div>
       )}
 
+      {/* Bundles section */}
+      {myListings.length >= 2 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="vs-counter text-[11px] tabular-nums">BUNDLES</h3>
+            <button
+              onClick={() => setBundleFormOpen(true)}
+              className="vs-btn vs-btn-ghost text-xs"
+            >
+              <Plus size={12} /> New bundle
+            </button>
+          </div>
+          {bundles.length === 0 ? (
+            <p className="text-xs text-text-dim italic">
+              Combine 2+ listings into a discounted bundle to sell faster.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {bundles.map(b => (
+                <div key={b.id} className="vs-card vs-lit relative">
+                  <button
+                    onClick={() => deleteBundle(b.id)}
+                    className="absolute top-2 right-2 p-1 text-text-dim hover:text-danger"
+                    title="Remove bundle"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                  <p className="vs-counter text-[10px] tabular-nums text-warning mb-1">
+                    {String(b.item_count).padStart(2, '0')} ITEMS · {Number(b.discount_pct).toFixed(0)}% OFF
+                  </p>
+                  <h4 className="text-sm font-medium pr-6 line-clamp-1">{b.name}</h4>
+                  <div className="flex items-baseline gap-2 mt-2">
+                    <span className="text-lg font-semibold text-cyan tabular-nums">
+                      €{Number(b.bundle_price).toFixed(2)}
+                    </span>
+                    <span className="text-[11px] text-text-dim line-through tabular-nums">
+                      €{Number(b.total_price).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Listings table */}
       {myListings.length === 0 ? (
         <EmptyState
@@ -297,6 +438,19 @@ export default function SellPage() {
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="inline-flex gap-1">
+                      {l.status === 'active' && (
+                        <button
+                          onClick={() => { setBoostListingId(l.id); setBoostError(null) }}
+                          className={`p-1.5 rounded transition-colors ${
+                            l.boosted_until && new Date(l.boosted_until).getTime() > Date.now()
+                              ? 'text-warning bg-warning/10'
+                              : 'text-text-dim hover:text-warning hover:bg-warning/10'
+                          }`}
+                          title={l.boosted_until && new Date(l.boosted_until).getTime() > Date.now() ? 'Boosted — extend' : 'Boost listing'}
+                        >
+                          <Zap size={13} />
+                        </button>
+                      )}
                       <button
                         onClick={() => toggleListingStatus(l)}
                         className="p-1.5 rounded text-text-dim hover:text-text hover:bg-surface-2 transition-colors"
@@ -318,6 +472,132 @@ export default function SellPage() {
           </table>
         </div>
       )}
+
+      {/* Boost sheet */}
+      <Sheet
+        open={!!boostListingId}
+        onClose={() => !boosting && setBoostListingId(null)}
+        maxWidth="max-w-sm"
+        title={<span className="flex items-center gap-2"><Zap size={16} className="text-warning" /> Boost listing</span>}
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-xs text-text-muted leading-relaxed">
+            Boosted listings rise to the top of category pages and get a FEATURED badge.
+            Spend XP to boost — costs grow with duration.
+          </p>
+          <div>
+            <label className="vs-label block mb-2">DURATION</label>
+            <div className="grid grid-cols-3 gap-2">
+              {([24, 72, 168] as const).map(h => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => setBoostHours(h)}
+                  data-active={boostHours === h}
+                  className="vs-tab justify-center flex-col py-3 h-auto"
+                >
+                  <span className="text-sm font-semibold tabular-nums">{h === 168 ? '7' : h === 72 ? '3' : '1'}{h === 168 ? 'd' : 'd'}</span>
+                  <span className="vs-counter text-[9px] text-text-dim mt-0.5 tabular-nums">
+                    {boostCost(h)} XP
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {boostError && <p className="text-xs text-danger p-2 bg-danger-dim rounded">{boostError}</p>}
+
+          <button
+            onClick={applyBoost}
+            disabled={boosting}
+            className="vs-btn vs-btn-primary text-sm w-full disabled:opacity-50"
+          >
+            {boosting ? 'Boosting...' : <><Zap size={13} /> Boost for {boostCost(boostHours)} XP</>}
+          </button>
+        </div>
+      </Sheet>
+
+      {/* Bundle create sheet */}
+      <Sheet
+        open={bundleFormOpen}
+        onClose={() => !bundleSubmitting && setBundleFormOpen(false)}
+        maxWidth="max-w-md"
+        title={<span className="flex items-center gap-2"><ShoppingBag size={16} className="text-purple" /> New bundle</span>}
+      >
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="vs-label block mb-1">NAME</label>
+            <input
+              value={bundleName}
+              onChange={e => setBundleName(e.target.value)}
+              maxLength={80}
+              minLength={3}
+              placeholder="Streamer essentials pack"
+              className="vs-input text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="vs-label block mb-1">DISCOUNT</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={5}
+                max={50}
+                step={5}
+                value={bundleDiscount}
+                onChange={e => setBundleDiscount(Number(e.target.value))}
+                className="flex-1 accent-purple"
+              />
+              <span className="vs-counter text-sm font-medium tabular-nums w-12 text-right">
+                {bundleDiscount}%
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="vs-label block mb-1">SELECT LISTINGS (≥2)</label>
+            <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+              {myListings.filter(l => l.status === 'active').map(l => {
+                const checked = bundleSelected.has(l.id)
+                return (
+                  <label key={l.id} className="flex items-center gap-2 p-2 rounded hover:bg-surface-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setBundleSelected(prev => {
+                          const next = new Set(prev)
+                          if (checked) next.delete(l.id); else next.add(l.id)
+                          return next
+                        })
+                      }}
+                      className="accent-purple"
+                    />
+                    <span className="text-xs flex-1 truncate">{l.title}</span>
+                    <span className="text-xs text-cyan tabular-nums shrink-0">
+                      €{Number(l.price).toFixed(2)}
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+            <p className="vs-counter text-[10px] text-text-dim mt-2 tabular-nums">
+              {String(bundleSelected.size).padStart(2, '0')} SELECTED
+            </p>
+          </div>
+
+          {bundleError && <p className="text-xs text-danger p-2 bg-danger-dim rounded">{bundleError}</p>}
+
+          <button
+            onClick={createBundle}
+            disabled={bundleSubmitting || bundleSelected.size < 2 || bundleName.trim().length < 3}
+            className="vs-btn vs-btn-primary text-sm w-full disabled:opacity-50"
+          >
+            {bundleSubmitting ? 'Creating...' : 'Create bundle'}
+          </button>
+        </div>
+      </Sheet>
     </div>
   )
 }

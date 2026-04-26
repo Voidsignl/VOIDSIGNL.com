@@ -10,6 +10,7 @@ import {
   BarChart3, Search, ChevronDown, Check, X, Ban, Star,
   AlertTriangle, Eye, Trash2, UserCog, Settings, TrendingUp,
   MessageCircle, Clock, Zap, ShoppingBag, ShieldCheck, EyeOff,
+  Sparkles,
 } from 'lucide-react'
 import type { MarketSeller, MarketListing } from '@/types'
 import { MARKET_CATEGORIES } from '@/types'
@@ -65,6 +66,9 @@ export default function AdminPage() {
   // Tournaments
   const [tournaments, setTournaments] = useState<any[]>([])
 
+  // Spotlight (currently featured profile id)
+  const [spotlightId, setSpotlightId] = useState<string | null>(null)
+
   // Market admin state
   const [pendingSellers, setPendingSellers] = useState<(MarketSeller & { profile?: Profile })[]>([])
   const [marketListings, setMarketListings] = useState<MarketListing[]>([])
@@ -110,6 +114,16 @@ export default function AdminPage() {
     setAuthorized(true)
     setLoading(false)
     loadOverview()
+    loadSpotlight()
+  }
+
+  async function loadSpotlight() {
+    const { data } = await supabase
+      .from('platform_settings')
+      .select('featured_profile_id')
+      .eq('id', 1)
+      .maybeSingle()
+    setSpotlightId((data as { featured_profile_id: string | null } | null)?.featured_profile_id ?? null)
   }
 
   async function loadOverview() {
@@ -256,6 +270,20 @@ export default function AdminPage() {
   async function toggleFounder(userId: string, current: boolean) {
     await supabase.from('profiles').update({ is_founding_member: !current }).eq('id', userId)
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_founding_member: !current } as any : u))
+  }
+
+  async function setAsSpotlight(userId: string) {
+    if (!currentUser?.id) return
+    await supabase
+      .from('platform_settings')
+      .update({
+        featured_profile_id: userId,
+        featured_set_at: new Date().toISOString(),
+        featured_set_by: currentUser.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', 1)
+    setSpotlightId(userId)
   }
 
   async function deletePost(postId: string) {
@@ -491,6 +519,18 @@ export default function AdminPage() {
                       className={`p-1.5 rounded text-[10px] transition-colors ${user.is_founding_member ? 'text-purple bg-purple/10' : 'text-text-dim hover:text-purple'}`}
                       title={user.is_founding_member ? 'Remove from Inner Circle' : 'Add to Inner Circle'}>
                       <Star size={11} fill={user.is_founding_member ? 'currentColor' : 'none'} />
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <button
+                      onClick={() => setAsSpotlight(user.id)}
+                      disabled={spotlightId === user.id}
+                      className={`p-1.5 rounded text-[10px] transition-colors ${
+                        spotlightId === user.id ? 'text-cyan bg-cyan/10 cursor-default' : 'text-text-dim hover:text-cyan'
+                      }`}
+                      title={spotlightId === user.id ? 'Currently featured' : 'Feature in homepage spotlight'}
+                    >
+                      <Sparkles size={11} fill={spotlightId === user.id ? 'currentColor' : 'none'} />
                     </button>
                   )}
                 </div>

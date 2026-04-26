@@ -192,6 +192,64 @@ const translations: Record<string, Record<Lang, string>> = {
   'common.loading': { en: 'Loading...', nl: 'Laden...' },
   'common.noResults': { en: 'No results found', nl: 'Geen resultaten gevonden' },
   'common.viewAll': { en: 'View all', nl: 'Alles bekijken' },
+
+  // Streaks
+  'streak.label': { en: 'STREAK', nl: 'STREAK' },
+  'streak.day': { en: 'DAY', nl: 'DAG' },
+  'streak.days': { en: 'DAYS', nl: 'DAGEN' },
+  'streak.startNow': { en: 'Log in daily to start a streak.', nl: 'Log dagelijks in om een streak te starten.' },
+  'streak.aboutToBreak': { en: 'to keep your streak alive', nl: 'om je streak in leven te houden' },
+  'streak.best': { en: 'Best', nl: 'Beste' },
+
+  // Widgets
+  'widget.recentActivity': { en: 'RECENT ACTIVITY', nl: 'RECENTE ACTIVITEIT' },
+  'widget.spotlight': { en: 'SPOTLIGHT · THIS WEEK', nl: 'SPOTLIGHT · DEZE WEEK' },
+  'widget.whoToFollow': { en: 'WHO TO FOLLOW', nl: 'WIE TE VOLGEN' },
+  'widget.nextTournament': { en: 'NEXT TOURNAMENT', nl: 'VOLGEND TOERNOOI' },
+  'widget.liveNow': { en: 'Live now', nl: 'Nu live' },
+  'widget.seeAll': { en: 'See all →', nl: 'Alles bekijken →' },
+  'widget.nothingYet': { en: 'Nothing yet — check back when others interact with you.', nl: 'Nog niets — kom terug zodra anderen interactie met je hebben.' },
+
+  // Market
+  'market.title': { en: 'THE VOID MARKET', nl: 'THE VOID MARKET' },
+  'market.subtitle': { en: 'Only for those who know.', nl: 'Alleen voor wie het weet.' },
+  'market.secureMembers': { en: 'SECURE · MEMBERS-ONLY · ESCROWED', nl: 'BEVEILIGD · ALLEEN LEDEN · ESCROW' },
+  'market.browseVault': { en: 'Browse the vault', nl: 'Doorzoek de kluis' },
+  'market.recentDrops': { en: 'Newest listings', nl: 'Nieuwste aanbod' },
+  'market.voidVerified': { en: 'Curated by VOIDSIGNL', nl: 'Gecureerd door VOIDSIGNL' },
+  'market.sellOnVoid': { en: 'SELL ON VOID', nl: 'VERKOOP OP VOID' },
+  'market.applyForSeller': { en: 'Want to sell on VOID? Apply for seller access', nl: 'Wil je verkopen? Vraag verkoper-toegang aan' },
+  'market.saved': { en: 'Saved', nl: 'Opgeslagen' },
+  'market.wishlist': { en: 'Wishlist', nl: 'Wenslijst' },
+  'market.report': { en: 'Report', nl: 'Rapporteren' },
+  'market.boost': { en: 'Boost listing', nl: 'Boost listing' },
+  'market.featured': { en: 'FEATURED', nl: 'UITGELICHT' },
+  'market.bundles': { en: 'BUNDLES', nl: 'BUNDELS' },
+  'market.newBundle': { en: 'New bundle', nl: 'Nieuwe bundel' },
+  'market.itemsOff': { en: '% OFF', nl: '% KORTING' },
+
+  // Push
+  'push.enable': { en: 'Enable push', nl: 'Push aanzetten' },
+  'push.on': { en: 'ON', nl: 'AAN' },
+  'push.blocked': { en: 'Blocked', nl: 'Geblokkeerd' },
+
+  // PWA
+  'pwa.install': { en: 'Install VOIDSIGNL', nl: 'Installeer VOIDSIGNL' },
+  'pwa.installDesc': { en: 'Get quicker access + push notifications when you\'re away.', nl: 'Snellere toegang + push-meldingen als je weg bent.' },
+  'pwa.later': { en: 'Later', nl: 'Later' },
+  'pwa.installBtn': { en: 'Install', nl: 'Installeren' },
+
+  // Bracket
+  'bracket.title': { en: 'BRACKET', nl: 'BRACKET' },
+  'bracket.generate': { en: 'Generate', nl: 'Genereren' },
+  'bracket.tbd': { en: 'TBD', nl: 'TBD' },
+  'bracket.bye': { en: 'BYE', nl: 'BYE' },
+  'bracket.tapToReport': { en: 'TAP TO REPORT', nl: 'TIK OM TE RAPPORTEREN' },
+  'bracket.reportMatch': { en: 'Report match', nl: 'Wedstrijd rapporteren' },
+  'bracket.winnerAdvances': { en: 'WINNER ADVANCES AUTOMATICALLY', nl: 'WINNAAR GAAT AUTOMATISCH DOOR' },
+  'bracket.final': { en: 'Final', nl: 'Finale' },
+  'bracket.semifinal': { en: 'Semifinal', nl: 'Halve finale' },
+  'bracket.quarterfinal': { en: 'Quarterfinal', nl: 'Kwartfinale' },
 }
 
 export function t(key: string, lang: Lang): string {

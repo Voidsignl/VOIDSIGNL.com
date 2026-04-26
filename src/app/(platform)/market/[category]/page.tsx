@@ -107,6 +107,13 @@ export default function MarketCategoryPage() {
       if (filters.sort === 'rep') {
         rows = [...rows].sort((a, b) => Number(b.seller?.rep_score || 0) - Number(a.seller?.rep_score || 0))
       }
+      // Boosted listings always rise to the top regardless of sort
+      const now = Date.now()
+      rows = [...rows].sort((a, b) => {
+        const aB = a.boosted_until && new Date(a.boosted_until).getTime() > now ? 1 : 0
+        const bB = b.boosted_until && new Date(b.boosted_until).getTime() > now ? 1 : 0
+        return bB - aB
+      })
       setListings(rows)
     } catch (e) {
       console.error('Failed to load listings', e)
