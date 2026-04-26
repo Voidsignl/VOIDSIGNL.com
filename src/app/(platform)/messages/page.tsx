@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase-browser'
 import type { Profile } from '@/types'
 import {
@@ -8,6 +9,8 @@ import {
   User, X, MoreHorizontal
 } from 'lucide-react'
 import { ScopeSpinner } from '@/components/ui/loader'
+import { Avatar } from '@/components/ui/avatar'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Conversation {
   id: string
@@ -276,7 +279,7 @@ export default function MessagesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-text-dim text-sm animate-pulse">Loading messages...</div>
+        <ScopeSpinner size={28} />
       </div>
     )
   }
@@ -292,8 +295,8 @@ export default function MessagesPage() {
               <MessageCircle size={16} className="text-purple" />
               Messages
               {totalUnread > 0 && (
-                <span className="w-5 h-5 rounded-full bg-danger text-white text-[10px] flex items-center justify-center font-medium">
-                  {totalUnread}
+                <span className="vs-counter px-1.5 h-[18px] min-w-[20px] rounded-full bg-danger text-white text-[10px] flex items-center justify-center font-medium tabular-nums">
+                  {totalUnread > 99 ? '99+' : totalUnread}
                 </span>
               )}
             </h2>
@@ -319,17 +322,14 @@ export default function MessagesPage() {
         {/* Conversation list */}
         <div className="flex-1 overflow-y-auto">
           {filteredConvs.length === 0 ? (
-            <div className="text-center py-12 px-4">
-              <MessageCircle size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-              <p className="text-xs text-text-dim">
-                {convSearch ? 'No conversations found' : 'No messages yet'}
-              </p>
-              <button
-                onClick={() => setShowNewConv(true)}
-                className="text-xs text-cyan hover:underline mt-2"
-              >
-                Start a conversation
-              </button>
+            <div className="px-3 py-6">
+              <EmptyState
+                icon={MessageCircle}
+                title={convSearch ? 'No conversations found' : 'No messages yet'}
+                description={convSearch ? 'Try a different search.' : 'Start chatting with squad members.'}
+                size="sm"
+                cta={!convSearch ? { label: 'Start conversation', onClick: () => setShowNewConv(true) } : undefined}
+              />
             </div>
           ) : (
             filteredConvs.map(conv => {
@@ -340,12 +340,23 @@ export default function MessagesPage() {
                 <button
                   key={conv.id}
                   onClick={() => setActiveConv(conv)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border/50 ${
+                  className={`relative w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-border/50 ${
                     isActive ? 'bg-purple/10' : 'hover:bg-surface'
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-purple/20 flex items-center justify-center text-sm font-bold text-purple shrink-0 relative">
-                    {(conv.other_user?.display_name || conv.other_user?.username || '?')[0].toUpperCase()}
+                  {isActive && (
+                    <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-gradient-to-b from-purple to-cyan" />
+                  )}
+                  <div className="relative shrink-0">
+                    <Avatar
+                      url={conv.other_user?.avatar_url}
+                      name={conv.other_user?.display_name || conv.other_user?.username}
+                      size="md"
+                      shape="rounded"
+                      variant="gradient"
+                      showInnerRing={(conv.other_user as any)?.is_founding_member}
+                      online={!!(conv.other_user as any)?.last_seen_at && Date.now() - new Date((conv.other_user as any).last_seen_at).getTime() < 5 * 60 * 1000}
+                    />
                     {hasUnread && (
                       <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-danger border-2 border-[#12121a]" />
                     )}
@@ -371,10 +382,15 @@ export default function MessagesPage() {
       {/* Chat view */}
       <div className={`flex-1 flex flex-col ${!activeConv ? 'hidden md:flex' : 'flex'}`}>
         {!activeConv ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-text-dim">
-            <MessageCircle size={40} className="opacity-30 mb-3" />
-            <p className="text-sm">Select a conversation</p>
-            <p className="text-xs mt-1">or start a new one</p>
+          <div className="flex-1 flex items-center justify-center px-6">
+            <div className="max-w-xs w-full">
+              <EmptyState
+                icon={MessageCircle}
+                title="Select a conversation"
+                description="Pick a chat from the list, or start a new one."
+                cta={{ label: 'New message', onClick: () => setShowNewConv(true) }}
+              />
+            </div>
           </div>
         ) : (
           <>
@@ -386,13 +402,24 @@ export default function MessagesPage() {
               >
                 <ArrowLeft size={18} />
               </button>
-              <div className="w-8 h-8 rounded-lg bg-purple/20 flex items-center justify-center text-xs font-bold text-purple">
-                {(activeConv.other_user?.display_name || activeConv.other_user?.username || '?')[0].toUpperCase()}
-              </div>
+              <Avatar
+                url={activeConv.other_user?.avatar_url}
+                name={activeConv.other_user?.display_name || activeConv.other_user?.username}
+                href={activeConv.other_user?.username ? `/profile/${activeConv.other_user.username}` : undefined}
+                size="sm"
+                shape="rounded"
+                variant="gradient"
+                showInnerRing={(activeConv.other_user as any)?.is_founding_member}
+                online={!!(activeConv.other_user as any)?.last_seen_at && Date.now() - new Date((activeConv.other_user as any).last_seen_at).getTime() < 5 * 60 * 1000}
+              />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {activeConv.other_user?.display_name || activeConv.other_user?.username}
-                </p>
+                {activeConv.other_user?.username ? (
+                  <Link href={`/profile/${activeConv.other_user.username}`} className="text-sm font-medium truncate hover:text-purple transition-colors block">
+                    {activeConv.other_user.display_name || activeConv.other_user.username}
+                  </Link>
+                ) : (
+                  <p className="text-sm font-medium truncate">Unknown</p>
+                )}
                 <p className="text-[10px] text-text-dim">@{activeConv.other_user?.username}</p>
               </div>
             </div>
@@ -401,7 +428,8 @@ export default function MessagesPage() {
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
               {messages.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-xs text-text-dim">No messages yet. Say hello!</p>
+                  <p className="text-xs text-text-dim">No messages yet. Say hello.</p>
+                  <span className="vs-counter text-[9px] text-text-dim mt-2 inline-block">START THE THREAD</span>
                 </div>
               ) : (
                 messages.map((msg, i) => {
@@ -510,9 +538,14 @@ export default function MessagesPage() {
                         onClick={() => startConversation(user)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors text-left"
                       >
-                        <div className="w-9 h-9 rounded-lg bg-purple/20 flex items-center justify-center text-sm font-bold text-purple shrink-0">
-                          {(user.display_name || user.username)[0].toUpperCase()}
-                        </div>
+                        <Avatar
+                          url={user.avatar_url}
+                          name={user.display_name || user.username}
+                          size="sm"
+                          shape="rounded"
+                          variant="gradient"
+                          showInnerRing={(user as any).is_founding_member}
+                        />
                         <div className="min-w-0">
                           <p className="text-sm font-medium truncate">{user.display_name || user.username}</p>
                           <p className="text-[10px] text-text-dim">@{user.username} · {user.level_name}</p>

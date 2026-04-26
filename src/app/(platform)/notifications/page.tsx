@@ -9,6 +9,7 @@ import {
   Settings, X, BellOff
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ScopeSpinner } from '@/components/ui/loader'
 
 interface Notification {
   id: string
@@ -105,7 +106,7 @@ export default function NotificationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-text-dim text-sm animate-pulse">Loading notifications...</div>
+        <ScopeSpinner size={28} />
       </div>
     )
   }
@@ -119,12 +120,14 @@ export default function NotificationsPage() {
             <Bell size={20} className="text-purple" />
             Notifications
             {unreadCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-danger text-white text-[10px] flex items-center justify-center font-medium">
-                {unreadCount}
+              <span className="vs-counter px-1.5 h-[18px] min-w-[20px] rounded-full bg-danger text-white text-[10px] flex items-center justify-center font-medium tabular-nums">
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </h1>
-          <p className="text-sm text-text-dim mt-0.5">{notifications.length} total · {unreadCount} unread</p>
+          <p className="vs-counter text-[11px] text-text-dim mt-1 tabular-nums">
+            {String(notifications.length).padStart(2, '0')} TOTAL · {String(unreadCount).padStart(2, '0')} UNREAD
+          </p>
         </div>
         {unreadCount > 0 && (
           <button onClick={markAllRead} className="vs-btn vs-btn-ghost text-xs">
@@ -134,19 +137,22 @@ export default function NotificationsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1">
         {[
-          { id: 'all' as NotifFilter, label: 'All' },
-          { id: 'unread' as NotifFilter, label: `Unread (${unreadCount})` },
-          { id: 'social' as NotifFilter, label: 'Social' },
-          { id: 'competitive' as NotifFilter, label: 'Competitive' },
-          { id: 'system' as NotifFilter, label: 'System' },
+          { id: 'all' as NotifFilter, label: 'All', count: notifications.length },
+          { id: 'unread' as NotifFilter, label: 'Unread', count: unreadCount },
+          { id: 'social' as NotifFilter, label: 'Social', count: notifications.filter(n => getConfig(n.type).category === 'social').length },
+          { id: 'competitive' as NotifFilter, label: 'Competitive', count: notifications.filter(n => getConfig(n.type).category === 'competitive').length },
+          { id: 'system' as NotifFilter, label: 'System', count: notifications.filter(n => getConfig(n.type).category === 'system').length },
         ].map(f => (
-          <button key={f.id} onClick={() => setFilter(f.id)}
-            className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${
-              filter === f.id ? 'bg-purple/15 text-purple' : 'text-text-dim hover:bg-surface hover:text-text-muted'
-            }`}>
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            data-active={filter === f.id}
+            className="vs-tab shrink-0"
+          >
             {f.label}
+            {f.count > 0 && <span className="text-[10px] opacity-60 tabular-nums">({f.count})</span>}
           </button>
         ))}
       </div>
@@ -165,14 +171,18 @@ export default function NotificationsPage() {
             const Icon = config.icon
 
             const content = (
-              <div className={`flex items-start gap-3.5 px-4 py-3.5 rounded-xl transition-all ${
+              <div className={`relative flex items-start gap-3.5 px-4 py-3.5 rounded-xl transition-all ${
                 notif.is_read
                   ? 'hover:bg-surface/50'
                   : 'bg-surface border border-border hover:border-border-hover'
               }`}>
+                {/* Unread left-edge accent */}
+                {!notif.is_read && (
+                  <span className="absolute left-0 top-3 bottom-3 w-[2px] rounded-r bg-gradient-to-b from-purple to-cyan" />
+                )}
                 {/* Icon */}
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                  notif.is_read ? 'bg-surface-2' : `bg-surface-2`
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                  notif.is_read ? 'bg-surface-2' : 'bg-surface-2 ring-1 ring-border'
                 }`}>
                   <Icon size={16} className={notif.is_read ? 'text-text-dim' : config.color} />
                 </div>
@@ -185,7 +195,7 @@ export default function NotificationsPage() {
                   {notif.body && (
                     <p className="text-xs text-text-dim mt-0.5 line-clamp-2">{notif.body}</p>
                   )}
-                  <p className="text-[10px] text-text-dim mt-1">{timeAgo(notif.created_at)}</p>
+                  <p className="vs-counter text-[10px] text-text-dim mt-1 tabular-nums">{timeAgo(notif.created_at)}</p>
                 </div>
 
                 {/* Unread dot */}

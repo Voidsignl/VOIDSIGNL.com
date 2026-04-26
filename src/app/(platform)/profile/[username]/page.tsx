@@ -391,17 +391,20 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-text-dim text-sm animate-pulse">Loading profile...</div>
+        <ScopeSpinner size={28} />
       </div>
     )
   }
 
   if (notFound) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <User size={36} className="text-text-dim opacity-40" />
-        <p className="text-text-dim text-sm">User not found</p>
-        <Link href="/feed" className="text-cyan text-sm hover:underline">Back to feed</Link>
+      <div className="max-w-md mx-auto mt-12">
+        <EmptyState
+          icon={User}
+          title="User not found"
+          description="This profile doesn't exist or has been removed."
+          cta={{ label: 'Back to feed', href: '/feed' }}
+        />
       </div>
     )
   }
@@ -433,7 +436,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
       {/* Profile Header */}
-      <div className={`vs-card mb-5 overflow-hidden relative ${themeStyles[profileTheme] || ''}`}
+      <div className={`vs-card vs-lit mb-5 overflow-hidden relative ${themeStyles[profileTheme] || ''}`}
         style={profileTheme === 'neon' ? { boxShadow: `0 0 20px ${accentColor}20, inset 0 0 20px ${accentColor}08` } : {}}>
         
         {/* Profile effects */}
@@ -457,10 +460,11 @@ export default function ProfilePage() {
             type="banner"
           />
         ) : (
-          <div className="h-28 bg-gradient-to-br from-purple/20 via-surface-2 to-cyan/10 relative">
+          <div className="h-28 bg-gradient-to-br from-purple/20 via-surface-2 to-cyan/10 relative overflow-hidden">
             {profile.banner_url && (
               <img src={profile.banner_url} alt="" className="w-full h-full object-cover" />
             )}
+            <div className="absolute inset-0 vs-scanlines opacity-40 pointer-events-none" />
             <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
           </div>
         )}
@@ -797,41 +801,41 @@ export default function ProfilePage() {
           {/* Stats bar */}
           <div className="flex flex-wrap items-center gap-4 md:gap-5 mt-4 pt-4 border-t border-border">
             <div className="text-center">
-              <p className="text-lg font-medium" style={{ color: accentColor }}>{level.name}</p>
-              <p className="text-[10px] text-text-dim tracking-wide">LEVEL {level.level}</p>
+              <p className="text-lg font-medium tabular-nums" style={{ color: accentColor }}>{level.name}</p>
+              <p className="vs-counter text-[10px] text-text-dim mt-0.5">LEVEL {level.level}</p>
             </div>
             <div className="h-8 w-px bg-border" />
             <div className="text-center">
-              <p className="text-lg font-medium">{profile.xp.toLocaleString()}</p>
-              <p className="text-[10px] text-text-dim tracking-wide">XP</p>
+              <p className="text-lg font-medium tabular-nums vs-counter">{profile.xp.toLocaleString()}</p>
+              <p className="vs-counter text-[10px] text-text-dim mt-0.5">XP</p>
             </div>
             <div className="h-8 w-px bg-border" />
             <button onClick={() => openFollowersList('followers')} className="text-center hover:opacity-80 transition-opacity">
-              <p className="text-lg font-medium">{followerCount}</p>
-              <p className="text-[10px] text-text-dim tracking-wide">FOLLOWERS</p>
+              <p className="text-lg font-medium tabular-nums vs-counter">{followerCount}</p>
+              <p className="vs-counter text-[10px] text-text-dim mt-0.5">FOLLOWERS</p>
             </button>
             <div className="h-8 w-px bg-border" />
             <button onClick={() => openFollowersList('following')} className="text-center hover:opacity-80 transition-opacity">
-              <p className="text-lg font-medium">{followingCount}</p>
-              <p className="text-[10px] text-text-dim tracking-wide">FOLLOWING</p>
+              <p className="text-lg font-medium tabular-nums vs-counter">{followingCount}</p>
+              <p className="vs-counter text-[10px] text-text-dim mt-0.5">FOLLOWING</p>
             </button>
             <div className="h-8 w-px bg-border" />
             <button onClick={() => setActiveTab('posts')} className="text-center hover:opacity-80 transition-opacity">
-              <p className="text-lg font-medium">{postCount}</p>
-              <p className="text-[10px] text-text-dim tracking-wide">POSTS</p>
+              <p className="text-lg font-medium tabular-nums vs-counter">{postCount}</p>
+              <p className="vs-counter text-[10px] text-text-dim mt-0.5">POSTS</p>
             </button>
             <div className="h-8 w-px bg-border" />
             <button onClick={() => setActiveTab('clips')} className="text-center hover:opacity-80 transition-opacity">
-              <p className="text-lg font-medium">{clipCount}</p>
-              <p className="text-[10px] text-text-dim tracking-wide">CLIPS</p>
+              <p className="text-lg font-medium tabular-nums vs-counter">{clipCount}</p>
+              <p className="vs-counter text-[10px] text-text-dim mt-0.5">CLIPS</p>
             </button>
             {/* XP progress */}
             {showXpBar && (
               <div className="flex-1 min-w-[100px]">
                 <div className="h-1.5 bg-void rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor }} />
+                  <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }} />
                 </div>
-                <p className="text-[9px] text-text-dim mt-1 text-right">{profile.xp}/{xpProgress.next} XP</p>
+                <p className="vs-counter text-[9px] text-text-dim mt-1 text-right tabular-nums">{profile.xp}/{xpProgress.next} XP</p>
               </div>
             )}
           </div>
@@ -867,10 +871,12 @@ export default function ProfilePage() {
             </div>
           ) : activeTab === 'posts' ? (
             posts.length === 0 ? (
-              <div className="vs-card text-center py-12">
-                <Newspaper size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-                <p className="text-sm text-text-dim">No posts yet</p>
-              </div>
+              <EmptyState
+                icon={Newspaper}
+                title={isOwn ? "You haven't posted yet" : 'No posts yet'}
+                description={isOwn ? 'Share what you\'re playing, looking for, or thinking about.' : `${profile.display_name || profile.username} hasn't posted yet.`}
+                cta={isOwn ? { label: 'Create post', href: '/feed' } : undefined}
+              />
             ) : (
               <div className="space-y-3">
                 {posts.map(post => (
@@ -951,10 +957,12 @@ export default function ProfilePage() {
             )
           ) : activeTab === 'clips' ? (
             clips.length === 0 ? (
-              <div className="vs-card text-center py-12">
-                <Film size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-                <p className="text-sm text-text-dim">No clips yet</p>
-              </div>
+              <EmptyState
+                icon={Film}
+                title={isOwn ? 'No clips uploaded yet' : 'No clips yet'}
+                description={isOwn ? 'Upload your best plays — clips of the week get featured.' : `${profile.display_name || profile.username} hasn't shared any clips yet.`}
+                cta={isOwn ? { label: 'Upload clip', href: '/clips' } : undefined}
+              />
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {clips.map(clip => (
@@ -995,10 +1003,12 @@ export default function ProfilePage() {
           ) : (
             // Games tab
             userGames.length === 0 ? (
-              <div className="vs-card text-center py-12">
-                <Gamepad2 size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-                <p className="text-sm text-text-dim">No games added yet</p>
-              </div>
+              <EmptyState
+                icon={Gamepad2}
+                title={isOwn ? 'No games added yet' : 'No games added'}
+                description={isOwn ? 'Add the games you play so squads can find you.' : `${profile.display_name || profile.username} hasn't added any games yet.`}
+                cta={isOwn ? { label: 'Add games', href: '/games' } : undefined}
+              />
             ) : (
               <div className="space-y-2">
                 {userGames.map(ug => (
@@ -1031,7 +1041,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {/* Gamertags card */}
           {!editing && profile.gamertags && Object.values(profile.gamertags).some(v => v) && (
-            <div className="vs-card">
+            <div className="vs-card vs-lit">
               <p className="vs-label mb-3">GAMERTAGS</p>
               <div className="space-y-2">
                 {Object.entries(profile.gamertags)
@@ -1048,7 +1058,7 @@ export default function ProfilePage() {
 
           {/* Socials card */}
           {!editing && profile.socials && Object.values(profile.socials).some(v => v) && (
-            <div className="vs-card">
+            <div className="vs-card vs-lit">
               <p className="vs-label mb-3">SOCIALS</p>
               <div className="space-y-2">
                 {Object.entries(profile.socials)
@@ -1065,7 +1075,7 @@ export default function ProfilePage() {
 
           {/* Games quick list */}
           {userGames.length > 0 && (
-            <div className="vs-card">
+            <div className="vs-card vs-lit">
               <p className="vs-label mb-3">GAMES ({userGames.length})</p>
               <div className="space-y-1.5">
                 {userGames.map(ug => (
@@ -1079,15 +1089,18 @@ export default function ProfilePage() {
           )}
 
           {/* Level card */}
-          <div className="vs-card">
-            <p className="vs-label mb-3">RANK</p>
+          <div className="vs-card vs-lit">
+            <div className="flex items-center justify-between mb-3">
+              <p className="vs-label">RANK</p>
+              <span className="vs-counter text-[9px] text-text-dim tabular-nums">LV {String(level.level).padStart(2, '0')}</span>
+            </div>
             <div className="text-center">
-              <p className="text-2xl font-bold" style={{ color: accentColor }}>{level.name}</p>
-              <p className="text-xs text-text-dim mt-1">Level {level.level} · {profile.xp.toLocaleString()} XP</p>
+              <p className="text-2xl font-bold tracking-tight" style={{ color: accentColor }}>{level.name}</p>
+              <p className="vs-counter text-[10px] text-text-dim mt-1.5 tabular-nums">{profile.xp.toLocaleString()} XP</p>
               <div className="h-1.5 bg-void rounded-full overflow-hidden mt-3">
-                <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }} />
               </div>
-              <p className="text-[9px] text-text-dim mt-1">{xpProgress.next - profile.xp} XP to next level</p>
+              <p className="vs-counter text-[9px] text-text-dim mt-1.5 tabular-nums">{(xpProgress.next - profile.xp).toLocaleString()} XP TO NEXT</p>
             </div>
           </div>
         </div>
@@ -1106,7 +1119,7 @@ export default function ProfilePage() {
             <div className="overflow-y-auto flex-1">
               {loadingList ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="text-text-dim text-xs animate-pulse">Loading...</div>
+                  <ScopeSpinner size={24} />
                 </div>
               ) : listUsers.length === 0 ? (
                 <div className="text-center py-12">

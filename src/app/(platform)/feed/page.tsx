@@ -21,7 +21,7 @@ export default function FeedPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center h-64">
-        <div className="text-text-dim text-sm animate-pulse">Loading feed...</div>
+        <ScopeSpinner size={28} />
       </div>
     }>
       <FeedContent />
@@ -318,23 +318,26 @@ function FeedContent() {
           <h1 className="text-xl font-semibold tracking-wide flex items-center gap-2">
             <Newspaper size={20} className="text-purple" />
             Feed
+            {!loading && posts.length > 0 && (
+              <span className="vs-counter text-[10px] text-text-dim tabular-nums ml-1">
+                {String(posts.length).padStart(2, '0')}{hasMore ? '+' : ''}
+              </span>
+            )}
           </h1>
           <p className="text-sm text-text-dim mt-0.5">What&apos;s happening in the community</p>
         </div>
-        <div className="flex items-center bg-surface rounded-lg border border-border overflow-hidden">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => setSort('recent')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-              sort === 'recent' ? 'bg-purple/15 text-purple' : 'text-text-dim hover:text-text-muted'
-            }`}
+            data-active={sort === 'recent'}
+            className="vs-tab"
           >
             <Clock size={12} /> Recent
           </button>
           <button
             onClick={() => setSort('popular')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-              sort === 'popular' ? 'bg-purple/15 text-purple' : 'text-text-dim hover:text-text-muted'
-            }`}
+            data-active={sort === 'popular'}
+            className="vs-tab"
           >
             <Flame size={12} /> Popular
           </button>
@@ -342,16 +345,13 @@ function FeedContent() {
       </div>
 
       {/* Channel tabs */}
-      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1 scrollbar-hide">
         {tabList.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors shrink-0 ${
-              activeTab === tab.id
-                ? 'bg-cyan/15 text-cyan border border-cyan/30'
-                : 'bg-surface border border-border text-text-dim hover:text-text-muted hover:border-border-hover'
-            }`}
+            data-active={activeTab === tab.id}
+            className="vs-tab shrink-0"
           >
             {tab.icon} {tab.label}
           </button>
@@ -360,16 +360,13 @@ function FeedContent() {
         {/* User's games first */}
         {userGames.length > 0 && (
           <>
-            <div className="w-px h-5 bg-border shrink-0" />
+            <div className="w-px h-5 bg-border shrink-0 mx-1" />
             {userGames.map(game => (
               <button
                 key={game.id}
                 onClick={() => setActiveTab(game.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors shrink-0 ${
-                  activeTab === game.id
-                    ? 'bg-cyan/15 text-cyan border border-cyan/30'
-                    : 'bg-surface border border-border text-text-dim hover:text-text-muted hover:border-border-hover'
-                }`}
+                data-active={activeTab === game.id}
+                className="vs-tab shrink-0"
               >
                 {game.name}
               </button>
@@ -380,18 +377,15 @@ function FeedContent() {
         {/* Remaining games not in user's list */}
         {games.filter(g => !userGames.find(ug => ug.id === g.id)).length > 0 && (
           <>
-            <div className="w-px h-5 bg-border shrink-0" />
+            <div className="w-px h-5 bg-border shrink-0 mx-1" />
             {games
               .filter(g => !userGames.find(ug => ug.id === g.id))
               .map(game => (
                 <button
                   key={game.id}
                   onClick={() => setActiveTab(game.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-colors shrink-0 ${
-                    activeTab === game.id
-                      ? 'bg-cyan/15 text-cyan border border-cyan/30'
-                      : 'bg-surface border border-border text-text-dim hover:text-text-muted hover:border-border-hover'
-                  }`}
+                  data-active={activeTab === game.id}
+                  className="vs-tab shrink-0"
                 >
                   {game.name}
                 </button>
@@ -402,7 +396,7 @@ function FeedContent() {
 
       {/* Post Composer */}
       {userId && (
-        <div className="vs-card mb-5">
+        <div className="vs-card vs-lit mb-5">
           {!composerOpen ? (
             <div
               className="flex items-center gap-3 cursor-pointer"
@@ -725,12 +719,27 @@ function FeedContent() {
                           const commentProfile = comment.profile as any
                           return (
                             <div key={comment.id} className="flex gap-2.5 group/comment">
-                              <div className="w-6 h-6 rounded-full bg-purple/20 flex items-center justify-center text-[9px] text-purple font-medium shrink-0 mt-0.5">
-                                {commentProfile?.username?.[0]?.toUpperCase() || '?'}
+                              <div className="mt-0.5">
+                                <Avatar
+                                  url={commentProfile?.avatar_url}
+                                  name={commentProfile?.display_name || commentProfile?.username}
+                                  href={commentProfile?.username ? `/profile/${commentProfile.username}` : undefined}
+                                  size="xs"
+                                  variant="gradient"
+                                />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium">{commentProfile?.username || 'Unknown'}</span>
+                                  {commentProfile?.username ? (
+                                    <Link
+                                      href={`/profile/${commentProfile.username}`}
+                                      className="text-xs font-medium hover:text-purple transition-colors"
+                                    >
+                                      {commentProfile.display_name || commentProfile.username}
+                                    </Link>
+                                  ) : (
+                                    <span className="text-xs font-medium">Unknown</span>
+                                  )}
                                   <span className="text-[10px] text-text-dim">{timeAgo(comment.created_at)}</span>
                                   {comment.user_id === userId && (
                                     <button
