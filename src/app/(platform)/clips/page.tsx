@@ -46,6 +46,8 @@ export default function ClipsPage() {
     loadClips()
   }, [selectedGame, sort])
 
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
   async function init() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
@@ -55,6 +57,14 @@ export default function ClipsPage() {
     loadGames()
     loadCOTW()
     loadClips()
+    // Real-time: nieuwe clips + likes verschijnen direct
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('clips-feed')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'clips' }, () => loadClips())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'clip_likes' }, () => loadClips())
+        .subscribe()
+    }
   }
 
   async function loadGames() {
@@ -257,17 +267,16 @@ export default function ClipsPage() {
 
       {/* Clip of the Week */}
       {cotw && (
-        <div className="relative overflow-hidden rounded-xl border border-purple/30 bg-gradient-to-br from-purple/10 via-surface to-surface">
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple to-transparent" />
+        <div className="relative overflow-hidden rounded-xl border border-purple/30 bg-gradient-to-br from-purple/10 via-surface to-surface vs-lit">
           <div className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <Trophy size={16} className="text-purple" />
               <span className="vs-label text-purple-light">CLIP OF THE WEEK</span>
             </div>
-            <div className="flex gap-5">
+            <div className="flex flex-col md:flex-row gap-5">
               {/* Thumbnail / embed */}
               <div
-                className="relative w-80 aspect-video rounded-lg overflow-hidden bg-void cursor-pointer group shrink-0"
+                className="relative w-full md:w-80 aspect-video rounded-lg overflow-hidden bg-void cursor-pointer group shrink-0"
                 onClick={() => openClipDetail(cotw)}
               >
                 {cotw.thumbnail_url || getVideoThumbnail(cotw.video_url) ? (
@@ -282,7 +291,7 @@ export default function ClipsPage() {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-12 h-12 rounded-full bg-purple/90 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-purple/90 flex items-center justify-center shadow-[0_0_20px_rgba(107,63,224,0.6)]">
                     <Play size={20} fill="white" className="text-white ml-0.5" />
                   </div>
                 </div>
@@ -291,18 +300,26 @@ export default function ClipsPage() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <h3
-                  className="text-lg font-medium mb-1 cursor-pointer hover:text-purple transition-colors"
+                  className="text-lg font-medium mb-2 cursor-pointer hover:text-purple transition-colors"
                   onClick={() => openClipDetail(cotw)}
                 >
                   {cotw.title}
                 </h3>
-                <div className="flex items-center gap-3 text-sm text-text-dim mb-3">
-                  <span>{cotw.profile?.username || 'Unknown'}</span>
+                <div className="flex items-center gap-2 mb-3">
+                  <Avatar
+                    url={cotw.profile?.avatar_url}
+                    name={cotw.profile?.display_name || cotw.profile?.username}
+                    href={cotw.profile?.username ? `/profile/${cotw.profile.username}` : undefined}
+                    size="sm"
+                    variant="gradient"
+                    showInnerRing={cotw.profile?.is_founding_member}
+                  />
+                  <div className="flex flex-col text-xs">
+                    <span className="font-medium text-text">{cotw.profile?.display_name || cotw.profile?.username || 'Unknown'}</span>
+                    <span className="text-text-dim">@{cotw.profile?.username}</span>
+                  </div>
                   {cotw.game && (
-                    <>
-                      <span className="text-border">·</span>
-                      <span className="vs-badge vs-badge-purple">{cotw.game.name}</span>
-                    </>
+                    <span className="vs-badge vs-badge-purple ml-2">{cotw.game.name}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-text-dim">
@@ -333,21 +350,19 @@ export default function ClipsPage() {
 
       {/* Filters bar */}
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Sort toggle */}
-        <div className="flex items-center bg-surface rounded-lg border border-border overflow-hidden">
+        {/* Sort */}
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setSort('recent')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-              sort === 'recent' ? 'bg-purple/15 text-purple' : 'text-text-dim hover:text-text-muted'
-            }`}
+            data-active={sort === 'recent'}
+            className="vs-tab text-xs"
           >
             <Clock size={12} /> Recent
           </button>
           <button
             onClick={() => setSort('popular')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-              sort === 'popular' ? 'bg-purple/15 text-purple' : 'text-text-dim hover:text-text-muted'
-            }`}
+            data-active={sort === 'popular'}
+            className="vs-tab text-xs"
           >
             <Flame size={12} /> Popular
           </button>
@@ -356,12 +371,11 @@ export default function ClipsPage() {
         <div className="h-4 w-px bg-border" />
 
         {/* Game filters */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1 flex-wrap">
           <button
             onClick={() => setSelectedGame(null)}
-            className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${
-              !selectedGame ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'bg-surface border border-border text-text-dim hover:text-text-muted hover:border-border-hover'
-            }`}
+            data-active={!selectedGame}
+            className="vs-tab text-xs"
           >
             All Games
           </button>
@@ -369,11 +383,8 @@ export default function ClipsPage() {
             <button
               key={game.id}
               onClick={() => setSelectedGame(game.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${
-                selectedGame === game.id
-                  ? 'bg-cyan/15 text-cyan border border-cyan/30'
-                  : 'bg-surface border border-border text-text-dim hover:text-text-muted hover:border-border-hover'
-              }`}
+              data-active={selectedGame === game.id}
+              className="vs-tab text-xs"
             >
               {game.name}
             </button>
@@ -383,15 +394,7 @@ export default function ClipsPage() {
 
       {/* Clips Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="vs-card animate-pulse">
-              <div className="aspect-video bg-surface-2 rounded-lg mb-3" />
-              <div className="h-4 bg-surface-2 rounded w-3/4 mb-2" />
-              <div className="h-3 bg-surface-2 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
+        <div className="flex justify-center py-16"><ScopeSpinner size={32} /></div>
       ) : clips.length === 0 ? (
         <EmptyState
           icon={Film}
@@ -404,7 +407,7 @@ export default function ClipsPage() {
           {clips.map((clip) => (
             <div
               key={clip.id}
-              className="vs-card group cursor-pointer hover:border-border-hover transition-all"
+              className="vs-card vs-lit group cursor-pointer hover:border-border-hover transition-all"
               onClick={() => openClipDetail(clip)}
             >
               {/* Thumbnail */}
@@ -421,36 +424,45 @@ export default function ClipsPage() {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-10 h-10 rounded-full bg-purple/90 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-purple/90 flex items-center justify-center shadow-[0_0_18px_rgba(107,63,224,0.55)]">
                     <Play size={16} fill="white" className="text-white ml-0.5" />
                   </div>
                 </div>
                 {clip.is_cotw && (
-                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-purple/90 text-white text-[10px] px-2 py-0.5 rounded font-medium">
+                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-purple/90 text-white text-[10px] px-2 py-0.5 rounded font-medium shadow-[0_0_10px_rgba(107,63,224,0.5)]">
                     <Trophy size={10} /> COTW
                   </div>
                 )}
+                {clip.game && (
+                  <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded font-medium">
+                    {clip.game.name}
+                  </div>
+                )}
+                <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded">
+                  <Eye size={10} /> {clip.view_count}
+                </div>
               </div>
 
-              {/* Info */}
-              <h3 className="text-sm font-medium truncate mb-1 group-hover:text-purple transition-colors">
+              {/* Title */}
+              <h3 className="text-sm font-medium truncate mb-2 group-hover:text-purple transition-colors">
                 {clip.title}
               </h3>
-              <div className="flex items-center justify-between text-xs text-text-dim">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="truncate">{clip.profile?.username || 'Unknown'}</span>
-                  {clip.game && (
-                    <>
-                      <span className="text-border">·</span>
-                      <span className="truncate">{clip.game.name}</span>
-                    </>
-                  )}
-                </div>
-                <span className="shrink-0 ml-2">{timeAgo(clip.created_at)}</span>
+
+              {/* Author + meta */}
+              <div className="flex items-center gap-2 text-xs">
+                <Avatar
+                  url={clip.profile?.avatar_url}
+                  name={clip.profile?.display_name || clip.profile?.username}
+                  size="xs"
+                  variant="gradient"
+                  showInnerRing={clip.profile?.is_founding_member}
+                />
+                <span className="font-medium text-text truncate flex-1">{clip.profile?.display_name || clip.profile?.username || 'Unknown'}</span>
+                <span className="text-text-dim shrink-0">{timeAgo(clip.created_at)}</span>
               </div>
 
               {/* Stats row */}
-              <div className="flex items-center gap-3 mt-2 text-xs text-text-dim">
+              <div className="flex items-center gap-3 mt-2.5 pt-2.5 border-t border-border/30 text-xs text-text-dim">
                 <button
                   onClick={(e) => toggleLike(clip.id, e)}
                   className={`flex items-center gap-1 transition-colors ${
@@ -462,9 +474,6 @@ export default function ClipsPage() {
                 </button>
                 <span className="flex items-center gap-1">
                   <MessageCircle size={12} /> {clip.comment_count || 0}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Eye size={12} /> {clip.view_count}
                 </span>
               </div>
             </div>
@@ -554,21 +563,28 @@ export default function ClipsPage() {
       {/* Clip Detail Modal */}
       {activeClip && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setActiveClip(null)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col animate-slide-up vs-lit" onClick={e => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-              <div className="min-w-0 flex-1 mr-4">
-                <h3 className="text-sm font-medium truncate">{activeClip.title}</h3>
-                <div className="flex items-center gap-2 text-xs text-text-dim mt-0.5">
-                  <span>{activeClip.profile?.username}</span>
-                  {activeClip.game && (
-                    <>
-                      <span className="text-border">·</span>
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0 gap-4">
+              <div className="min-w-0 flex-1 flex items-center gap-3">
+                <Avatar
+                  url={activeClip.profile?.avatar_url}
+                  name={activeClip.profile?.display_name || activeClip.profile?.username}
+                  href={activeClip.profile?.username ? `/profile/${activeClip.profile.username}` : undefined}
+                  size="md"
+                  variant="gradient"
+                  showInnerRing={activeClip.profile?.is_founding_member}
+                />
+                <div className="min-w-0">
+                  <h3 className="text-sm font-medium truncate">{activeClip.title}</h3>
+                  <div className="flex items-center gap-2 text-xs text-text-dim mt-0.5">
+                    <span className="truncate">@{activeClip.profile?.username}</span>
+                    {activeClip.game && (
                       <span className="vs-badge vs-badge-purple text-[10px]">{activeClip.game.name}</span>
-                    </>
-                  )}
-                  <span className="text-border">·</span>
-                  <span>{timeAgo(activeClip.created_at)}</span>
+                    )}
+                    <span className="text-border">·</span>
+                    <span className="shrink-0">{timeAgo(activeClip.created_at)}</span>
+                  </div>
                 </div>
               </div>
               <button onClick={() => setActiveClip(null)} className="text-text-dim hover:text-text shrink-0">
