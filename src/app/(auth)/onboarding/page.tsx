@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { VoidsignlLogo } from '@/components/ui/logo'
-import { ChevronRight, Check, Gamepad2, User, Image } from 'lucide-react'
+import { ChevronRight, Check, Gamepad2, User, Image, Loader2 } from 'lucide-react'
 
 const PLATFORM_AVATARS = [
   '/avatars/void-01.svg', '/avatars/void-02.svg', '/avatars/void-03.svg',
@@ -146,10 +146,16 @@ export default function OnboardingPage() {
   const currentIndex = steps.findIndex(s => s.key === step)
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden vs-scanlines">
+      {/* Subtle background ambient — same vibe as login/register */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-purple/[0.04] rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8 animate-fade-in">
           <VoidsignlLogo size={40} className="mx-auto mb-4 text-text" />
+          <p className="vs-counter text-[10px] text-purple-light tabular-nums mb-1">
+            SETUP · {step === 'done' ? 'COMPLETE' : `${String(currentIndex + 1).padStart(2, '0')} / ${String(steps.length).padStart(2, '0')}`}
+          </p>
           <p className="vs-label">SETUP YOUR SIGNAL</p>
         </div>
 
@@ -157,15 +163,15 @@ export default function OnboardingPage() {
           <div className="flex items-center justify-center gap-3 mb-10">
             {steps.map((s, i) => (
               <div key={s.key} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all ${
-                  i < currentIndex ? 'bg-purple text-white' :
-                  i === currentIndex ? 'bg-purple/20 text-purple border border-purple/40' :
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center vs-counter text-[11px] tabular-nums transition-all ${
+                  i < currentIndex ? 'bg-purple text-white shadow-[0_0_10px_rgba(107,63,224,0.4)]' :
+                  i === currentIndex ? 'bg-purple/20 text-purple-light border border-purple/40 shadow-[0_0_8px_rgba(107,63,224,0.3)]' :
                   'bg-surface text-text-dim border border-border'
                 }`}>
-                  {i < currentIndex ? <Check size={14} /> : i + 1}
+                  {i < currentIndex ? <Check size={14} /> : String(i + 1).padStart(2, '0')}
                 </div>
                 {i < steps.length - 1 && (
-                  <div className={`w-12 h-[1px] ${i < currentIndex ? 'bg-purple' : 'bg-border'}`} />
+                  <div className={`w-12 h-[1px] ${i < currentIndex ? 'bg-gradient-to-r from-purple to-cyan' : 'bg-border'}`} />
                 )}
               </div>
             ))}
@@ -280,8 +286,8 @@ export default function OnboardingPage() {
                 ))}
               </div>
               {selectedGames.length > 0 && (
-                <p className="text-xs text-cyan mt-2">
-                  {selectedGames.length} game{selectedGames.length > 1 ? 's' : ''} selected — first one is your main
+                <p className="vs-counter text-[10px] text-cyan mt-2 tabular-nums">
+                  {String(selectedGames.length).padStart(2, '0')} SELECTED · FIRST IS MAIN
                 </p>
               )}
             </div>
@@ -292,9 +298,13 @@ export default function OnboardingPage() {
               <button
                 onClick={finishOnboarding}
                 disabled={loading}
-                className="vs-btn vs-btn-primary flex-1"
+                className="vs-btn vs-btn-primary flex-1 disabled:opacity-60"
               >
-                {loading ? 'Setting up...' : 'Complete setup'}
+                {loading ? (
+                  <><Loader2 size={14} className="animate-spin" /> Setting up...</>
+                ) : (
+                  'Complete setup'
+                )}
               </button>
             </div>
           </div>
@@ -302,12 +312,17 @@ export default function OnboardingPage() {
 
         {step === 'done' && (
           <div className="text-center animate-fade-in space-y-4">
-            <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 rounded-full bg-success/15 border border-success/30 flex items-center justify-center mx-auto shadow-[0_0_24px_rgba(93,202,165,0.25)]">
               <Check size={28} className="text-success" />
             </div>
-            <h2 className="text-xl font-medium">You&apos;re in</h2>
+            <h2
+              className="text-xl tracking-[3px] font-bold"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              YOU&apos;RE IN
+            </h2>
             <p className="text-text-dim text-sm">Welcome to the void, {displayName || username}</p>
-            <p className="text-xs text-purple">+10 XP earned</p>
+            <p className="vs-counter text-[10px] text-purple-light tabular-nums">+10 XP EARNED</p>
           </div>
         )}
       </div>

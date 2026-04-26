@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import { VoidsignlLogo } from '@/components/ui/logo'
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function RegisterPage() {
@@ -86,6 +87,9 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-10 animate-fade-in">
           <VoidsignlLogo size={64} animated className="mx-auto mb-6 text-text" />
+          <p className="vs-counter text-[10px] text-cyan tabular-nums mb-2">
+            REQUEST · 01
+          </p>
           <h1
             className="text-2xl tracking-[4px] font-bold mb-2"
             style={{ fontFamily: 'var(--font-display)' }}
@@ -163,9 +167,13 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="vs-btn vs-btn-primary w-full"
+            className="vs-btn vs-btn-primary w-full disabled:opacity-60"
           >
-            {loading ? 'Creating...' : 'Enter the void'}
+            {loading ? (
+              <><Loader2 size={14} className="animate-spin" /> Creating...</>
+            ) : (
+              'Enter the void'
+            )}
           </button>
         </form>
 
