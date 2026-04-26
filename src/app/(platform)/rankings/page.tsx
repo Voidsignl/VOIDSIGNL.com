@@ -315,7 +315,7 @@ export default function RankingsPage() {
                           {user.display_name || user.username}
                         </Link>
                         {user.is_founding_member && (
-                          <span className="vs-badge vs-badge-purple text-[8px] py-0 px-1.5">Founder</span>
+                          <span className="vs-badge vs-badge-purple text-[8px] py-0 px-1.5">Inner</span>
                         )}
                         {user.is_coach && (
                           <span className="vs-badge text-[8px] py-0 px-1.5 bg-success/15 text-success">Coach</span>

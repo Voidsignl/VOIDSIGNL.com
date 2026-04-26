@@ -94,7 +94,7 @@ export default function HomePage() {
         </a>
         <div className="flex items-center gap-3 md:gap-6">
           <a href="#features" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide hidden md:block">Features</a>
-          <a href="#founders" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide hidden md:block">Founders</a>
+          <a href="#inner-circle" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide hidden md:block">Inner Circle</a>
           <a href="#rankings" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide hidden md:block">Rankings</a>
           <Link href="/login" className="text-xs text-text-dim hover:text-text transition-colors tracking-wide">Sign in</Link>
           <Link href="/register" className="text-[10px] md:text-xs bg-purple hover:bg-purple-light text-white px-3 md:px-5 py-2 rounded-lg transition-colors tracking-wide">
@@ -144,7 +144,7 @@ export default function HomePage() {
               <span className="relative">Enter the void</span>
               <ArrowRight size={15} className="relative group-hover:translate-x-1 transition-all" />
             </Link>
-            <p className="text-[11px] text-text-dim mt-4 tracking-wide">Founding membership · Now open</p>
+            <p className="text-[11px] text-text-dim mt-4 tracking-wide">Inner circle · Now open</p>
           </div>
         </div>
 
@@ -168,7 +168,7 @@ export default function HomePage() {
               </div>
               <div>
                 <p className="text-[10px] tracking-[3px] uppercase text-purple font-medium" style={{ fontFamily: 'var(--font-display)' }}>
-                  Founding phase · Active
+                  Inner circle · Active
                 </p>
                 <p className="text-sm text-text-muted mt-0.5">Closed beta · Invite-only access</p>
               </div>
@@ -251,14 +251,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Founding Members */}
-      <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04]" id="founders">
+      {/* Inner Circle */}
+      <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04]" id="inner-circle">
         <div className="max-w-5xl mx-auto">
           <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>02</span>
-          <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">Founding Members</h2>
+          <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">The Inner Circle</h2>
           <div className="w-12 h-0.5 bg-purple rounded mb-4" />
           <p className="text-text-muted text-[15px] max-w-xl leading-relaxed mb-12">
-            The first members receive permanent founder status. Listed first, recognized always.
+            The first to enter the void. Permanent inner circle status — listed first, recognized always.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -281,7 +281,7 @@ export default function HomePage() {
                   <p className="text-sm font-medium mb-0.5 truncate">{f.name}</p>
                   <p className="text-[10px] text-text-dim mb-3 truncate">{f.tag}</p>
                   <div className="inline-flex items-center gap-1.5 text-[10px] text-purple bg-purple/10 px-2.5 py-1 rounded-full border border-purple/20">
-                    <Star size={9} fill="currentColor" /> Founding
+                    <Star size={9} fill="currentColor" /> Inner Circle
                   </div>
                 </div>
               </div>
@@ -374,7 +374,7 @@ export default function HomePage() {
                     </div>
                   </div>
                   <span className={`hidden md:block text-[10px] ${(player as any).is_founding_member ? 'text-purple' : 'text-text-dim'}`}>
-                    {(player as any).is_founding_member ? 'Founding' : (player as any).level_name}
+                    {(player as any).is_founding_member ? 'Inner' : (player as any).level_name}
                   </span>
                   <span className="text-xs md:text-sm text-right" style={{ fontFamily: 'var(--font-display)' }}>
                     {(player as any).xp > 0 ? (player as any).xp.toLocaleString() : '—'}
@@ -396,7 +396,7 @@ export default function HomePage() {
       <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04] text-center">
         <div className="max-w-lg mx-auto">
           <h2 className="text-3xl font-semibold tracking-tight mb-3">Join the signal.</h2>
-          <p className="text-text-muted text-sm mb-8">Founding members · Priority access · Permanent status</p>
+          <p className="text-text-muted text-sm mb-8">Inner circle · Priority access · Permanent status</p>
           <Link
             href="/register"
             className="relative inline-flex items-center gap-3 bg-gradient-to-br from-purple to-purple-light hover:from-purple-light hover:to-purple text-white px-6 md:px-10 py-3.5 rounded-lg text-sm tracking-[3px] uppercase font-medium transition-all group shadow-[0_0_40px_rgba(107,63,224,0.35)] hover:shadow-[0_0_60px_rgba(107,63,224,0.6)]"

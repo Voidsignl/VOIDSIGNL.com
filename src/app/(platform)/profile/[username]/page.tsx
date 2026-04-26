@@ -517,7 +517,7 @@ export default function ProfilePage() {
                 )}
                 {profile.is_founding_member && (
                   <span className="vs-badge vs-badge-purple text-[9px]">
-                    <Star size={8} /> Founder
+                    <Star size={8} /> Inner Circle
                   </span>
                 )}
                 {profile.is_verified && (

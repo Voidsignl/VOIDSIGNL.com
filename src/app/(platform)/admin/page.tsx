@@ -389,7 +389,7 @@ export default function AdminPage() {
                   {isAdmin && (
                     <button onClick={() => toggleFounder(user.id, user.is_founding_member)}
                       className={`p-1.5 rounded text-[10px] transition-colors ${user.is_founding_member ? 'text-purple bg-purple/10' : 'text-text-dim hover:text-purple'}`}
-                      title={user.is_founding_member ? 'Remove founder' : 'Make founder'}>
+                      title={user.is_founding_member ? 'Remove from Inner Circle' : 'Add to Inner Circle'}>
                       <Star size={11} fill={user.is_founding_member ? 'currentColor' : 'none'} />
                     </button>
                   )}

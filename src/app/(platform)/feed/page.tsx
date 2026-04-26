@@ -589,7 +589,7 @@ function FeedContent() {
                         {postProfile?.display_name || postProfile?.username || 'Unknown'}
                       </Link>
                       {postProfile?.is_founding_member && (
-                        <span className="vs-badge vs-badge-purple text-[9px]">Founder</span>
+                        <span className="vs-badge vs-badge-purple text-[9px]">Inner</span>
                       )}
                       {postProfile?.level_name && postProfile.level_name !== 'Recruit' && (
                         <span className="text-[10px] text-text-dim">{postProfile.level_name}</span>
