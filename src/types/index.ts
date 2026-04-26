@@ -129,6 +129,92 @@ export interface ClipLike {
   created_at: string
 }
 
+// ============================================================================
+// THE VOID MARKET
+// ============================================================================
+
+export type MarketCategory = 'digital' | 'services' | 'gear' | 'vault'
+export type ListingStatus = 'active' | 'sold' | 'removed' | 'pending'
+export type OrderStatus = 'pending' | 'paid' | 'delivered' | 'confirmed' | 'disputed' | 'refunded'
+
+export interface MarketSeller {
+  id: string
+  user_id: string
+  application_note: string | null
+  verified_at: string | null
+  rejected_at: string | null
+  approved_by: string | null
+  rep_score: number
+  total_sales: number
+  stripe_account_id: string | null
+  created_at: string
+  profile?: Profile
+}
+
+export interface MarketListing {
+  id: string
+  seller_id: string
+  category: MarketCategory
+  title: string
+  description: string | null
+  price: number
+  currency: 'EUR' | 'USD' | 'GBP'
+  status: ListingStatus
+  tags: string[]
+  images: string[]
+  file_url: string | null
+  game_id: string | null
+  stock: number
+  commission_rate: number
+  void_verified: boolean
+  created_at: string
+  updated_at: string
+  seller?: MarketSeller & { profile?: Profile }
+  game?: Game
+}
+
+export interface MarketOrder {
+  id: string
+  listing_id: string
+  buyer_id: string
+  seller_id: string
+  amount: number
+  commission: number
+  seller_payout: number
+  status: OrderStatus
+  stripe_payment_intent: string | null
+  delivery_confirmed_at: string | null
+  escrow_released_at: string | null
+  created_at: string
+  listing?: MarketListing
+  buyer?: Profile
+  seller?: MarketSeller & { profile?: Profile }
+}
+
+export interface MarketReview {
+  id: string
+  order_id: string
+  reviewer_id: string
+  seller_id: string
+  rating: number
+  body: string | null
+  created_at: string
+  reviewer?: Profile
+}
+
+export const MARKET_CATEGORIES: Record<MarketCategory, {
+  label: string
+  tag: string
+  blurb: string
+  accent: 'cyan' | 'purple' | 'warning' | 'danger'
+  highRisk?: boolean
+}> = {
+  digital:  { label: 'Digital Vault', tag: 'DIGITAL',  blurb: 'configs · presets · overlays',     accent: 'cyan' },
+  services: { label: 'Services',      tag: 'SERVICES', blurb: 'carries · scrims · reviews',       accent: 'purple' },
+  gear:     { label: 'Gear Yard',     tag: 'GEAR',     blurb: 'hardware · peripherals · merch',   accent: 'warning' },
+  vault:    { label: 'Vault Access',  tag: 'VAULT',    blurb: 'accounts · skins · rare items',    accent: 'danger', highRisk: true },
+}
+
 export type Level = {
   level: number
   name: string

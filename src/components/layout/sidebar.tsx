@@ -7,14 +7,15 @@ import { createClient } from '@/lib/supabase-browser'
 import {
   LayoutDashboard, Newspaper, Trophy, Users, BarChart3,
   Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield, Award,
-  Menu, LogOut, Gamepad2
+  Menu, LogOut, Gamepad2, ShoppingBag
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/feed', icon: Newspaper, label: 'Feed' },
-  { href: '/tournaments', icon: Trophy, label: 'Tournaments' },
   { href: '/lfg', icon: Users, label: 'LFG' },
+  { href: '/market', icon: ShoppingBag, label: 'Market' },
+  { href: '/tournaments', icon: Trophy, label: 'Tournaments' },
   { href: '/rankings', icon: BarChart3, label: 'Rankings' },
   { divider: true },
   { href: '/clips', icon: Film, label: 'Clips' },
@@ -31,8 +32,8 @@ const MOBILE_NAV = [
   { href: '/feed', icon: Newspaper, label: 'Feed' },
   { href: '/clips', icon: Film, label: 'Clips' },
   { href: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { href: '/market', icon: ShoppingBag, label: 'Market' },
   { href: '/messages', icon: MessageCircle, label: 'DMs' },
-  { href: '/profile', icon: User, label: 'Profile' },
 ]
 
 export function Sidebar() {

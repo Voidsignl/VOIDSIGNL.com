@@ -9,10 +9,13 @@ import {
   Shield, Users, Newspaper, Film, Trophy, Flag, Gamepad2,
   BarChart3, Search, ChevronDown, Check, X, Ban, Star,
   AlertTriangle, Eye, Trash2, UserCog, Settings, TrendingUp,
-  MessageCircle, Clock, Zap
+  MessageCircle, Clock, Zap, ShoppingBag, ShieldCheck, EyeOff,
 } from 'lucide-react'
+import type { MarketSeller, MarketListing } from '@/types'
+import { MARKET_CATEGORIES } from '@/types'
+import { formatPrice } from '@/lib/market-utils'
 
-type AdminTab = 'overview' | 'users' | 'content' | 'reports' | 'games' | 'tournaments'
+type AdminTab = 'overview' | 'users' | 'content' | 'reports' | 'games' | 'tournaments' | 'market'
 
 interface Report {
   id: string
@@ -61,6 +64,13 @@ export default function AdminPage() {
 
   // Tournaments
   const [tournaments, setTournaments] = useState<any[]>([])
+
+  // Market admin state
+  const [pendingSellers, setPendingSellers] = useState<(MarketSeller & { profile?: Profile })[]>([])
+  const [marketListings, setMarketListings] = useState<MarketListing[]>([])
+  const [marketStats, setMarketStats] = useState({
+    pending_sellers: 0, active_listings: 0, total_orders: 0, total_commission: 0, total_revenue: 0,
+  })
 
   // XP Grant
   const [xpModal, setXpModal] = useState<{ userId: string; username: string } | null>(null)
@@ -149,6 +159,65 @@ export default function AdminPage() {
         .limit(50)
       if (data) setTournaments(data)
     }
+    if (activeTab === 'market') {
+      const [pendingRes, listingsRes, ordersRes] = await Promise.all([
+        supabase
+          .from('market_sellers')
+          .select('*, profile:profiles(*)')
+          .is('verified_at', null)
+          .is('rejected_at', null)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('market_listings')
+          .select('*, seller:market_sellers(*, profile:profiles(username, display_name)), game:games(id,name)')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('market_orders')
+          .select('amount, commission, status')
+          .eq('status', 'confirmed'),
+      ])
+      const pend = (pendingRes.data || []) as unknown as (MarketSeller & { profile?: Profile })[]
+      const lst = (listingsRes.data || []) as unknown as MarketListing[]
+      const orders = (ordersRes.data || []) as { amount: number; commission: number; status: string }[]
+      setPendingSellers(pend)
+      setMarketListings(lst)
+      setMarketStats({
+        pending_sellers: pend.length,
+        active_listings: lst.filter(l => l.status === 'active').length,
+        total_orders: orders.length,
+        total_commission: orders.reduce((s, o) => s + Number(o.commission), 0),
+        total_revenue: orders.reduce((s, o) => s + Number(o.amount), 0),
+      })
+    }
+  }
+
+  async function approveSeller(sellerId: string) {
+    if (!currentUser?.id) return
+    await supabase
+      .from('market_sellers')
+      .update({ verified_at: new Date().toISOString(), approved_by: currentUser.id })
+      .eq('id', sellerId)
+    setPendingSellers(prev => prev.filter(s => s.id !== sellerId))
+    setMarketStats(s => ({ ...s, pending_sellers: Math.max(0, s.pending_sellers - 1) }))
+  }
+
+  async function rejectSeller(sellerId: string) {
+    if (!confirm('Reject this seller application?')) return
+    await supabase.from('market_sellers').update({ rejected_at: new Date().toISOString() }).eq('id', sellerId)
+    setPendingSellers(prev => prev.filter(s => s.id !== sellerId))
+    setMarketStats(s => ({ ...s, pending_sellers: Math.max(0, s.pending_sellers - 1) }))
+  }
+
+  async function toggleVoidVerified(listingId: string, current: boolean) {
+    await supabase.from('market_listings').update({ void_verified: !current }).eq('id', listingId)
+    setMarketListings(prev => prev.map(l => l.id === listingId ? { ...l, void_verified: !current } : l))
+  }
+
+  async function removeListing(listingId: string) {
+    if (!confirm('Remove this listing? It will be hidden from the market.')) return
+    await supabase.from('market_listings').update({ status: 'removed' }).eq('id', listingId)
+    setMarketListings(prev => prev.map(l => l.id === listingId ? { ...l, status: 'removed' as const } : l))
   }
 
   async function updateUserRole(userId: string, role: string) {
@@ -247,6 +316,7 @@ export default function AdminPage() {
     { id: 'reports', label: 'Reports', icon: Flag },
     { id: 'games', label: 'Games', icon: Gamepad2, adminOnly: true },
     { id: 'tournaments', label: 'Tournaments', icon: Trophy },
+    { id: 'market', label: 'Market', icon: ShoppingBag, adminOnly: true },
   ]
 
   return (
@@ -616,6 +686,164 @@ export default function AdminPage() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Market */}
+      {activeTab === 'market' && isAdmin && (
+        <div className="space-y-6">
+          {/* Stats strip */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="vs-card vs-lit">
+              <p className="vs-label">PENDING</p>
+              <p className="text-2xl font-semibold text-warning tabular-nums mt-1">{marketStats.pending_sellers}</p>
+            </div>
+            <div className="vs-card vs-lit">
+              <p className="vs-label">ACTIVE LISTINGS</p>
+              <p className="text-2xl font-semibold text-cyan tabular-nums mt-1">{marketStats.active_listings}</p>
+            </div>
+            <div className="vs-card vs-lit">
+              <p className="vs-label">CONFIRMED ORDERS</p>
+              <p className="text-2xl font-semibold tabular-nums mt-1">{marketStats.total_orders}</p>
+            </div>
+            <div className="vs-card vs-lit">
+              <p className="vs-label">REVENUE</p>
+              <p className="text-2xl font-semibold tabular-nums mt-1">€{marketStats.total_revenue.toFixed(2)}</p>
+            </div>
+            <div className="vs-card vs-lit">
+              <p className="vs-label">COMMISSION</p>
+              <p className="text-2xl font-semibold text-success tabular-nums mt-1">€{marketStats.total_commission.toFixed(2)}</p>
+            </div>
+          </div>
+
+          {/* Pending sellers */}
+          <div>
+            <h3 className="vs-counter text-[11px] tabular-nums mb-2">PENDING SELLER APPLICATIONS</h3>
+            {pendingSellers.length === 0 ? (
+              <div className="vs-card text-center py-8">
+                <Check size={20} className="text-success mx-auto mb-1" />
+                <p className="text-xs text-text-dim">No pending applications</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {pendingSellers.map(s => (
+                  <div key={s.id} className="vs-card flex flex-col sm:flex-row sm:items-start gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-purple/15 flex items-center justify-center text-xs font-bold text-purple shrink-0">
+                        {(s.profile?.display_name || s.profile?.username || '?')[0]?.toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <Link href={`/profile/${s.profile?.username}`} className="text-sm font-medium hover:text-purple-light">
+                          {s.profile?.display_name || s.profile?.username}
+                        </Link>
+                        <p className="text-[10px] text-text-dim tabular-nums">
+                          @{s.profile?.username} · applied {timeAgo(s.created_at)}
+                        </p>
+                        {s.application_note && (
+                          <p className="text-xs text-text-muted mt-2 leading-relaxed whitespace-pre-wrap line-clamp-4">
+                            {s.application_note}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => approveSeller(s.id)} className="vs-btn vs-btn-primary text-xs">
+                        <Check size={13} /> APPROVE
+                      </button>
+                      <button onClick={() => rejectSeller(s.id)} className="vs-btn vs-btn-danger text-xs">
+                        <X size={13} /> REJECT
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* All listings */}
+          <div>
+            <h3 className="vs-counter text-[11px] tabular-nums mb-2">ALL LISTINGS</h3>
+            {marketListings.length === 0 ? (
+              <div className="vs-card text-center py-8">
+                <ShoppingBag size={20} className="text-text-dim mx-auto mb-1" />
+                <p className="text-xs text-text-dim">No listings yet</p>
+              </div>
+            ) : (
+              <div className="vs-card vs-lit p-0 overflow-x-auto">
+                <table className="w-full text-sm min-w-[640px]">
+                  <thead className="bg-surface-2 border-b border-border">
+                    <tr className="text-left vs-counter text-[10px] tabular-nums">
+                      <th className="px-4 py-2.5">TITLE</th>
+                      <th className="px-4 py-2.5">SELLER</th>
+                      <th className="px-4 py-2.5">CATEGORY</th>
+                      <th className="px-4 py-2.5 text-right">PRICE</th>
+                      <th className="px-4 py-2.5">STATUS</th>
+                      <th className="px-4 py-2.5 text-right">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {marketListings.map(l => (
+                      <tr key={l.id} className="hover:bg-surface/50 transition-colors">
+                        <td className="px-4 py-2.5">
+                          <Link href={`/market/listing/${l.id}`} className="text-text hover:text-purple-light line-clamp-1">
+                            {l.void_verified && <ShieldCheck size={11} className="text-purple-light inline mr-1" />}
+                            {l.title}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2.5 text-xs">
+                          <Link href={`/profile/${l.seller?.profile?.username || ''}`} className="text-text-muted hover:text-text">
+                            @{l.seller?.profile?.username || 'unknown'}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className="vs-badge text-[9px] bg-surface-2 text-text-muted border border-border">
+                            {MARKET_CATEGORIES[l.category].tag}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-right text-cyan tabular-nums">
+                          {formatPrice(l.price, l.currency)}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`vs-badge text-[9px] capitalize ${
+                            l.status === 'active' ? 'vs-badge-success' :
+                            l.status === 'sold' ? 'vs-badge-cyan' :
+                            l.status === 'removed' ? 'vs-badge-danger' :
+                            'vs-badge-warning'
+                          }`}>
+                            {l.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-right">
+                          <div className="inline-flex gap-1">
+                            <button
+                              onClick={() => toggleVoidVerified(l.id, l.void_verified)}
+                              className={`p-1.5 rounded transition-colors ${
+                                l.void_verified
+                                  ? 'text-purple-light bg-purple/10 hover:bg-purple/20'
+                                  : 'text-text-dim hover:text-purple-light hover:bg-purple/10'
+                              }`}
+                              title={l.void_verified ? 'Remove VOID Verified' : 'Mark VOID Verified'}
+                            >
+                              <ShieldCheck size={13} />
+                            </button>
+                            {l.status !== 'removed' && (
+                              <button
+                                onClick={() => removeListing(l.id)}
+                                className="p-1.5 rounded text-text-dim hover:text-danger hover:bg-danger/10 transition-colors"
+                                title="Remove listing"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
