@@ -13,6 +13,8 @@ import {
   Settings, Globe, Lock, Play
 } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/image-upload'
+import { Avatar } from '@/components/ui/avatar'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type ProfileTab = 'posts' | 'clips' | 'games'
 
@@ -481,18 +483,14 @@ export default function ProfilePage() {
                 )}
               </div>
             ) : (
-              <div className="w-20 h-20 rounded-xl bg-purple/30 border-4 border-surface flex items-center justify-center text-2xl font-bold text-purple shrink-0 relative overflow-hidden">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()
-                )}
-                {profile.is_founding_member && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-purple flex items-center justify-center">
-                    <Star size={10} className="text-white" fill="white" />
-                  </div>
-                )}
-              </div>
+              <Avatar
+                url={profile.avatar_url}
+                name={profile.display_name || profile.username}
+                size="xl"
+                shape="rounded"
+                variant="gradient"
+                showInnerRing={profile.is_founding_member}
+              />
             )}
 
             <div className="flex-1 min-w-0 pb-1">
@@ -852,11 +850,8 @@ export default function ProfilePage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-purple/15 text-purple'
-                    : 'text-text-dim hover:bg-surface hover:text-text-muted'
-                }`}
+                data-active={activeTab === tab.id}
+                className="vs-tab"
               >
                 <tab.icon size={13} /> {tab.label}
                 {tab.count > 0 && <span className="text-[10px] opacity-60">({tab.count})</span>}
@@ -911,12 +906,13 @@ export default function ProfilePage() {
                       <div className="mt-3 pt-3 border-t border-border space-y-2">
                         {(postComments[post.id] || []).map((c: any) => (
                           <div key={c.id} className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full bg-purple/20 flex items-center justify-center text-[8px] font-bold text-purple shrink-0 mt-0.5">
-                              {c.profile?.avatar_url ? (
-                                <img src={c.profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-                              ) : (
-                                (c.profile?.display_name || c.profile?.username || '?')[0].toUpperCase()
-                              )}
+                            <div className="mt-0.5">
+                              <Avatar
+                                url={c.profile?.avatar_url}
+                                name={c.profile?.display_name || c.profile?.username}
+                                size="xs"
+                                variant="gradient"
+                              />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
@@ -1127,13 +1123,13 @@ export default function ProfilePage() {
                       onClick={() => setShowListModal(null)}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2/50 transition-colors"
                     >
-                      <div className="w-9 h-9 rounded-full bg-purple/20 flex items-center justify-center text-[10px] font-bold text-purple shrink-0 overflow-hidden">
-                        {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          (user.display_name || user.username)[0].toUpperCase()
-                        )}
-                      </div>
+                      <Avatar
+                        url={user.avatar_url}
+                        name={user.display_name || user.username}
+                        size="md"
+                        variant="gradient"
+                        showInnerRing={user.is_founding_member}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-medium truncate">{user.display_name || user.username}</p>

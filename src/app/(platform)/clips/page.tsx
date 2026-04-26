@@ -8,6 +8,7 @@ import {
   ChevronLeft, ChevronRight, Clock, Flame, Send, Trash2
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Avatar } from '@/components/ui/avatar'
 
 type SortMode = 'recent' | 'popular'
 type UploadStep = 'form' | 'uploading' | 'done'
@@ -614,8 +615,13 @@ export default function ClipsPage() {
               ) : (
                 clipComments.map(comment => (
                   <div key={comment.id} className="flex gap-3 group">
-                    <div className="w-7 h-7 rounded-full bg-purple/20 flex items-center justify-center text-[10px] text-purple font-medium shrink-0 mt-0.5">
-                      {(comment.profile?.username || '?')[0].toUpperCase()}
+                    <div className="mt-0.5">
+                      <Avatar
+                        url={(comment.profile as any)?.avatar_url}
+                        name={comment.profile?.username}
+                        size="sm"
+                        variant="gradient"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
