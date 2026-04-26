@@ -285,7 +285,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-52px)] flex -m-4 md:-m-6">
+    <div className="flex -m-4 md:-m-6 h-[calc(100dvh-52px-4rem-env(safe-area-inset-bottom))] md:h-[calc(100dvh-52px)]">
       {/* Conversation list */}
       <div className={`w-full md:w-80 border-r border-border flex flex-col shrink-0 bg-[#12121a] ${activeConv ? 'hidden md:flex' : 'flex'}`}>
         {/* Header */}
@@ -498,7 +498,7 @@ export default function MessagesPage() {
       {/* New conversation modal */}
       {showNewConv && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowNewConv(false)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 max-h-[85vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <Plus size={16} className="text-purple" /> New Message

@@ -514,8 +514,8 @@ export default function BuddyCoachPage() {
       {/* Booking Modal */}
       {bookingCoach && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setBookingCoach(null)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto animate-slide-up vs-lit" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-surface z-10">
               <h3 className="text-sm font-medium flex items-center gap-2"><GraduationCap size={16} className="text-purple" /> Book Session</h3>
               <button onClick={() => setBookingCoach(null)} className="text-text-dim hover:text-text"><X size={16} /></button>
             </div>
@@ -588,8 +588,8 @@ export default function BuddyCoachPage() {
       {/* Review Modal */}
       {reviewSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setReviewSession(null)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 max-h-[85vh] overflow-y-auto animate-slide-up vs-lit" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-surface z-10">
               <h3 className="text-sm font-medium flex items-center gap-2"><Star size={16} className="text-yellow-400" /> Leave Review</h3>
               <button onClick={() => setReviewSession(null)} className="text-text-dim hover:text-text"><X size={16} /></button>
             </div>

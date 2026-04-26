@@ -345,7 +345,7 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
           onClick={() => !buying && setBuyOpen(false)}
         >
           <div
-            className="vs-card vs-lit max-w-md w-full animate-slide-up"
+            className="vs-card vs-lit max-w-md w-full max-h-[90vh] overflow-y-auto animate-slide-up"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3">

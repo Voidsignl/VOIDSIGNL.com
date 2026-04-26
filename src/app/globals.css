@@ -51,10 +51,14 @@
     border: 0.5px solid var(--color-border);
     border-radius: 8px;
     padding: 10px 14px;
-    font-size: 14px;
+    font-size: 16px; /* >=16px prevents iOS auto-zoom on focus */
     color: var(--color-text);
     outline: none;
     transition: border-color 0.2s;
+  }
+  /* Desktop: scale back to 14px for visual rhythm */
+  @media (min-width: 768px) {
+    .vs-input { font-size: 14px; }
   }
   .vs-input:focus { border-color: var(--color-purple); }
   .vs-input::placeholder { color: var(--color-text-dim); }

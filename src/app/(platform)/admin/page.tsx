@@ -618,7 +618,7 @@ export default function AdminPage() {
       {/* XP Grant Modal */}
       {xpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setXpModal(null)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 max-h-[85vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <Zap size={16} className="text-cyan" /> Grant XP

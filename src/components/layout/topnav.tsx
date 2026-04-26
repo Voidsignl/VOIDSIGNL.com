@@ -2,13 +2,26 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { VoidsignlLogo, VoidsignlMonogram } from '@/components/ui/logo'
-import { Search, Bell, Globe, X, User, Gamepad2, Newspaper, Trophy, Film, Users, BarChart3, Award, MessageCircle } from 'lucide-react'
+import {
+  Search, Bell, Globe, X, User, Gamepad2, Newspaper, Trophy, Film, Users,
+  BarChart3, Award, MessageCircle, CheckCheck, ArrowRight,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import type { Profile } from '@/types'
 import { useLang } from '@/lib/lang-context'
 import { Avatar } from '@/components/ui/avatar'
+
+interface NotifPreview {
+  id: string
+  type: string
+  title: string
+  body: string | null
+  is_read: boolean
+  link: string | null
+  created_at: string
+}
 
 interface TopnavProps {
   profile: Profile | null
@@ -49,9 +62,13 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
   const [open, setOpen] = useState(false)
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const [searching, setSearching] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifs, setNotifs] = useState<NotifPreview[]>([])
+  const [loadingNotifs, setLoadingNotifs] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const mobileInputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
   const router = useRouter()
   const { lang, setLang, t } = useLang()
@@ -63,10 +80,52 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setOpen(false)
       }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false)
+      }
     }
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+
+  async function openNotifs() {
+    setNotifOpen(prev => !prev)
+    if (!notifOpen && notifs.length === 0) {
+      setLoadingNotifs(true)
+      const { data } = await supabase
+        .from('notifications')
+        .select('id, type, title, body, is_read, link, created_at')
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (data) setNotifs(data as NotifPreview[])
+      setLoadingNotifs(false)
+    }
+  }
+
+  async function handleNotifClick(n: NotifPreview) {
+    setNotifOpen(false)
+    if (!n.is_read) {
+      void supabase.from('notifications').update({ is_read: true }).eq('id', n.id)
+      setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, is_read: true } : x))
+    }
+    if (n.link) router.push(n.link)
+  }
+
+  async function markAllRead() {
+    const unreadIds = notifs.filter(n => !n.is_read).map(n => n.id)
+    if (unreadIds.length === 0) return
+    setNotifs(prev => prev.map(n => ({ ...n, is_read: true })))
+    await supabase.from('notifications').update({ is_read: true }).in('id', unreadIds)
+  }
+
+  function notifTimeAgo(date: string): string {
+    const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
+    if (s < 60) return 'now'
+    if (s < 3600) return `${Math.floor(s / 60)}m`
+    if (s < 86400) return `${Math.floor(s / 3600)}h`
+    if (s < 604800) return `${Math.floor(s / 86400)}d`
+    return new Date(date).toLocaleDateString('en', { month: 'short', day: 'numeric' })
+  }
 
   function handleChange(value: string) {
     setQuery(value)
@@ -287,14 +346,88 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
 
         {profile ? (
           <>
-            <Link href="/notifications" className="relative">
-              <Bell size={17} className="text-text-muted hover:text-text transition-colors" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-danger rounded-full text-[9px] flex items-center justify-center text-white border-2 border-surface">
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </span>
+            <div ref={notifRef} className="relative">
+              <button
+                onClick={openNotifs}
+                className="relative p-1.5 -m-1.5 active:scale-90 transition-transform"
+                aria-label="Notifications"
+              >
+                <Bell
+                  size={17}
+                  className={`transition-colors ${notifOpen ? 'text-purple-light' : 'text-text-muted hover:text-text'}`}
+                />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-danger rounded-full text-[9px] flex items-center justify-center text-white font-medium tabular-nums border-2 border-surface">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute top-full right-0 mt-2 w-[340px] max-w-[calc(100vw-1.5rem)] bg-surface border border-border rounded-xl shadow-xl shadow-black/40 overflow-hidden z-50 animate-slide-up vs-lit">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <p className="vs-counter text-[10px] tabular-nums">
+                      NOTIFICATIONS{notificationCount > 0 ? ` · ${String(notificationCount).padStart(2, '0')}` : ''}
+                    </p>
+                    {notificationCount > 0 && (
+                      <button
+                        onClick={markAllRead}
+                        className="text-[10px] text-cyan hover:text-cyan/80 transition-colors flex items-center gap-1"
+                      >
+                        <CheckCheck size={10} /> Mark all
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-[400px] overflow-y-auto">
+                    {loadingNotifs ? (
+                      <div className="py-8 text-center text-xs text-text-dim">Loading...</div>
+                    ) : notifs.length === 0 ? (
+                      <div className="py-12 text-center">
+                        <Bell size={24} className="mx-auto text-text-dim opacity-40 mb-2" />
+                        <p className="text-xs text-text-dim">No notifications yet</p>
+                      </div>
+                    ) : (
+                      notifs.map(n => (
+                        <button
+                          key={n.id}
+                          onClick={() => handleNotifClick(n)}
+                          className={`relative w-full flex items-start gap-3 px-4 py-3 text-left border-b border-border/50 transition-colors hover:bg-surface-2 ${
+                            !n.is_read ? 'bg-purple/[0.04]' : ''
+                          }`}
+                        >
+                          {!n.is_read && (
+                            <span className="absolute left-0 top-3 bottom-3 w-[2px] rounded-r bg-gradient-to-b from-purple to-cyan" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs leading-snug line-clamp-2 ${!n.is_read ? 'text-text font-medium' : 'text-text-muted'}`}>
+                              {n.title}
+                            </p>
+                            {n.body && (
+                              <p className="text-[10px] text-text-dim mt-0.5 line-clamp-1">{n.body}</p>
+                            )}
+                            <p className="vs-counter text-[9px] text-text-dim mt-1 tabular-nums">
+                              {notifTimeAgo(n.created_at)}
+                            </p>
+                          </div>
+                          {!n.is_read && (
+                            <span className="w-2 h-2 rounded-full bg-purple shrink-0 mt-1.5" />
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  <Link
+                    href="/notifications"
+                    onClick={() => setNotifOpen(false)}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-[11px] text-text-muted hover:text-text bg-surface-2 transition-colors"
+                  >
+                    See all <ArrowRight size={11} />
+                  </Link>
+                </div>
               )}
-            </Link>
+            </div>
             <Avatar
               url={profile.avatar_url}
               name={profile.display_name || profile.username}

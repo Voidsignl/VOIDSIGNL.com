@@ -134,7 +134,8 @@ export default function MarketHomePage() {
       {isVerifiedSeller && (
         <Link
           href="/market/sell"
-          className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 vs-btn vs-btn-primary text-sm shadow-[0_0_24px_rgba(107,63,224,0.4)] animate-slide-up"
+          className="fixed right-4 md:right-6 z-40 vs-btn vs-btn-primary text-sm shadow-[0_0_24px_rgba(107,63,224,0.4)] animate-slide-up"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
         >
           <Plus size={14} /> SELL ON VOID
         </Link>
