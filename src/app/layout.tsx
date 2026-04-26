@@ -1,10 +1,28 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import { LangProvider } from "@/lib/lang-context"
+import { PWAProvider } from "@/components/ui/pwa-provider"
 
 export const metadata: Metadata = {
   title: "VOIDSIGNL — Not for everyone · For those who know",
   description: "Multi-game gaming community platform. Tournaments, rankings, and community.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "VOIDSIGNL",
+  },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: "/icon.svg",
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#0e0e12",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 }
 
 export default function RootLayout({
@@ -34,6 +52,7 @@ export default function RootLayout({
             {children}
           </LangProvider>
         </div>
+        <PWAProvider />
       </body>
     </html>
   )

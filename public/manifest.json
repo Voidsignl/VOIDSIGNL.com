@@ -1,0 +1,22 @@
+{
+  "name": "VOIDSIGNL",
+  "short_name": "VOIDSIGNL",
+  "description": "Gaming community platform — find squads, share clips, compete in tournaments.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0e0e12",
+  "theme_color": "#6B3FE0",
+  "categories": ["games", "social", "entertainment"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Feed", "short_name": "Feed", "url": "/feed" },
+    { "name": "Messages", "short_name": "DMs", "url": "/messages" },
+    { "name": "Market", "short_name": "Market", "url": "/market" }
+  ]
+}

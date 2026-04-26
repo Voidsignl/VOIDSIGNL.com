@@ -7,11 +7,12 @@ import Link from 'next/link'
 import {
   Trophy, Plus, X, Calendar, Users, MapPin, Monitor, Shield,
   Clock, ChevronRight, Crown, Swords, Check, Gamepad2, Search, Zap,
-  Flame
+  Flame, Loader2,
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar } from '@/components/ui/avatar'
 import { ScopeSpinner } from '@/components/ui/loader'
+import { Bracket } from '@/components/tournament/Bracket'
 
 interface Tournament {
   id: string
@@ -492,6 +493,15 @@ export default function TournamentsPage() {
                   )}
                 </div>
               )}
+
+              {/* Bracket section */}
+              <BracketSection
+                tournamentId={activeTournament.id}
+                isOrganizer={(activeTournament.organizer as { id?: string })?.id === userId}
+                organizerId={(activeTournament.organizer as { id?: string })?.id || ''}
+                tournamentStatus={activeTournament.status}
+                userId={userId}
+              />
             </div>
           </div>
         </div>
@@ -583,6 +593,103 @@ export default function TournamentsPage() {
             </div>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+interface BracketMatch {
+  id: string
+  tournament_id: string
+  round: number
+  slot: number
+  entrant_a: string | null
+  entrant_b: string | null
+  score_a: number | null
+  score_b: number | null
+  winner: string | null
+  status: 'pending' | 'in_progress' | 'completed' | 'bye'
+  profile_a?: { id: string; username: string; display_name: string | null; avatar_url: string | null }
+  profile_b?: { id: string; username: string; display_name: string | null; avatar_url: string | null }
+}
+
+function BracketSection({
+  tournamentId, isOrganizer, organizerId, tournamentStatus, userId,
+}: {
+  tournamentId: string
+  isOrganizer: boolean
+  organizerId: string
+  tournamentStatus: string
+  userId: string | null
+}) {
+  const supabase = createClient()
+  const [matches, setMatches] = useState<BracketMatch[]>([])
+  const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function load() {
+    setLoading(true)
+    const { data } = await supabase
+      .from('tournament_matches')
+      .select(`
+        *,
+        profile_a:profiles!tournament_matches_entrant_a_fkey(id, username, display_name, avatar_url),
+        profile_b:profiles!tournament_matches_entrant_b_fkey(id, username, display_name, avatar_url)
+      `)
+      .eq('tournament_id', tournamentId)
+      .order('round', { ascending: true })
+      .order('slot', { ascending: true })
+    setMatches((data || []) as unknown as BracketMatch[])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [tournamentId])
+
+  async function generate() {
+    setGenerating(true)
+    setError(null)
+    try {
+      const { error: e } = await supabase.rpc('generate_tournament_bracket', {
+        p_tournament_id: tournamentId,
+      })
+      if (e) throw e
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not generate bracket')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  return (
+    <div className="pt-4 border-t border-border">
+      <div className="flex items-center justify-between mb-3">
+        <p className="vs-label flex items-center gap-1.5">
+          <Swords size={11} className="text-purple" /> BRACKET
+        </p>
+        {isOrganizer && matches.length === 0 && tournamentStatus !== 'completed' && (
+          <button
+            onClick={generate}
+            disabled={generating}
+            className="vs-btn vs-btn-primary text-xs disabled:opacity-50"
+          >
+            {generating ? <Loader2 size={12} className="animate-spin" /> : <><Swords size={12} /> Generate</>}
+          </button>
+        )}
+      </div>
+      {error && <p className="text-xs text-danger mb-2">{error}</p>}
+      {loading ? (
+        <div className="flex items-center justify-center py-6">
+          <ScopeSpinner size={22} />
+        </div>
+      ) : (
+        <Bracket
+          matches={matches}
+          currentUserId={userId}
+          organizerId={organizerId}
+          onChanged={load}
+        />
       )}
     </div>
   )
