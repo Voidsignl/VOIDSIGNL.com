@@ -1,14 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import type { Game, Profile } from '@/types'
 import Link from 'next/link'
 import {
-  Users, Plus, X, Mic, MicOff, Clock, MapPin, Monitor, Shield,
-  UserPlus, Check, ChevronDown, Gamepad2, Search, Filter, Zap
+  Users, Plus, X, Mic, Clock, MapPin, Monitor, Shield,
+  UserPlus, Check, Gamepad2, Search, Send, Inbox, Crown
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Avatar } from '@/components/ui/avatar'
+import { ScopeSpinner } from '@/components/ui/loader'
+
+interface LfgResponse {
+  id: string
+  user_id: string
+  message: string | null
+  status: 'pending' | 'accepted' | 'declined' | null
+  created_at: string
+  profile?: Profile
+}
 
 interface LfgPost {
   id: string
@@ -27,9 +38,11 @@ interface LfgPost {
   expires_at: string
   profile?: Profile
   game?: Game
-  response_count?: number
-  user_responded?: boolean
+  responses?: LfgResponse[]
+  my_response?: LfgResponse | null
 }
+
+type ViewMode = 'browse' | 'mine' | 'applied' | 'squads'
 
 export default function LfgPage() {
   const supabase = createClient()
@@ -38,10 +51,21 @@ export default function LfgPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Filters
+  // View + filters
+  const [view, setView] = useState<ViewMode>('browse')
   const [selectedGame, setSelectedGame] = useState<string | null>(null)
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Counts voor My LFG section
+  const [myCounts, setMyCounts] = useState({ posts: 0, applied: 0, squads: 0 })
+
+  // Apply-with-note state per post
+  const [applyingPostId, setApplyingPostId] = useState<string | null>(null)
+  const [applyNote, setApplyNote] = useState('')
+
+  // Owner-side: panel open voor responses
+  const [openResponsesId, setOpenResponsesId] = useState<string | null>(null)
 
   // Create modal
   const [showCreate, setShowCreate] = useState(false)
@@ -55,14 +79,34 @@ export default function LfgPage() {
   const [formMinRank, setFormMinRank] = useState('')
   const [creating, setCreating] = useState(false)
 
+  // Live pulse — totalen
+  const [pulse, setPulse] = useState({ active: 0, formingNow: 0 })
+
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
   useEffect(() => { init() }, [])
-  useEffect(() => { loadPosts() }, [selectedGame, selectedPlatform])
+  useEffect(() => { if (userId) loadAll() }, [view, selectedGame, selectedPlatform, userId])
 
   async function init() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) setUserId(user.id)
-    loadGames()
-    loadPosts()
+    await loadGames()
+    if (user) {
+      await loadAll(user.id)
+      subscribeRealtime(user.id)
+    } else {
+      await loadAll(null)
+    }
+  }
+
+  function subscribeRealtime(uid: string) {
+    if (channelRef.current) return
+    channelRef.current = supabase
+      .channel('lfg-feed')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lfg_posts' }, () => loadAll(uid))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'lfg_posts' }, () => loadAll(uid))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lfg_responses' }, () => loadAll(uid))
+      .subscribe()
   }
 
   async function loadGames() {
@@ -70,28 +114,78 @@ export default function LfgPage() {
     if (data) setGames(data)
   }
 
-  async function loadPosts() {
+  async function loadAll(uid: string | null = userId) {
     setLoading(true)
-    let query = supabase
+
+    // Build base query — depends on view-mode
+    let postQuery = supabase
       .from('lfg_posts')
-      .select('*, profile:profiles(*), game:games(*)')
-      .in('status', ['open'])
-      .gt('expires_at', new Date().toISOString())
+      .select('*, profile:profiles(*), game:games(*), responses:lfg_responses(id, user_id, message, status, created_at, profile:profiles(*))')
       .order('created_at', { ascending: false })
       .limit(50)
 
-    if (selectedGame) query = query.eq('game_id', selectedGame)
-    if (selectedPlatform) query = query.eq('platform', selectedPlatform)
+    if (view === 'mine' && uid) {
+      postQuery = postQuery.eq('user_id', uid)
+    } else if (view === 'applied' && uid) {
+      // Posts waar ik op heb gereageerd — sub-query approach via responses
+      const { data: myResp } = await supabase
+        .from('lfg_responses')
+        .select('lfg_post_id')
+        .eq('user_id', uid)
+      const ids = (myResp ?? []).map((r: { lfg_post_id: string }) => r.lfg_post_id)
+      if (ids.length === 0) {
+        setPosts([])
+        setLoading(false)
+        return
+      }
+      postQuery = postQuery.in('id', ids)
+    } else if (view === 'squads' && uid) {
+      // Squads waar ik in zit (accepted response of eigen post)
+      const { data: accepted } = await supabase
+        .from('lfg_responses')
+        .select('lfg_post_id')
+        .eq('user_id', uid)
+        .eq('status', 'accepted')
+      const ids = (accepted ?? []).map((r: { lfg_post_id: string }) => r.lfg_post_id)
+      postQuery = postQuery.or(`user_id.eq.${uid},id.in.(${ids.length ? ids.join(',') : '00000000-0000-0000-0000-000000000000'})`)
+    } else {
+      // Browse view — alleen open en niet verlopen
+      postQuery = postQuery.in('status', ['open']).gt('expires_at', new Date().toISOString())
+      if (selectedGame) postQuery = postQuery.eq('game_id', selectedGame)
+      if (selectedPlatform) postQuery = postQuery.eq('platform', selectedPlatform)
+    }
 
-    const { data } = await query
-    if (data) setPosts(data as unknown as LfgPost[])
+    const { data } = await postQuery
+    if (data) {
+      const enriched = (data as unknown as LfgPost[]).map(p => ({
+        ...p,
+        my_response: uid ? p.responses?.find(r => r.user_id === uid) ?? null : null,
+      }))
+      setPosts(enriched)
+    }
+
+    // Load counts voor My LFG section + pulse
+    if (uid) {
+      const [myPosts, myApplied, mySquads, allActive] = await Promise.all([
+        supabase.from('lfg_posts').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'open').gt('expires_at', new Date().toISOString()),
+        supabase.from('lfg_responses').select('id', { count: 'exact', head: true }).eq('user_id', uid).is('status', null),
+        supabase.from('lfg_responses').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'accepted'),
+        supabase.from('lfg_posts').select('id', { count: 'exact', head: true }).eq('status', 'open').gt('expires_at', new Date().toISOString()),
+      ])
+      setMyCounts({
+        posts: myPosts.count ?? 0,
+        applied: myApplied.count ?? 0,
+        squads: mySquads.count ?? 0,
+      })
+      setPulse({ active: allActive.count ?? 0, formingNow: 0 })
+    }
+
     setLoading(false)
   }
 
   async function createPost() {
     if (!userId || !formTitle.trim() || !formGame) return
     setCreating(true)
-
     const { error } = await supabase.from('lfg_posts').insert({
       user_id: userId,
       game_id: formGame,
@@ -103,25 +197,45 @@ export default function LfgPage() {
       party_size: formPartySize,
       mic_required: formMic,
     })
-
     if (!error) {
       setShowCreate(false)
       setFormTitle(''); setFormDesc(''); setFormGame(''); setFormPlatform('')
       setFormRegion(''); setFormPartySize(2); setFormMic(false); setFormMinRank('')
-      loadPosts()
+      loadAll()
     }
     setCreating(false)
   }
 
-  async function respondToPost(postId: string) {
+  async function applyToPost(postId: string) {
     if (!userId) return
-    await supabase.from('lfg_responses').insert({ lfg_post_id: postId, user_id: userId })
-    setPosts(prev => prev.map(p => p.id === postId ? { ...p, user_responded: true } : p))
+    await supabase.from('lfg_responses').insert({
+      lfg_post_id: postId,
+      user_id: userId,
+      message: applyNote.trim() || null,
+    })
+    setApplyingPostId(null)
+    setApplyNote('')
+    loadAll()
+  }
+
+  async function acceptResponse(responseId: string, postId: string) {
+    await supabase.from('lfg_responses').update({ status: 'accepted' }).eq('id', responseId)
+    // Update filled-counter atomically — bump door 1
+    const post = posts.find(p => p.id === postId)
+    if (post) {
+      await supabase.from('lfg_posts').update({ filled: (post.filled ?? 0) + 1 }).eq('id', postId)
+    }
+    loadAll()
+  }
+
+  async function declineResponse(responseId: string) {
+    await supabase.from('lfg_responses').update({ status: 'declined' }).eq('id', responseId)
+    loadAll()
   }
 
   async function closePost(postId: string) {
     await supabase.from('lfg_posts').update({ status: 'closed' }).eq('id', postId)
-    setPosts(prev => prev.filter(p => p.id !== postId))
+    loadAll()
   }
 
   function timeAgo(date: string) {
@@ -146,13 +260,21 @@ export default function LfgPage() {
 
   return (
     <div className="max-w-4xl mx-auto animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      {/* Header — title + live pulse + create CTA */}
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-wide flex items-center gap-2">
             <Users size={20} className="text-purple" /> LFG
           </h1>
-          <p className="text-sm text-text-dim mt-0.5">Find teammates, squad up</p>
+          <div className="flex items-center gap-3 mt-1 text-sm text-text-dim">
+            <span className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+              </span>
+              <span><strong className="text-text">{pulse.active}</strong> looking now</span>
+            </span>
+          </div>
         </div>
         {userId && (
           <button onClick={() => setShowCreate(true)} className="vs-btn vs-btn-primary text-sm">
@@ -161,210 +283,460 @@ export default function LfgPage() {
         )}
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
-        <div className="relative flex-1 max-w-xs">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search LFG posts..." className="vs-input text-xs pl-8 py-1.5" />
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setSelectedGame(null)} className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${!selectedGame ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'bg-surface border border-border text-text-dim hover:border-border-hover'}`}>
-            All Games
+      {/* My LFG bar — quick switch */}
+      {userId && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
+          <button
+            onClick={() => setView('browse')}
+            data-active={view === 'browse'}
+            className="vs-card vs-tab text-left py-3 px-4 flex flex-col gap-1 items-start"
+          >
+            <span className="vs-label flex items-center gap-1.5"><Search size={11} /> BROWSE</span>
+            <span className="text-base font-medium">All squads</span>
           </button>
-          {games.slice(0, 6).map(g => (
-            <button key={g.id} onClick={() => setSelectedGame(g.id)} className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${selectedGame === g.id ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'bg-surface border border-border text-text-dim hover:border-border-hover'}`}>
-              {g.name.split(':')[0]}
-            </button>
-          ))}
+          <button
+            onClick={() => setView('mine')}
+            data-active={view === 'mine'}
+            className="vs-card vs-tab text-left py-3 px-4 flex flex-col gap-1 items-start"
+          >
+            <span className="vs-label flex items-center gap-1.5"><Crown size={11} /> MY POSTS</span>
+            <span className="text-base font-medium">{myCounts.posts}</span>
+          </button>
+          <button
+            onClick={() => setView('applied')}
+            data-active={view === 'applied'}
+            className="vs-card vs-tab text-left py-3 px-4 flex flex-col gap-1 items-start"
+          >
+            <span className="vs-label flex items-center gap-1.5"><Inbox size={11} /> APPLIED</span>
+            <span className="text-base font-medium">{myCounts.applied}</span>
+          </button>
+          <button
+            onClick={() => setView('squads')}
+            data-active={view === 'squads'}
+            className="vs-card vs-tab text-left py-3 px-4 flex flex-col gap-1 items-start"
+          >
+            <span className="vs-label flex items-center gap-1.5"><Users size={11} /> SQUADS</span>
+            <span className="text-base font-medium">{myCounts.squads}</span>
+          </button>
         </div>
-        <select value={selectedPlatform || ''} onChange={e => setSelectedPlatform(e.target.value || null)} className="bg-surface border border-border rounded-lg text-xs text-text-dim px-3 py-1.5 outline-none appearance-none">
-          <option value="">All Platforms</option>
-          <option value="PC">PC</option>
-          <option value="PlayStation">PlayStation</option>
-          <option value="Xbox">Xbox</option>
-          <option value="Switch">Switch</option>
-          <option value="Crossplay">Crossplay</option>
-        </select>
-      </div>
+      )}
 
-      {/* Posts */}
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="vs-card animate-pulse">
-              <div className="h-4 bg-surface-2 rounded w-48 mb-2" />
-              <div className="h-3 bg-surface-2 rounded w-full mb-2" />
-              <div className="h-3 bg-surface-2 rounded w-2/3" />
-            </div>
-          ))}
+      {/* Filters — alleen op browse view */}
+      {view === 'browse' && (
+        <div className="flex items-center gap-3 mb-5 flex-wrap">
+          <div className="relative flex-1 max-w-xs">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search LFG posts..." className="vs-input text-xs pl-8 py-1.5" />
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            <button onClick={() => setSelectedGame(null)} data-active={!selectedGame} className="vs-tab text-xs">
+              All Games
+            </button>
+            {games.slice(0, 6).map(g => (
+              <button key={g.id} onClick={() => setSelectedGame(g.id)} data-active={selectedGame === g.id} className="vs-tab text-xs">
+                {g.name.split(':')[0]}
+              </button>
+            ))}
+          </div>
+          <select
+            value={selectedPlatform || ''}
+            onChange={e => setSelectedPlatform(e.target.value || null)}
+            className="bg-surface border border-border rounded-lg text-xs text-text-dim px-3 py-1.5 outline-none appearance-none"
+          >
+            <option value="">All Platforms</option>
+            <option value="PC">PC</option>
+            <option value="PlayStation">PlayStation</option>
+            <option value="Xbox">Xbox</option>
+            <option value="Switch">Switch</option>
+            <option value="Crossplay">Crossplay</option>
+          </select>
         </div>
+      )}
+
+      {/* Posts feed */}
+      {loading ? (
+        <div className="flex justify-center py-12"><ScopeSpinner size={28} /></div>
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No LFG posts right now"
-          description="Create one and find your squad."
+          title={
+            view === 'mine' ? "You haven't posted any LFG yet"
+            : view === 'applied' ? "You haven't applied to any squads"
+            : view === 'squads' ? "You haven't joined any squads yet"
+            : 'No LFG posts right now'
+          }
+          description={
+            view === 'browse' ? 'Create one and find your squad.'
+            : 'Switch to Browse to find squads.'
+          }
+          cta={view !== 'browse' ? { label: 'Browse squads', onClick: () => setView('browse') } : userId ? { label: 'Create LFG', onClick: () => setShowCreate(true) } : undefined}
         />
       ) : (
         <div className="space-y-3">
-          {filtered.map(post => {
-            const isOwn = post.user_id === userId
-            const profile = post.profile as any
-            const game = post.game as any
-            const spotsLeft = post.party_size - post.filled
-
-            return (
-              <div key={post.id} className="vs-card hover:border-border-hover transition-all">
-                <div className="flex items-start gap-4">
-                  {/* Left: avatar */}
-                  <Link href={`/profile/${profile?.username}`} className="shrink-0">
-                    <div className="w-10 h-10 rounded-lg bg-purple/20 flex items-center justify-center text-sm font-bold text-purple">
-                      {(profile?.display_name || profile?.username || '?')[0].toUpperCase()}
-                    </div>
-                  </Link>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="text-sm font-medium">{post.title}</h3>
-                      {game && <span className="vs-badge vs-badge-purple text-[9px]">{game.name}</span>}
-                    </div>
-
-                    {post.description && (
-                      <p className="text-xs text-text-muted mb-2 line-clamp-2">{post.description}</p>
-                    )}
-
-                    {/* Tags row */}
-                    <div className="flex items-center gap-3 text-[10px] text-text-dim flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <Users size={10} />
-                        <span className={spotsLeft > 0 ? 'text-success' : 'text-danger'}>
-                          {post.filled}/{post.party_size}
-                        </span>
-                        {spotsLeft > 0 ? ` · ${spotsLeft} spot${spotsLeft > 1 ? 's' : ''} left` : ' · Full'}
-                      </span>
-                      {post.platform && <span className="flex items-center gap-1"><Monitor size={10} /> {post.platform}</span>}
-                      {post.region && <span className="flex items-center gap-1"><MapPin size={10} /> {post.region}</span>}
-                      {post.mic_required && <span className="flex items-center gap-1 text-cyan"><Mic size={10} /> Mic required</span>}
-                      {post.min_rank && <span className="flex items-center gap-1"><Shield size={10} /> {post.min_rank}+</span>}
-                      <span className="flex items-center gap-1"><Clock size={10} /> {expiresIn(post.expires_at)}</span>
-                    </div>
-
-                    {/* Author + time */}
-                    <div className="flex items-center gap-2 mt-2 text-[10px] text-text-dim">
-                      <Link href={`/profile/${profile?.username}`} className="hover:text-purple transition-colors">
-                        @{profile?.username}
-                      </Link>
-                      <span>·</span>
-                      <span>{timeAgo(post.created_at)}</span>
-                    </div>
-                  </div>
-
-                  {/* Action */}
-                  <div className="shrink-0">
-                    {isOwn ? (
-                      <button onClick={() => closePost(post.id)} className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
-                        Close
-                      </button>
-                    ) : spotsLeft > 0 ? (
-                      post.user_responded ? (
-                        <span className="vs-btn vs-btn-ghost text-xs px-3 py-1.5 opacity-60 cursor-default">
-                          <Check size={12} /> Applied
-                        </span>
-                      ) : (
-                        <button onClick={() => respondToPost(post.id)} className="vs-btn vs-btn-cyan text-xs px-3 py-1.5">
-                          <UserPlus size={12} /> Join
-                        </button>
-                      )
-                    ) : (
-                      <span className="text-xs text-text-dim">Full</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Party fill bar */}
-                <div className="mt-3 h-1 bg-void rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${post.filled >= post.party_size ? 'bg-success' : 'bg-cyan'}`}
-                    style={{ width: `${(post.filled / post.party_size) * 100}%` }}
-                  />
-                </div>
-              </div>
-            )
-          })}
+          {filtered.map(post => (
+            <LfgPostCard
+              key={post.id}
+              post={post}
+              userId={userId}
+              applying={applyingPostId === post.id}
+              applyNote={applyNote}
+              setApplyNote={setApplyNote}
+              onStartApply={() => { setApplyingPostId(post.id); setApplyNote('') }}
+              onCancelApply={() => { setApplyingPostId(null); setApplyNote('') }}
+              onApply={() => applyToPost(post.id)}
+              onClose={() => closePost(post.id)}
+              responsesOpen={openResponsesId === post.id}
+              onToggleResponses={() => setOpenResponsesId(openResponsesId === post.id ? null : post.id)}
+              onAcceptResponse={(rid) => acceptResponse(rid, post.id)}
+              onDeclineResponse={declineResponse}
+              timeAgo={timeAgo}
+              expiresIn={expiresIn}
+            />
+          ))}
         </div>
       )}
 
       {/* Create modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowCreate(false)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-surface z-10">
-              <h3 className="text-sm font-medium flex items-center gap-2"><Plus size={16} className="text-purple" /> Create LFG Post</h3>
-              <button onClick={() => setShowCreate(false)} className="text-text-dim hover:text-text"><X size={16} /></button>
+        <CreatePostModal
+          games={games}
+          onClose={() => setShowCreate(false)}
+          formTitle={formTitle} setFormTitle={setFormTitle}
+          formDesc={formDesc} setFormDesc={setFormDesc}
+          formGame={formGame} setFormGame={setFormGame}
+          formPlatform={formPlatform} setFormPlatform={setFormPlatform}
+          formRegion={formRegion} setFormRegion={setFormRegion}
+          formPartySize={formPartySize} setFormPartySize={setFormPartySize}
+          formMic={formMic} setFormMic={setFormMic}
+          formMinRank={formMinRank} setFormMinRank={setFormMinRank}
+          creating={creating}
+          onSubmit={createPost}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Post Card met slot visualization ───────────────────────────────────────────
+
+function LfgPostCard({
+  post, userId, applying, applyNote, setApplyNote,
+  onStartApply, onCancelApply, onApply, onClose,
+  responsesOpen, onToggleResponses, onAcceptResponse, onDeclineResponse,
+  timeAgo, expiresIn,
+}: {
+  post: LfgPost
+  userId: string | null
+  applying: boolean
+  applyNote: string
+  setApplyNote: (v: string) => void
+  onStartApply: () => void
+  onCancelApply: () => void
+  onApply: () => void
+  onClose: () => void
+  responsesOpen: boolean
+  onToggleResponses: () => void
+  onAcceptResponse: (responseId: string) => void
+  onDeclineResponse: (responseId: string) => void
+  timeAgo: (d: string) => string
+  expiresIn: (d: string) => string
+}) {
+  const isOwn = post.user_id === userId
+  const profile = post.profile as Profile | undefined
+  const game = post.game as Game | undefined
+  const responses = post.responses ?? []
+  const accepted = responses.filter(r => r.status === 'accepted')
+  const pending = responses.filter(r => !r.status || r.status === 'pending')
+  const filledTotal = 1 + accepted.length // poster + accepted
+  const spotsLeft = post.party_size - filledTotal
+  const hasApplied = !!post.my_response
+  const myStatus = post.my_response?.status
+
+  // Slot rendering: 1 owner + accepted + empty
+  const slots: ({ kind: 'owner' | 'member' | 'empty', profile?: Profile })[] = []
+  slots.push({ kind: 'owner', profile })
+  for (const r of accepted) slots.push({ kind: 'member', profile: r.profile })
+  while (slots.length < post.party_size) slots.push({ kind: 'empty' })
+
+  return (
+    <div className="vs-card vs-lit hover:border-border-hover transition-all">
+      <div className="flex items-start gap-4">
+        <Avatar
+          url={profile?.avatar_url}
+          name={profile?.display_name || profile?.username}
+          href={profile?.username ? `/profile/${profile.username}` : undefined}
+          size="md"
+          variant="gradient"
+          showInnerRing={profile?.is_founding_member}
+        />
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h3 className="text-sm font-medium">{post.title}</h3>
+            {game && <span className="vs-badge vs-badge-purple text-[9px]">{game.name}</span>}
+          </div>
+          {post.description && (
+            <p className="text-xs text-text-muted mb-2 line-clamp-2">{post.description}</p>
+          )}
+
+          {/* Tags */}
+          <div className="flex items-center gap-3 text-[10px] text-text-dim flex-wrap">
+            {post.platform && <span className="flex items-center gap-1"><Monitor size={10} /> {post.platform}</span>}
+            {post.region && <span className="flex items-center gap-1"><MapPin size={10} /> {post.region}</span>}
+            {post.mic_required && <span className="flex items-center gap-1 text-cyan"><Mic size={10} /> Mic required</span>}
+            {post.min_rank && <span className="flex items-center gap-1"><Shield size={10} /> {post.min_rank}+</span>}
+            <span className="flex items-center gap-1"><Clock size={10} /> {expiresIn(post.expires_at)}</span>
+          </div>
+
+          {/* Author + time */}
+          <div className="flex items-center gap-2 mt-2 text-[10px] text-text-dim">
+            <Link href={`/profile/${profile?.username}`} className="hover:text-purple transition-colors">
+              @{profile?.username}
+            </Link>
+            <span>·</span>
+            <span>{timeAgo(post.created_at)}</span>
+          </div>
+        </div>
+
+        {/* Action button */}
+        <div className="shrink-0">
+          {isOwn ? (
+            <div className="flex flex-col items-end gap-1.5">
+              {pending.length > 0 && (
+                <button onClick={onToggleResponses} className="vs-btn vs-btn-cyan text-xs px-3 py-1.5">
+                  <Inbox size={12} /> {pending.length} {pending.length === 1 ? 'applicant' : 'applicants'}
+                </button>
+              )}
+              <button onClick={onClose} className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
+                Close
+              </button>
             </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="vs-label block mb-1">TITLE *</label>
-                <input value={formTitle} onChange={e => setFormTitle(e.target.value)} className="vs-input text-sm" placeholder="Need 2 for ranked grind..." maxLength={80} />
-              </div>
-              <div>
-                <label className="vs-label block mb-1">DESCRIPTION</label>
-                <textarea value={formDesc} onChange={e => setFormDesc(e.target.value)} className="vs-input text-sm resize-none min-h-[60px]" placeholder="What are you looking for?" maxLength={500} />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="vs-label block mb-1">GAME *</label>
-                  <select value={formGame} onChange={e => setFormGame(e.target.value)} className="vs-input text-sm appearance-none">
-                    <option value="">Select game...</option>
-                    {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                  </select>
+          ) : hasApplied ? (
+            <span className={`vs-btn text-xs px-3 py-1.5 cursor-default ${
+              myStatus === 'accepted' ? 'vs-btn-cyan' : myStatus === 'declined' ? 'opacity-40' : 'vs-btn-ghost'
+            }`}>
+              {myStatus === 'accepted' ? <><Check size={12} /> In squad</>
+                : myStatus === 'declined' ? <>Declined</>
+                : <><Check size={12} /> Applied</>}
+            </span>
+          ) : spotsLeft > 0 ? (
+            <button onClick={onStartApply} className="vs-btn vs-btn-cyan text-xs px-3 py-1.5">
+              <UserPlus size={12} /> Join
+            </button>
+          ) : (
+            <span className="text-xs text-text-dim">Full</span>
+          )}
+        </div>
+      </div>
+
+      {/* Slot visualization — N circles for party_size */}
+      <div className="mt-4 pt-4 border-t border-border/40">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {slots.map((slot, i) => {
+            if (slot.kind === 'owner') {
+              return (
+                <div key={i} className="flex flex-col items-center gap-1 group">
+                  <div className="relative">
+                    <Avatar
+                      url={slot.profile?.avatar_url}
+                      name={slot.profile?.display_name || slot.profile?.username}
+                      size="sm"
+                      variant="gradient"
+                    />
+                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple flex items-center justify-center border-2 border-surface">
+                      <Crown size={8} fill="white" className="text-white" />
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-text-dim">Lead</span>
                 </div>
-                <div>
-                  <label className="vs-label block mb-1">PLATFORM</label>
-                  <select value={formPlatform} onChange={e => setFormPlatform(e.target.value)} className="vs-input text-sm appearance-none">
-                    <option value="">Any</option>
-                    <option value="PC">PC</option>
-                    <option value="PlayStation">PlayStation</option>
-                    <option value="Xbox">Xbox</option>
-                    <option value="Crossplay">Crossplay</option>
-                  </select>
+              )
+            }
+            if (slot.kind === 'member') {
+              return (
+                <div key={i} className="flex flex-col items-center gap-1">
+                  <Avatar
+                    url={slot.profile?.avatar_url}
+                    name={slot.profile?.display_name || slot.profile?.username}
+                    size="sm"
+                    variant="gradient"
+                  />
+                  <span className="text-[8px] text-text-dim truncate max-w-[40px]">{slot.profile?.username?.slice(0, 6) ?? ''}</span>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="vs-label block mb-1">REGION</label>
-                  <select value={formRegion} onChange={e => setFormRegion(e.target.value)} className="vs-input text-sm appearance-none">
-                    <option value="">Any</option>
-                    <option value="EU">EU</option>
-                    <option value="NA">NA</option>
-                    <option value="APAC">APAC</option>
-                    <option value="SA">SA</option>
-                    <option value="OCE">OCE</option>
-                  </select>
+              )
+            }
+            return (
+              <div key={i} className="flex flex-col items-center gap-1">
+                <div className="w-8 h-8 rounded-full border border-dashed border-border-hover bg-void/40 flex items-center justify-center text-text-dim hover:border-cyan hover:text-cyan transition-colors">
+                  <Plus size={12} />
                 </div>
-                <div>
-                  <label className="vs-label block mb-1">PARTY SIZE</label>
-                  <select value={formPartySize} onChange={e => setFormPartySize(Number(e.target.value))} className="vs-input text-sm appearance-none">
-                    {[2,3,4,5,6].map(n => <option key={n} value={n}>{n} players</option>)}
-                  </select>
-                </div>
+                <span className="text-[8px] text-text-dim">Open</span>
               </div>
-              <div>
-                <label className="vs-label block mb-1">MIN RANK (OPTIONAL)</label>
-                <input value={formMinRank} onChange={e => setFormMinRank(e.target.value)} className="vs-input text-sm" placeholder="e.g. Gold, Diamond, Platinum..." />
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={formMic} onChange={e => setFormMic(e.target.checked)} className="accent-purple w-4 h-4" />
-                <Mic size={14} className="text-cyan" />
-                <span className="text-sm">Mic required</span>
-              </label>
-              <button onClick={createPost} disabled={!formTitle.trim() || !formGame || creating} className="vs-btn vs-btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed">
-                {creating ? <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : 'Post LFG'}
+            )
+          })}
+          <div className="ml-auto text-[10px] text-text-dim">
+            <span className={spotsLeft > 0 ? 'text-success' : 'text-text-dim'}>
+              {filledTotal}/{post.party_size}
+            </span>
+            {spotsLeft > 0 && <span className="ml-1">· {spotsLeft} {spotsLeft > 1 ? 'spots' : 'spot'} open</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Apply-with-note inline prompt */}
+      {applying && (
+        <div className="mt-3 p-3 bg-void/60 border border-cyan/20 rounded-lg space-y-2">
+          <textarea
+            value={applyNote}
+            onChange={e => setApplyNote(e.target.value)}
+            maxLength={200}
+            rows={2}
+            className="vs-input text-xs resize-none"
+            placeholder="Optional: add a note (role, comm style, your rank...)"
+            autoFocus
+          />
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] text-text-dim">{applyNote.length}/200</span>
+            <div className="flex gap-2">
+              <button onClick={onCancelApply} className="vs-btn vs-btn-ghost text-xs px-3 py-1">Cancel</button>
+              <button onClick={onApply} className="vs-btn vs-btn-cyan text-xs px-3 py-1">
+                <Send size={11} /> Send application
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Owner-only: responses panel */}
+      {isOwn && responsesOpen && pending.length > 0 && (
+        <div className="mt-3 p-3 bg-void/60 border border-cyan/20 rounded-lg space-y-2">
+          <p className="vs-label flex items-center gap-1.5"><Inbox size={11} /> APPLICANTS</p>
+          {pending.map(r => (
+            <div key={r.id} className="flex items-start gap-3 py-2 border-t border-border/30 first:border-t-0">
+              <Avatar
+                url={r.profile?.avatar_url}
+                name={r.profile?.display_name || r.profile?.username}
+                href={r.profile?.username ? `/profile/${r.profile.username}` : undefined}
+                size="sm"
+                variant="gradient"
+                showInnerRing={r.profile?.is_founding_member}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Link href={`/profile/${r.profile?.username}`} className="text-xs font-medium hover:text-purple">
+                    {r.profile?.display_name || r.profile?.username}
+                  </Link>
+                  <span className="text-[9px] text-text-dim">{timeAgo(r.created_at)}</span>
+                </div>
+                {r.message && <p className="text-xs text-text-muted mt-0.5">{r.message}</p>}
+              </div>
+              <div className="flex gap-1.5">
+                <button onClick={() => onAcceptResponse(r.id)} className="vs-btn vs-btn-cyan text-xs px-2.5 py-1">
+                  <Check size={11} /> Accept
+                </button>
+                <button onClick={() => onDeclineResponse(r.id)} className="vs-btn vs-btn-ghost text-xs px-2.5 py-1">
+                  Decline
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Create Modal ────────────────────────────────────────────────────────────
+
+function CreatePostModal(props: {
+  games: Game[]
+  onClose: () => void
+  formTitle: string; setFormTitle: (v: string) => void
+  formDesc: string; setFormDesc: (v: string) => void
+  formGame: string; setFormGame: (v: string) => void
+  formPlatform: string; setFormPlatform: (v: string) => void
+  formRegion: string; setFormRegion: (v: string) => void
+  formPartySize: number; setFormPartySize: (n: number) => void
+  formMic: boolean; setFormMic: (b: boolean) => void
+  formMinRank: string; setFormMinRank: (v: string) => void
+  creating: boolean
+  onSubmit: () => void
+}) {
+  const {
+    games, onClose,
+    formTitle, setFormTitle, formDesc, setFormDesc, formGame, setFormGame,
+    formPlatform, setFormPlatform, formRegion, setFormRegion,
+    formPartySize, setFormPartySize, formMic, setFormMic, formMinRank, setFormMinRank,
+    creating, onSubmit,
+  } = props
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto animate-slide-up vs-lit" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-surface z-10">
+          <h3 className="text-sm font-medium flex items-center gap-2"><Plus size={16} className="text-purple" /> Create LFG Post</h3>
+          <button onClick={onClose} className="text-text-dim hover:text-text"><X size={16} /></button>
+        </div>
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="vs-label block mb-1">TITLE *</label>
+            <input value={formTitle} onChange={e => setFormTitle(e.target.value)} className="vs-input text-sm" placeholder="Need 2 for ranked grind..." maxLength={80} />
+          </div>
+          <div>
+            <label className="vs-label block mb-1">DESCRIPTION</label>
+            <textarea value={formDesc} onChange={e => setFormDesc(e.target.value)} className="vs-input text-sm resize-none min-h-[60px]" placeholder="What are you looking for?" maxLength={500} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="vs-label block mb-1">GAME *</label>
+              <select value={formGame} onChange={e => setFormGame(e.target.value)} className="vs-input text-sm appearance-none">
+                <option value="">Select game...</option>
+                {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="vs-label block mb-1">PLATFORM</label>
+              <select value={formPlatform} onChange={e => setFormPlatform(e.target.value)} className="vs-input text-sm appearance-none">
+                <option value="">Any</option>
+                <option value="PC">PC</option>
+                <option value="PlayStation">PlayStation</option>
+                <option value="Xbox">Xbox</option>
+                <option value="Crossplay">Crossplay</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="vs-label block mb-1">REGION</label>
+              <select value={formRegion} onChange={e => setFormRegion(e.target.value)} className="vs-input text-sm appearance-none">
+                <option value="">Any</option>
+                <option value="EU">EU</option>
+                <option value="NA">NA</option>
+                <option value="APAC">APAC</option>
+                <option value="SA">SA</option>
+                <option value="OCE">OCE</option>
+              </select>
+            </div>
+            <div>
+              <label className="vs-label block mb-1">PARTY SIZE</label>
+              <select value={formPartySize} onChange={e => setFormPartySize(Number(e.target.value))} className="vs-input text-sm appearance-none">
+                {[2,3,4,5,6].map(n => <option key={n} value={n}>{n} players</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="vs-label block mb-1">MIN RANK (OPTIONAL)</label>
+            <input value={formMinRank} onChange={e => setFormMinRank(e.target.value)} className="vs-input text-sm" placeholder="e.g. Gold, Diamond, Platinum..." />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={formMic} onChange={e => setFormMic(e.target.checked)} className="accent-purple w-4 h-4" />
+            <Mic size={14} className="text-cyan" />
+            <span className="text-sm">Mic required</span>
+          </label>
+          <button onClick={onSubmit} disabled={!formTitle.trim() || !formGame || creating} className="vs-btn vs-btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed">
+            {creating ? <ScopeSpinner size={16} /> : 'Post LFG'}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
