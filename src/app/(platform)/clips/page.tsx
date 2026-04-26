@@ -260,7 +260,7 @@ export default function ClipsPage() {
     }
   }
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+  function handleDrop(e: React.DragEvent<HTMLElement>) {
     e.preventDefault()
     setDragActive(false)
     const file = e.dataTransfer.files?.[0]
