@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { VoidsignlLogo } from '@/components/ui/logo'
+import { SectionCounter } from '@/components/ui/section-counter'
 import Link from 'next/link'
 import {
   ArrowRight, ArrowDown, Trophy, Film, Users, Newspaper, Star,
@@ -103,8 +104,8 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero — fullscreen */}
-      <section className="min-h-screen flex flex-col items-center justify-center text-center relative overflow-hidden">
+      {/* Hero — fullscreen, scanlines + scope ambient */}
+      <section className="min-h-screen flex flex-col items-center justify-center text-center relative overflow-hidden vs-scanlines">
         {/* Background effects */}
         <div className="absolute inset-0">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple/[0.06] rounded-full blur-[150px]" />
@@ -115,9 +116,9 @@ export default function HomePage() {
         </div>
 
         <div className="relative z-10">
-          {/* Logo */}
+          {/* Logo — animated scope */}
           <div className={`transition-all duration-1000 ease-out ${phase >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
-            <VoidsignlLogo size={80} className="mx-auto mb-12 text-text" />
+            <VoidsignlLogo size={88} animated className="mx-auto mb-12 text-text" />
           </div>
 
           {/* Title */}
@@ -212,7 +213,7 @@ export default function HomePage() {
       {/* Features — inspired by brandguide section 05 */}
       <section className="py-16 md:py-24 px-4 md:px-8" id="features">
         <div className="max-w-5xl mx-auto">
-          <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>01</span>
+          <SectionCounter index={1} total={3} />
           <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">Platform</h2>
           <div className="w-12 h-0.5 bg-purple rounded mb-8" />
           <p className="text-text-muted text-[15px] max-w-xl leading-relaxed mb-12">
@@ -228,7 +229,7 @@ export default function HomePage() {
               { icon: Film, label: 'Content', title: 'Clips & COTW', desc: 'Upload plays, compete for Clip of the Week. Get seen.', color: 'purple' },
               { icon: MessageCircle, label: 'Connect', title: 'Direct Messages', desc: 'Private DMs with read receipts. Talk strategy, build bonds.', color: 'cyan' },
             ].map(f => (
-              <div key={f.title} className="relative bg-surface border border-white/[0.04] rounded-xl p-7 hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden">
+              <div key={f.title} className="relative bg-surface border border-white/[0.04] rounded-xl p-7 hover:border-white/[0.12] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden vs-lit">
                 {/* Glow blob on hover */}
                 <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none ${f.color === 'purple' ? 'bg-purple/30' : 'bg-cyan/25'}`} />
                 <div className="relative">
@@ -254,7 +255,7 @@ export default function HomePage() {
       {/* Inner Circle */}
       <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04]" id="inner-circle">
         <div className="max-w-5xl mx-auto">
-          <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>02</span>
+          <SectionCounter index={2} total={3} />
           <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">The Inner Circle</h2>
           <div className="w-12 h-0.5 bg-purple rounded mb-4" />
           <p className="text-text-muted text-[15px] max-w-xl leading-relaxed mb-12">
@@ -297,7 +298,7 @@ export default function HomePage() {
           staat op /rankings voor leden. */}
       <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04]" id="rankings">
         <div className="max-w-5xl mx-auto">
-          <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>03</span>
+          <SectionCounter index={3} total={3} />
           <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">Global Rankings</h2>
           <div className="w-12 h-0.5 bg-purple rounded mb-8" />
           <p className="text-text-muted text-[15px] max-w-xl leading-relaxed mb-8">

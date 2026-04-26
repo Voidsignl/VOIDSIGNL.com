@@ -112,17 +112,17 @@ export default function DashboardPage() {
 
       {/* Stats row — followers/following clickable naar profile */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <div className="vs-card">
+        <div className="vs-card vs-lit">
           <p className="vs-label mb-1">YOUR LEVEL</p>
           <p className="text-xl font-medium text-purple">{level.name}</p>
-          <div className="mt-2 h-1 bg-void rounded-full overflow-hidden">
+          <div className="mt-2 h-1.5 bg-void rounded-full overflow-hidden">
             <div
-              className="h-full bg-purple rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-purple to-cyan rounded-full transition-all shadow-[0_0_8px_rgba(107,63,224,0.5)]"
               style={{ width: `${xpProgress.percentage}%` }}
             />
           </div>
         </div>
-        <div className="vs-card">
+        <div className="vs-card vs-lit">
           <p className="vs-label mb-1">XP</p>
           <p className="text-xl font-medium text-cyan">{profile.xp.toLocaleString()}</p>
         </div>

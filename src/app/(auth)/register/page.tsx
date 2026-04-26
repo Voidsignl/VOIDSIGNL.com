@@ -81,10 +81,11 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden vs-scanlines">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] bg-purple/[0.04] rounded-full blur-[140px] pointer-events-none" />
+      <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-10 animate-fade-in">
-          <VoidsignlLogo size={56} className="mx-auto mb-6 text-text" />
+          <VoidsignlLogo size={64} animated className="mx-auto mb-6 text-text" />
           <h1
             className="text-2xl tracking-[4px] font-bold mb-2"
             style={{ fontFamily: 'var(--font-display)' }}
@@ -96,7 +97,7 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4 animate-slide-up">
+        <form onSubmit={handleRegister} className="space-y-4 animate-slide-up vs-brackets">
           {error && (
             <div className="bg-danger/10 border border-danger/20 rounded-lg px-4 py-3 text-sm text-danger">
               {error}

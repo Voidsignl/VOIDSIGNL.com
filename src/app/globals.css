@@ -136,4 +136,119 @@
   .animate-slide-up { animation: slideUp 0.4s ease-out; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Scope/vizier logo animation — rotation + dot pulse */
+  @keyframes vs-scope-rotate {
+    from { transform: rotate(-90deg); }
+    to { transform: rotate(270deg); }
+  }
+  @keyframes vs-scope-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.55; }
+  }
+
+  /* ─── Cyber-premium signature elementen ──────────────────────────────────── */
+
+  /* Lit-edge — gradient lijn op de bovenkant van een card alsof er een lichtbron
+     van boven schijnt. Ultra-subtiel, alleen op kaarten die ertoe doen. */
+  .vs-lit {
+    position: relative;
+  }
+  .vs-lit::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      rgba(107, 63, 224, 0.5),
+      rgba(0, 200, 240, 0.5),
+      transparent
+    );
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Corner-brackets — HUD-style targeting marks die fade-in op hover/focus.
+     Zeer subtiel, voelt tactical zonder druk. */
+  .vs-brackets {
+    position: relative;
+  }
+  .vs-brackets::before,
+  .vs-brackets::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: var(--color-purple-light);
+    border-style: solid;
+    border-width: 0;
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+    pointer-events: none;
+  }
+  .vs-brackets::before {
+    top: -2px;
+    left: -2px;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+  .vs-brackets::after {
+    bottom: -2px;
+    right: -2px;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+  }
+  .vs-brackets:hover::before,
+  .vs-brackets:hover::after,
+  .vs-brackets:focus-within::before,
+  .vs-brackets:focus-within::after {
+    opacity: 0.7;
+  }
+
+  /* Scanlines overlay — alleen op fullscreen-elementen (hero, login, modal).
+     Gebruik op een wrapping div met deze class; absolute pseudo levert de lijnen. */
+  .vs-scanlines {
+    position: relative;
+  }
+  .vs-scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.018) 3px,
+      rgba(255, 255, 255, 0.018) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Section counter — gestandaardiseerde mono-counter `01 / 12` voor sectie/card */
+  .vs-counter {
+    font-family: var(--font-display);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--color-purple);
+  }
+
+  /* Subtle noise — body achtergrond grain, ultra-laag-opacity */
+  .vs-noise {
+    position: relative;
+  }
+  .vs-noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 1;
+  }
 }
