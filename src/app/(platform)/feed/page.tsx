@@ -10,6 +10,8 @@ import {
   Image, X, ChevronDown, ChevronUp, MoreHorizontal, Flag,
   Flame, Clock, Users, Globe, Bookmark, Pin
 } from 'lucide-react'
+import { Avatar } from '@/components/ui/avatar'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type FeedTab = 'global' | 'following' | string // string = game_id
 type SortMode = 'recent' | 'popular'
@@ -405,9 +407,12 @@ function FeedContent() {
               className="flex items-center gap-3 cursor-pointer"
               onClick={() => { setComposerOpen(true); setTimeout(() => composerRef.current?.focus(), 100) }}
             >
-              <div className="w-9 h-9 rounded-full bg-purple flex items-center justify-center text-sm font-medium text-white shrink-0">
-                {profile?.display_name?.[0]?.toUpperCase() || profile?.username?.[0]?.toUpperCase() || '?'}
-              </div>
+              <Avatar
+                url={profile?.avatar_url}
+                name={profile?.display_name || profile?.username}
+                size="md"
+                variant="gradient"
+              />
               <div className="flex-1 bg-void/50 rounded-lg px-4 py-2.5 text-sm text-text-dim hover:text-text-muted transition-colors">
                 Share something with the community...
               </div>
@@ -415,8 +420,13 @@ function FeedContent() {
           ) : (
             <div>
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full bg-purple flex items-center justify-center text-sm font-medium text-white shrink-0 mt-1">
-                  {profile?.display_name?.[0]?.toUpperCase() || profile?.username?.[0]?.toUpperCase() || '?'}
+                <div className="mt-1">
+                  <Avatar
+                    url={profile?.avatar_url}
+                    name={profile?.display_name || profile?.username}
+                    size="md"
+                    variant="gradient"
+                  />
                 </div>
                 <div className="flex-1">
                   <textarea
@@ -552,16 +562,24 @@ function FeedContent() {
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <div className="vs-card text-center py-16">
-          <Newspaper size={36} className="mx-auto text-text-dim mb-3 opacity-40" />
-          <p className="text-text-dim text-sm">
-            {activeTab === 'following'
+        <EmptyState
+          icon={Newspaper}
+          title={
+            activeTab === 'following'
               ? 'No posts from people you follow yet'
               : activeTab === 'global'
-                ? 'No posts yet — be the first!'
-                : 'No posts in this channel yet'}
-          </p>
-        </div>
+                ? 'No posts yet'
+                : 'No posts in this channel yet'
+          }
+          description={
+            activeTab === 'following'
+              ? 'Follow members to see their posts here.'
+              : activeTab === 'global'
+                ? 'Be the first to share something with the community.'
+                : 'No content here yet — drop the first post.'
+          }
+          cta={userId ? { label: 'Create post', onClick: () => { setComposerOpen(true); setTimeout(() => composerRef.current?.focus(), 100) } } : undefined}
+        />
       ) : (
         <div className="space-y-4">
           {posts.map(post => {
@@ -577,9 +595,14 @@ function FeedContent() {
               <div key={post.id} className="vs-card group/post">
                 {/* Post header */}
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-purple/30 flex items-center justify-center text-xs font-medium text-purple shrink-0">
-                    {postProfile?.display_name?.[0]?.toUpperCase() || postProfile?.username?.[0]?.toUpperCase() || '?'}
-                  </div>
+                  <Avatar
+                    url={postProfile?.avatar_url}
+                    name={postProfile?.display_name || postProfile?.username}
+                    href={postProfile?.username ? `/profile/${postProfile.username}` : undefined}
+                    size="md"
+                    variant="gradient"
+                    showInnerRing={postProfile?.is_founding_member}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Link

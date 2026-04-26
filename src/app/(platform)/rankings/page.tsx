@@ -9,6 +9,7 @@ import {
   BarChart3, Trophy, Star, Crown, Medal, ChevronUp, ChevronDown,
   Flame, Users, Shield, Gamepad2, TrendingUp, Zap, Search
 } from 'lucide-react'
+import { Avatar } from '@/components/ui/avatar'
 
 type RankTab = 'xp' | 'posts' | 'clips' | 'followers'
 type TimeFilter = 'all' | 'month' | 'week'
@@ -222,7 +223,7 @@ export default function RankingsPage() {
         <div>
           {/* Tab bar + search */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
-            <div className="flex items-center bg-surface rounded-lg border border-border overflow-x-auto shrink-0">
+            <div className="flex items-center gap-1 shrink-0 flex-wrap">
               {[
                 { id: 'xp' as RankTab, label: 'XP', icon: Zap },
                 { id: 'posts' as RankTab, label: 'Posts', icon: TrendingUp },
@@ -232,9 +233,8 @@ export default function RankingsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs transition-colors ${
-                    activeTab === tab.id ? 'bg-purple/15 text-purple' : 'text-text-dim hover:text-text-muted'
-                  }`}
+                  data-active={activeTab === tab.id}
+                  className="vs-tab text-xs"
                 >
                   <tab.icon size={12} /> {tab.label}
                 </button>
@@ -294,16 +294,15 @@ export default function RankingsPage() {
                     </div>
 
                     {/* Avatar */}
-                    <Link href={`/profile/${user.username}`} className="shrink-0">
-                      <div className="w-9 h-9 rounded-lg bg-purple/20 flex items-center justify-center text-sm font-bold text-purple relative">
-                        {(user.display_name || user.username)[0].toUpperCase()}
-                        {user.is_founding_member && (
-                          <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-purple flex items-center justify-center">
-                            <Star size={7} className="text-white" fill="white" />
-                          </div>
-                        )}
-                      </div>
-                    </Link>
+                    <Avatar
+                      url={user.avatar_url}
+                      name={user.display_name || user.username}
+                      href={`/profile/${user.username}`}
+                      size="md"
+                      shape="rounded"
+                      variant="gradient"
+                      showInnerRing={user.is_founding_member}
+                    />
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">

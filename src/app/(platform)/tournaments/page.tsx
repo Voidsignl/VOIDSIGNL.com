@@ -8,6 +8,7 @@ import {
   Trophy, Plus, X, Calendar, Users, MapPin, Monitor, Shield,
   Clock, ChevronRight, Crown, Swords, Check, Gamepad2, Search, Zap
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Tournament {
   id: string
@@ -246,11 +247,11 @@ export default function TournamentsPage() {
           ))}
         </div>
       ) : tournaments.length === 0 ? (
-        <div className="vs-card text-center py-16">
-          <Trophy size={36} className="mx-auto text-text-dim opacity-40 mb-3" />
-          <p className="text-sm text-text-dim">No tournaments found</p>
-          <p className="text-xs text-text-dim mt-1">Create one and start competing</p>
-        </div>
+        <EmptyState
+          icon={Trophy}
+          title="No tournaments found"
+          description="Create one and start competing."
+        />
       ) : (
         <div className="space-y-3">
           {tournaments.map(t => {

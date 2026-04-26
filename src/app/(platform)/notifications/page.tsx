@@ -8,6 +8,7 @@ import {
   Award, Users, Swords, Check, CheckCheck, Trash2, Filter,
   Settings, X, BellOff
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Notification {
   id: string
@@ -152,12 +153,11 @@ export default function NotificationsPage() {
 
       {/* Notification list */}
       {filtered.length === 0 ? (
-        <div className="vs-card text-center py-16">
-          <BellOff size={32} className="mx-auto text-text-dim opacity-40 mb-3" />
-          <p className="text-sm text-text-dim">
-            {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
-          </p>
-        </div>
+        <EmptyState
+          icon={BellOff}
+          title={filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
+          description={filter === 'unread' ? 'Geen ongelezen meldingen.' : 'Updates verschijnen hier zodra ze binnenkomen.'}
+        />
       ) : (
         <div className="space-y-1">
           {filtered.map(notif => {

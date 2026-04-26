@@ -8,6 +8,7 @@ import {
   Users, Plus, X, Mic, MicOff, Clock, MapPin, Monitor, Shield,
   UserPlus, Check, ChevronDown, Gamepad2, Search, Filter, Zap
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface LfgPost {
   id: string
@@ -198,11 +199,11 @@ export default function LfgPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="vs-card text-center py-16">
-          <Users size={36} className="mx-auto text-text-dim opacity-40 mb-3" />
-          <p className="text-sm text-text-dim">No LFG posts right now</p>
-          <p className="text-xs text-text-dim mt-1">Create one and find your squad</p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No LFG posts right now"
+          description="Create one and find your squad."
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map(post => {

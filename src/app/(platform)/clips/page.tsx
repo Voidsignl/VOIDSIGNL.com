@@ -7,6 +7,7 @@ import {
   Film, Trophy, Heart, MessageCircle, Eye, Play, X, Upload,
   ChevronLeft, ChevronRight, Clock, Flame, Send, Trash2
 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type SortMode = 'recent' | 'popular'
 type UploadStep = 'form' | 'uploading' | 'done'
@@ -390,11 +391,12 @@ export default function ClipsPage() {
           ))}
         </div>
       ) : clips.length === 0 ? (
-        <div className="vs-card text-center py-16">
-          <Film size={40} className="mx-auto text-text-dim mb-3 opacity-40" />
-          <p className="text-text-dim text-sm">No clips yet</p>
-          <p className="text-text-dim text-xs mt-1">Be the first to upload a clip</p>
-        </div>
+        <EmptyState
+          icon={Film}
+          title="No clips yet"
+          description="Be the first to upload a clip and stake your claim."
+          cta={userId ? { label: 'Upload clip', onClick: () => setShowUpload(true) } : undefined}
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {clips.map((clip) => (

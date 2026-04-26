@@ -193,16 +193,13 @@ export default function AchievementsPage() {
       </div>
 
       {/* Category filter */}
-      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1 mb-5 overflow-x-auto pb-1">
         {(Object.entries(CATEGORY_LABELS) as [CategoryFilter, typeof CATEGORY_LABELS[string]][]).map(([key, val]) => (
           <button
             key={key}
             onClick={() => setCategory(key)}
-            className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${
-              category === key
-                ? 'bg-purple/15 text-purple'
-                : 'text-text-dim hover:bg-surface hover:text-text-muted'
-            }`}
+            data-active={category === key}
+            className="vs-tab whitespace-nowrap"
           >
             {val.label}
             <span className="ml-1 text-[10px] opacity-50">

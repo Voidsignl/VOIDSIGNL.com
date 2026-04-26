@@ -271,10 +271,12 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex items-center gap-1 mb-6 overflow-x-auto pb-1">
         {TABS.filter(t => !t.adminOnly || isAdmin).map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs transition-colors whitespace-nowrap ${
-              activeTab === tab.id ? 'bg-purple/15 text-purple' : 'text-text-dim hover:bg-surface hover:text-text-muted'
-            }`}>
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            data-active={activeTab === tab.id}
+            className="vs-tab whitespace-nowrap"
+          >
             <tab.icon size={13} /> {tab.label}
             {tab.id === 'reports' && stats.reports_pending > 0 && (
               <span className="w-4 h-4 rounded-full bg-danger text-white text-[9px] flex items-center justify-center">{stats.reports_pending}</span>
