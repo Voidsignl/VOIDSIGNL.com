@@ -10,6 +10,7 @@ import {
   Flame, Users, Shield, Gamepad2, TrendingUp, Zap, Search
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type RankTab = 'xp' | 'posts' | 'clips' | 'followers'
 type TimeFilter = 'all' | 'month' | 'week'
@@ -111,10 +112,14 @@ export default function RankingsPage() {
   }
 
   function getRankIcon(rank: number) {
-    if (rank === 1) return <Crown size={16} className="text-yellow-400" />
+    if (rank === 1) return <Crown size={16} className="text-yellow-400 drop-shadow-[0_0_4px_rgba(250,204,21,0.4)]" />
     if (rank === 2) return <Medal size={16} className="text-gray-300" />
     if (rank === 3) return <Medal size={16} className="text-amber-600" />
-    return <span className="text-xs text-text-dim w-4 text-center">{rank}</span>
+    return (
+      <span className="vs-counter text-[10px] text-text-dim tabular-nums w-7 text-center">
+        {String(rank).padStart(2, '0')}
+      </span>
+    )
   }
 
   function getRankBg(rank: number) {
@@ -142,13 +147,22 @@ export default function RankingsPage() {
           <h1 className="text-xl font-semibold tracking-wide flex items-center gap-2">
             <BarChart3 size={20} className="text-purple" />
             Rankings
+            {totalMembers > 0 && (
+              <span className="vs-counter text-[10px] text-text-dim tabular-nums ml-1">
+                {String(totalMembers).padStart(3, '0')}
+              </span>
+            )}
           </h1>
-          <p className="text-sm text-text-dim mt-0.5">{totalMembers} members competing</p>
+          <p className="vs-counter text-[11px] text-text-dim mt-1 tabular-nums">
+            {String(totalMembers).padStart(3, '0')} MEMBERS · {activeTab.toUpperCase()} LEADERBOARD
+          </p>
         </div>
         {currentUserRank > 0 && (
-          <div className="vs-card flex items-center gap-3 py-2 px-4">
-            <span className="text-xs text-text-dim">Your rank</span>
-            <span className="text-lg font-bold text-cyan">#{currentUserRank}</span>
+          <div className="vs-card vs-lit flex items-center gap-3 py-2 px-4">
+            <span className="vs-counter text-[10px] text-text-dim">YOUR RANK</span>
+            <span className="text-lg font-bold text-cyan tabular-nums">
+              #{String(currentUserRank).padStart(2, '0')}
+            </span>
           </div>
         )}
       </div>
@@ -157,63 +171,75 @@ export default function RankingsPage() {
       {!loading && users.length >= 3 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {/* 2nd place */}
-          <div className="vs-card vs-lit text-center pt-8 pb-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-300/40 to-transparent" />
+          <div className="vs-card vs-lit vs-brackets text-center pt-7 pb-4 relative overflow-hidden border-gray-300/15">
+            <span className="vs-counter text-[10px] text-gray-300 tabular-nums absolute top-3 left-4">02</span>
             <Medal size={20} className="text-gray-300 mx-auto mb-2" />
-            <Link href={`/profile/${users[1].username}`}>
-              <div className="w-14 h-14 rounded-xl bg-purple/20 flex items-center justify-center text-xl font-bold text-purple mx-auto mb-2 relative">
-                {(users[1].display_name || users[1].username)[0].toUpperCase()}
-                {users[1].is_founding_member && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple flex items-center justify-center">
-                    <Star size={8} className="text-white" fill="white" />
-                  </div>
-                )}
-              </div>
-              <p className="text-sm font-medium hover:text-purple transition-colors">{users[1].display_name || users[1].username}</p>
+            <div className="flex justify-center mb-2">
+              <Avatar
+                url={users[1].avatar_url}
+                name={users[1].display_name || users[1].username}
+                href={`/profile/${users[1].username}`}
+                size="lg"
+                shape="rounded"
+                variant="gradient"
+                showInnerRing={users[1].is_founding_member}
+              />
+            </div>
+            <Link href={`/profile/${users[1].username}`} className="text-sm font-medium hover:text-purple transition-colors">
+              {users[1].display_name || users[1].username}
             </Link>
             <p className="text-[10px] text-text-dim">@{users[1].username}</p>
-            <p className="text-xs text-cyan mt-2 font-medium">{getStatValue(users[1])}</p>
-            <p className="text-[10px] text-purple mt-0.5">{users[1].level_name}</p>
+            <p className="text-xs text-cyan mt-2 font-medium tabular-nums">{getStatValue(users[1])}</p>
+            <p className="vs-counter text-[10px] text-purple-light mt-1 tabular-nums">{users[1].level_name.toUpperCase()}</p>
           </div>
 
           {/* 1st place */}
-          <div className="vs-card vs-lit text-center pt-6 pb-4 relative overflow-hidden border-yellow-400/20">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
-            <Crown size={24} className="text-yellow-400 mx-auto mb-2" />
-            <Link href={`/profile/${users[0].username}`}>
-              <div className="w-16 h-16 rounded-xl bg-yellow-400/15 border border-yellow-400/20 flex items-center justify-center text-2xl font-bold text-yellow-400 mx-auto mb-2 relative">
-                {(users[0].display_name || users[0].username)[0].toUpperCase()}
-                {users[0].is_founding_member && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple flex items-center justify-center">
-                    <Star size={8} className="text-white" fill="white" />
-                  </div>
-                )}
-              </div>
-              <p className="text-base font-semibold hover:text-yellow-400 transition-colors">{users[0].display_name || users[0].username}</p>
+          <div
+            className="vs-card vs-lit vs-brackets text-center pt-5 pb-4 relative overflow-hidden border-yellow-400/25"
+            style={{ boxShadow: '0 0 28px rgba(250,204,21,0.10), inset 0 0 24px rgba(250,204,21,0.04)' }}
+          >
+            <span className="vs-counter text-[10px] text-yellow-400 tabular-nums absolute top-3 left-4">01</span>
+            <Crown size={26} className="text-yellow-400 mx-auto mb-2 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" />
+            <div className="flex justify-center mb-2">
+              <Avatar
+                url={users[0].avatar_url}
+                name={users[0].display_name || users[0].username}
+                href={`/profile/${users[0].username}`}
+                size="xl"
+                shape="rounded"
+                variant="gradient"
+                showInnerRing={users[0].is_founding_member}
+              />
+            </div>
+            <Link href={`/profile/${users[0].username}`} className="text-base font-semibold hover:text-yellow-400 transition-colors">
+              {users[0].display_name || users[0].username}
             </Link>
             <p className="text-[10px] text-text-dim">@{users[0].username}</p>
-            <p className="text-sm text-cyan mt-2 font-bold">{getStatValue(users[0])}</p>
-            <p className="text-[10px] text-purple mt-0.5">{users[0].level_name}</p>
+            <p className="text-sm text-cyan mt-2 font-bold tabular-nums">{getStatValue(users[0])}</p>
+            <p className="vs-counter text-[10px] text-purple-light mt-1 tabular-nums">{users[0].level_name.toUpperCase()}</p>
           </div>
 
           {/* 3rd place */}
-          <div className="vs-card vs-lit text-center pt-8 pb-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
+          <div className="vs-card vs-lit vs-brackets text-center pt-7 pb-4 relative overflow-hidden border-amber-600/20">
+            <span className="vs-counter text-[10px] text-amber-600 tabular-nums absolute top-3 left-4">03</span>
             <Medal size={20} className="text-amber-600 mx-auto mb-2" />
-            <Link href={`/profile/${users[2].username}`}>
-              <div className="w-14 h-14 rounded-xl bg-purple/20 flex items-center justify-center text-xl font-bold text-purple mx-auto mb-2 relative">
-                {(users[2].display_name || users[2].username)[0].toUpperCase()}
-                {users[2].is_founding_member && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-purple flex items-center justify-center">
-                    <Star size={8} className="text-white" fill="white" />
-                  </div>
-                )}
-              </div>
-              <p className="text-sm font-medium hover:text-purple transition-colors">{users[2].display_name || users[2].username}</p>
+            <div className="flex justify-center mb-2">
+              <Avatar
+                url={users[2].avatar_url}
+                name={users[2].display_name || users[2].username}
+                href={`/profile/${users[2].username}`}
+                size="lg"
+                shape="rounded"
+                variant="gradient"
+                showInnerRing={users[2].is_founding_member}
+              />
+            </div>
+            <Link href={`/profile/${users[2].username}`} className="text-sm font-medium hover:text-purple transition-colors">
+              {users[2].display_name || users[2].username}
             </Link>
             <p className="text-[10px] text-text-dim">@{users[2].username}</p>
-            <p className="text-xs text-cyan mt-2 font-medium">{getStatValue(users[2])}</p>
-            <p className="text-[10px] text-purple mt-0.5">{users[2].level_name}</p>
+            <p className="text-xs text-cyan mt-2 font-medium tabular-nums">{getStatValue(users[2])}</p>
+            <p className="vs-counter text-[10px] text-purple-light mt-1 tabular-nums">{users[2].level_name.toUpperCase()}</p>
           </div>
         </div>
       )}
@@ -268,12 +294,11 @@ export default function RankingsPage() {
               ))}
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="vs-card text-center py-12">
-              <BarChart3 size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-              <p className="text-sm text-text-dim">
-                {searchQuery ? 'No players found' : 'No ranked players yet'}
-              </p>
-            </div>
+            <EmptyState
+              icon={BarChart3}
+              title={searchQuery ? 'No players found' : 'No ranked players yet'}
+              description={searchQuery ? 'Try a different search term.' : 'The leaderboard fills up as members earn XP.'}
+            />
           ) : (
             <div className="space-y-1.5">
               {filteredUsers.map((user, i) => {
@@ -330,8 +355,10 @@ export default function RankingsPage() {
 
                     {/* Stat */}
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-medium text-cyan">{getStatValue(user)}</p>
-                      <p className="text-[10px] text-text-dim">Lvl {user.level}</p>
+                      <p className="text-sm font-medium text-cyan tabular-nums">{getStatValue(user)}</p>
+                      <p className="vs-counter text-[10px] text-text-dim tabular-nums">
+                        LV {String(user.level).padStart(2, '0')}
+                      </p>
                     </div>
                   </div>
                 )
@@ -343,24 +370,31 @@ export default function RankingsPage() {
         {/* Right sidebar */}
         <div className="space-y-4">
           {/* Level distribution */}
-          <div className="vs-card">
+          <div className="vs-card vs-lit">
             <p className="vs-label mb-3">LEVEL DISTRIBUTION</p>
             <div className="space-y-2">
               {LEVELS.slice().reverse().map(level => {
                 const count = levelDistribution[level.name] || 0
                 const max = Math.max(...Object.values(levelDistribution), 1)
                 const pct = (count / max) * 100
+                const tierClass =
+                  level.level >= 8 ? 'bg-gradient-to-r from-yellow-400/80 to-yellow-400' :
+                  level.level >= 5 ? 'bg-gradient-to-r from-purple to-purple-light' :
+                  level.level >= 3 ? 'bg-gradient-to-r from-cyan/80 to-cyan' :
+                  'bg-text-dim/60'
 
                 return (
                   <div key={level.level} className="flex items-center gap-2">
-                    <span className="text-[10px] text-text-dim w-20 text-right truncate">{level.name}</span>
+                    <span className="text-[10px] text-text-muted w-20 text-right truncate">{level.name}</span>
                     <div className="flex-1 h-2 bg-void rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all bg-purple"
-                        style={{ width: `${pct}%`, opacity: count > 0 ? 1 : 0.2 }}
+                        className={`h-full rounded-full transition-all ${tierClass}`}
+                        style={{ width: `${pct}%`, opacity: count > 0 ? 1 : 0.15 }}
                       />
                     </div>
-                    <span className="text-[10px] text-text-dim w-5 text-right">{count}</span>
+                    <span className="vs-counter text-[10px] text-text-dim w-7 text-right tabular-nums">
+                      {String(count).padStart(2, '0')}
+                    </span>
                   </div>
                 )
               })}
@@ -368,36 +402,38 @@ export default function RankingsPage() {
           </div>
 
           {/* Rank tiers */}
-          <div className="vs-card">
+          <div className="vs-card vs-lit">
             <p className="vs-label mb-3">RANK TIERS</p>
             <div className="space-y-1.5">
               {LEVELS.map(level => (
                 <div key={level.level} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${
-                      level.level >= 8 ? 'bg-yellow-400' :
-                      level.level >= 5 ? 'bg-purple' :
+                      level.level >= 8 ? 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.6)]' :
+                      level.level >= 5 ? 'bg-purple shadow-[0_0_6px_rgba(107,63,224,0.5)]' :
                       level.level >= 3 ? 'bg-cyan' : 'bg-text-dim'
                     }`} />
                     <span className="text-text-muted">{level.name}</span>
                   </div>
-                  <span className="text-text-dim">{level.min_xp.toLocaleString()} XP</span>
+                  <span className="vs-counter text-[10px] text-text-dim tabular-nums">
+                    {level.min_xp.toLocaleString()} XP
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* How to earn XP */}
-          <div className="vs-card">
+          <div className="vs-card vs-lit">
             <p className="vs-label mb-3">HOW TO CLIMB</p>
             <div className="space-y-2 text-xs text-text-dim">
-              <div className="flex justify-between"><span>Create a post</span><span className="text-purple">+5 XP</span></div>
-              <div className="flex justify-between"><span>Comment</span><span className="text-purple">+2 XP</span></div>
-              <div className="flex justify-between"><span>Upload a clip</span><span className="text-purple">+10 XP</span></div>
-              <div className="flex justify-between"><span>Daily login</span><span className="text-purple">+3 XP</span></div>
-              <div className="flex justify-between"><span>Join tournament</span><span className="text-purple">+25 XP</span></div>
-              <div className="flex justify-between"><span>Win tournament</span><span className="text-purple">+100 XP</span></div>
-              <div className="flex justify-between"><span>Clip of the Week</span><span className="text-purple">+50 XP</span></div>
+              <div className="flex justify-between"><span>Create a post</span><span className="text-purple tabular-nums">+5 XP</span></div>
+              <div className="flex justify-between"><span>Comment</span><span className="text-purple tabular-nums">+2 XP</span></div>
+              <div className="flex justify-between"><span>Upload a clip</span><span className="text-purple tabular-nums">+10 XP</span></div>
+              <div className="flex justify-between"><span>Daily login</span><span className="text-purple tabular-nums">+3 XP</span></div>
+              <div className="flex justify-between"><span>Join tournament</span><span className="text-purple tabular-nums">+25 XP</span></div>
+              <div className="flex justify-between"><span>Win tournament</span><span className="text-purple tabular-nums">+100 XP</span></div>
+              <div className="flex justify-between"><span>Clip of the Week</span><span className="text-purple tabular-nums">+50 XP</span></div>
             </div>
           </div>
         </div>
