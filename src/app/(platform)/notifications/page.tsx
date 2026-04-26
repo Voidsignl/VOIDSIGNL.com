@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScopeSpinner } from '@/components/ui/loader'
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { PullIndicator } from '@/components/ui/pull-indicator'
 
 interface Notification {
   id: string
@@ -111,8 +113,16 @@ export default function NotificationsPage() {
     )
   }
 
+  const ptr = usePullToRefresh({
+    onRefresh: async () => {
+      if (userId) await loadNotifications(userId)
+    },
+  })
+
   return (
     <div className="max-w-3xl mx-auto animate-fade-in">
+      <div ref={ptr.sentinelRef} />
+      <PullIndicator pull={ptr.pull} ready={ptr.ready} refreshing={ptr.refreshing} />
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>

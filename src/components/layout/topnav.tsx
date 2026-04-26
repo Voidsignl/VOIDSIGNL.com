@@ -88,6 +88,35 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  // Realtime: keep notif dropdown list fresh when new notifs arrive
+  useEffect(() => {
+    if (!profile?.id) return
+    const chan = supabase
+      .channel(`notif-dropdown:${profile.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${profile.id}` },
+        async (payload) => {
+          const newRow = payload.new as NotifPreview
+          setNotifs(prev => {
+            // Avoid dupes
+            if (prev.some(n => n.id === newRow.id)) return prev
+            return [newRow, ...prev].slice(0, 8)
+          })
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `user_id=eq.${profile.id}` },
+        (payload) => {
+          const upd = payload.new as NotifPreview
+          setNotifs(prev => prev.map(n => n.id === upd.id ? upd : n))
+        },
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(chan) }
+  }, [profile?.id])
+
   async function openNotifs() {
     setNotifOpen(prev => !prev)
     if (!notifOpen && notifs.length === 0) {

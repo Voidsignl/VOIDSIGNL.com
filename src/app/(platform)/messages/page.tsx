@@ -11,6 +11,7 @@ import {
 import { ScopeSpinner } from '@/components/ui/loader'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Sheet } from '@/components/ui/sheet'
 
 interface Conversation {
   id: string
@@ -76,22 +77,47 @@ export default function MessagesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Poll for new messages every 5s
+  // Realtime: subscribe to new messages in the active conversation.
   useEffect(() => {
     if (!activeConv) return
-    const interval = setInterval(() => {
-      loadMessages(activeConv.id)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [activeConv?.id])
+    const chan = supabase
+      .channel(`msgs:${activeConv.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeConv.id}` },
+        () => {
+          loadMessages(activeConv.id)
+          // Auto-mark as read if a peer message comes in while window is open
+          if (userId) markAsRead(activeConv.id)
+        },
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(chan) }
+  }, [activeConv?.id, userId])
 
-  // Poll conversations every 10s
+  // Realtime: subscribe to all message changes affecting this user's
+  // conversations so the conv-list reorders/badges update without polling.
   useEffect(() => {
     if (!userId) return
-    const interval = setInterval(() => {
-      loadConversations(userId)
-    }, 10000)
-    return () => clearInterval(interval)
+    const chan = supabase
+      .channel(`conv-list:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'messages' },
+        () => loadConversations(userId),
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversations' },
+        () => loadConversations(userId),
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'conversation_participants', filter: `user_id=eq.${userId}` },
+        () => loadConversations(userId),
+      )
+      .subscribe()
+    return () => { void supabase.removeChannel(chan) }
   }, [userId])
 
   async function init() {
@@ -655,70 +681,62 @@ export default function MessagesPage() {
         )}
       </div>
 
-      {/* New conversation modal */}
-      {showNewConv && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowNewConv(false)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 max-h-[85vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="text-sm font-medium flex items-center gap-2">
-                <Plus size={16} className="text-purple" /> New Message
-              </h3>
-              <button onClick={() => setShowNewConv(false)} className="text-text-dim hover:text-text">
-                <X size={16} />
-              </button>
-            </div>
+      {/* New conversation sheet */}
+      <Sheet
+        open={showNewConv}
+        onClose={() => setShowNewConv(false)}
+        maxWidth="max-w-sm"
+        title={<span className="flex items-center gap-2"><Plus size={16} className="text-purple" /> New Message</span>}
+      >
+        <div className="p-4">
+          <div className="relative mb-3">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+            <input
+              type="text"
+              value={searchUsers}
+              onChange={e => searchForUsers(e.target.value)}
+              placeholder="Search by username..."
+              className="vs-input text-sm pl-8"
+              autoFocus
+            />
+          </div>
 
-            <div className="p-4">
-              <div className="relative mb-3">
-                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                <input
-                  type="text"
-                  value={searchUsers}
-                  onChange={e => searchForUsers(e.target.value)}
-                  placeholder="Search by username..."
-                  className="vs-input text-sm pl-8"
-                  autoFocus
-                />
+          <div className="max-h-64 overflow-y-auto">
+            {searchingUsers ? (
+              <div className="text-center py-4">
+                <ScopeSpinner size={20} className="mx-auto" />
               </div>
-
-              <div className="max-h-64 overflow-y-auto">
-                {searchingUsers ? (
-                  <div className="text-center py-4">
-                    <ScopeSpinner size={20} className="mx-auto" />
-                  </div>
-                ) : searchResults.length === 0 ? (
-                  <p className="text-xs text-text-dim text-center py-4">
-                    {searchUsers.length >= 2 ? 'No users found' : 'Type to search for users'}
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {searchResults.map(user => (
-                      <button
-                        key={user.id}
-                        onClick={() => startConversation(user)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors text-left"
-                      >
-                        <Avatar
-                          url={user.avatar_url}
-                          name={user.display_name || user.username}
-                          size="sm"
-                          shape="rounded"
-                          variant="gradient"
-                          showInnerRing={(user as any).is_founding_member}
-                        />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{user.display_name || user.username}</p>
-                          <p className="text-[10px] text-text-dim">@{user.username} · {user.level_name}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+            ) : searchResults.length === 0 ? (
+              <p className="text-xs text-text-dim text-center py-4">
+                {searchUsers.length >= 2 ? 'No users found' : 'Type to search for users'}
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {searchResults.map(user => (
+                  <button
+                    key={user.id}
+                    onClick={() => startConversation(user)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors text-left active:scale-[0.99]"
+                  >
+                    <Avatar
+                      url={user.avatar_url}
+                      name={user.display_name || user.username}
+                      size="sm"
+                      shape="rounded"
+                      variant="gradient"
+                      showInnerRing={(user as any).is_founding_member}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{user.display_name || user.username}</p>
+                      <p className="text-[10px] text-text-dim">@{user.username} · {user.level_name}</p>
+                    </div>
+                  </button>
+                ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
-      )}
+      </Sheet>
     </div>
   )
 }

@@ -13,6 +13,9 @@ import {
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScopeSpinner } from '@/components/ui/loader'
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh'
+import { PullIndicator } from '@/components/ui/pull-indicator'
+import { PostSkeleton } from '@/components/ui/skeleton'
 
 type FeedTab = 'global' | 'following' | string // string = game_id
 type SortMode = 'recent' | 'popular'
@@ -310,8 +313,19 @@ function FeedContent() {
     { id: 'following', label: 'Following', icon: <Users size={13} /> },
   ]
 
+  const ptr = usePullToRefresh({
+    onRefresh: async () => {
+      setPosts([])
+      setPage(0)
+      setHasMore(true)
+      await loadPosts(0)
+    },
+  })
+
   return (
     <div className="max-w-3xl mx-auto animate-fade-in">
+      <div ref={ptr.sentinelRef} />
+      <PullIndicator pull={ptr.pull} ready={ptr.ready} refreshing={ptr.refreshing} />
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
@@ -542,19 +556,7 @@ function FeedContent() {
       {/* Posts */}
       {loading ? (
         <div className="space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="vs-card animate-pulse">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-full bg-surface-2" />
-                <div className="flex-1">
-                  <div className="h-3.5 bg-surface-2 rounded w-28 mb-1.5" />
-                  <div className="h-2.5 bg-surface-2 rounded w-16" />
-                </div>
-              </div>
-              <div className="h-4 bg-surface-2 rounded w-full mb-2" />
-              <div className="h-4 bg-surface-2 rounded w-3/4" />
-            </div>
-          ))}
+          {[0, 1, 2].map(i => <PostSkeleton key={i} />)}
         </div>
       ) : posts.length === 0 ? (
         <EmptyState

@@ -27,6 +27,8 @@ export default function ClipsPage() {
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [likedClips, setLikedClips] = useState<Set<string>>(new Set())
+  const [myNominationClipId, setMyNominationClipId] = useState<string | null>(null)
+  const [cotwLeaders, setCotwLeaders] = useState<Map<string, number>>(new Map())
 
   // Upload modal
   const [showUpload, setShowUpload] = useState(false)
@@ -61,6 +63,7 @@ export default function ClipsPage() {
     if (user) {
       setUserId(user.id)
       loadLikedClips(user.id)
+      loadNominationState(user.id)
     }
     loadGames()
     loadCOTW()
@@ -82,6 +85,59 @@ export default function ClipsPage() {
       .eq('is_approved', true)
       .order('name')
     if (data) setGames(data)
+  }
+
+  /** Loads my COTW nomination (this week) + current vote counts. */
+  async function loadNominationState(uid: string) {
+    const weekStart = (() => {
+      const d = new Date()
+      const day = d.getDay() || 7 // ISO Mon=1
+      d.setDate(d.getDate() - (day - 1))
+      return d.toISOString().slice(0, 10)
+    })()
+
+    const [{ data: mine }, { data: leaders }] = await Promise.all([
+      supabase
+        .from('clip_nominations')
+        .select('clip_id')
+        .eq('voter_id', uid)
+        .eq('week_start', weekStart)
+        .maybeSingle(),
+      supabase.rpc('cotw_current_leaders', { p_limit: 50 }),
+    ])
+
+    setMyNominationClipId((mine as { clip_id: string } | null)?.clip_id ?? null)
+    if (leaders) {
+      const map = new Map<string, number>()
+      ;(leaders as { clip_id: string; votes: number }[]).forEach(r => {
+        map.set(r.clip_id, Number(r.votes))
+      })
+      setCotwLeaders(map)
+    }
+  }
+
+  async function nominateClip(clipId: string) {
+    if (!userId) return
+    const wasMine = myNominationClipId === clipId
+    // Optimistic
+    setMyNominationClipId(wasMine ? null : clipId)
+    setCotwLeaders(prev => {
+      const next = new Map(prev)
+      if (myNominationClipId && myNominationClipId !== clipId) {
+        next.set(myNominationClipId, Math.max(0, (next.get(myNominationClipId) ?? 0) - 1))
+      }
+      if (wasMine) {
+        next.set(clipId, Math.max(0, (next.get(clipId) ?? 0) - 1))
+      } else {
+        next.set(clipId, (next.get(clipId) ?? 0) + 1)
+      }
+      return next
+    })
+    const { error } = await supabase.rpc('toggle_clip_nomination', { p_clip_id: clipId })
+    if (error) {
+      // Reload truth on error
+      void loadNominationState(userId)
+    }
   }
 
   async function loadCOTW() {
@@ -768,7 +824,7 @@ export default function ClipsPage() {
             </div>
 
             {/* Stats bar */}
-            <div className="flex items-center gap-4 px-4 py-3 border-b border-border text-sm text-text-dim shrink-0">
+            <div className="flex items-center gap-4 px-4 py-3 border-b border-border text-sm text-text-dim shrink-0 flex-wrap">
               <button
                 onClick={() => toggleLike(activeClip.id)}
                 className={`flex items-center gap-1.5 transition-colors ${
@@ -784,6 +840,22 @@ export default function ClipsPage() {
               <span className="flex items-center gap-1.5">
                 <MessageCircle size={15} /> {activeClip.comment_count || 0} comments
               </span>
+              {userId && activeClip.user_id !== userId && (
+                <button
+                  onClick={() => nominateClip(activeClip.id)}
+                  className={`ml-auto flex items-center gap-1.5 transition-colors px-2 py-1 rounded ${
+                    myNominationClipId === activeClip.id
+                      ? 'text-yellow-400 bg-yellow-400/10'
+                      : 'text-text-dim hover:text-yellow-400'
+                  }`}
+                  title={myNominationClipId === activeClip.id ? 'Withdraw nomination' : 'Nominate for COTW'}
+                >
+                  <Trophy size={15} fill={myNominationClipId === activeClip.id ? 'currentColor' : 'none'} />
+                  <span className="vs-counter text-[11px] tabular-nums">
+                    {cotwLeaders.get(activeClip.id) ?? 0} COTW
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Comments */}

@@ -8,6 +8,8 @@ import { getLevelFromXP, getXPProgress } from '@/types'
 import type { Profile, Post, Game } from '@/types'
 import Link from 'next/link'
 import { OnlineFriends } from '@/components/ui/online-friends'
+import { ActivityWidget } from '@/components/ui/activity-widget'
+import { StreakWidget } from '@/components/ui/streak-widget'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -280,8 +282,20 @@ export default function DashboardPage() {
 
         {/* Right sidebar */}
         <div className="space-y-4">
+          {/* Daily streak */}
+          {profile && (
+            <StreakWidget
+              current={profile.streak_count ?? 0}
+              best={profile.streak_best ?? 0}
+              lastDate={profile.last_streak_date}
+            />
+          )}
+
           {/* Online friends */}
           {profile && <OnlineFriends userId={profile.id} />}
+
+          {/* Recent activity */}
+          {profile && <ActivityWidget userId={profile.id} />}
 
           {/* Your games */}
           <div className="vs-card">

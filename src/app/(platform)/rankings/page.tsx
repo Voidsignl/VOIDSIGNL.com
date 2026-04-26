@@ -12,7 +12,7 @@ import {
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
 
-type RankTab = 'xp' | 'posts' | 'clips' | 'followers'
+type RankTab = 'xp' | 'weekly' | 'posts' | 'clips' | 'followers'
 type TimeFilter = 'all' | 'month' | 'week'
 
 interface RankedUser {
@@ -29,6 +29,7 @@ interface RankedUser {
   post_count?: number
   clip_count?: number
   follower_count?: number
+  weekly_xp?: number
 }
 
 export default function RankingsPage() {
@@ -68,6 +69,34 @@ export default function RankingsPage() {
   async function loadRankings() {
     setLoading(true)
 
+    if (activeTab === 'weekly') {
+      // Rolling-7d XP delta via RPC
+      const [{ data }, totalRes] = await Promise.all([
+        supabase.rpc('weekly_xp_leaders', { p_limit: 100 }),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_onboarded', true),
+      ])
+      if (data) {
+        setUsers((data as Record<string, unknown>[]).map(r => ({
+          id: r.user_id as string,
+          username: r.username as string,
+          display_name: r.display_name as string | null,
+          avatar_url: r.avatar_url as string | null,
+          level_name: r.level_name as string,
+          level: 1,
+          xp: 0,
+          is_founding_member: !!r.is_founding_member,
+          is_verified: false,
+          is_coach: false,
+          weekly_xp: Number(r.weekly_xp),
+        })))
+      } else {
+        setUsers([])
+      }
+      setTotalMembers(totalRes.count || 0)
+      setLoading(false)
+      return
+    }
+
     const orderField = activeTab === 'xp' ? 'xp' :
                        activeTab === 'posts' ? 'post_count' :
                        activeTab === 'clips' ? 'clip_count' : 'follower_count'
@@ -104,6 +133,7 @@ export default function RankingsPage() {
   function getStatValue(user: RankedUser): string {
     switch (activeTab) {
       case 'xp': return `${user.xp.toLocaleString()} XP`
+      case 'weekly': return `+${(user.weekly_xp ?? 0).toLocaleString()} XP`
       case 'posts': return `${user.post_count || 0} posts`
       case 'clips': return `${user.clip_count || 0} clips`
       case 'followers': return `${user.follower_count || 0} followers`
@@ -252,6 +282,7 @@ export default function RankingsPage() {
             <div className="flex items-center gap-1 shrink-0 flex-wrap">
               {[
                 { id: 'xp' as RankTab, label: 'XP', icon: Zap },
+                { id: 'weekly' as RankTab, label: 'This week', icon: Flame },
                 { id: 'posts' as RankTab, label: 'Posts', icon: TrendingUp },
                 { id: 'clips' as RankTab, label: 'Clips', icon: Flame },
                 { id: 'followers' as RankTab, label: 'Followers', icon: Users },
