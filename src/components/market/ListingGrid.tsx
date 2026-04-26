@@ -16,6 +16,9 @@ interface ListingGridProps {
   emptyTitle?: string
   emptyDescription?: string
   emptyCta?: { label: string; href?: string; onClick?: () => void }
+  /** Set of listing-IDs that the current user has saved. */
+  savedIds?: Set<string>
+  showSaveHearts?: boolean
 }
 
 export function ListingGrid({
@@ -24,6 +27,8 @@ export function ListingGrid({
   emptyTitle = 'No listings yet',
   emptyDescription = 'Check back soon — drops happen daily.',
   emptyCta,
+  savedIds,
+  showSaveHearts = false,
 }: ListingGridProps) {
   if (loading) {
     return (
@@ -47,7 +52,12 @@ export function ListingGrid({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
       {listings.map(l => (
-        <ListingCard key={l.id} listing={l} />
+        <ListingCard
+          key={l.id}
+          listing={l}
+          savable={showSaveHearts}
+          saved={savedIds?.has(l.id) ?? false}
+        />
       ))}
     </div>
   )

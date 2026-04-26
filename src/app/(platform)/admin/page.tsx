@@ -68,8 +68,18 @@ export default function AdminPage() {
   // Market admin state
   const [pendingSellers, setPendingSellers] = useState<(MarketSeller & { profile?: Profile })[]>([])
   const [marketListings, setMarketListings] = useState<MarketListing[]>([])
+  const [pendingReports, setPendingReports] = useState<Array<{
+    id: string
+    listing_id: string
+    reason: string
+    details: string | null
+    created_at: string
+    listing?: { id: string; title: string; status: string } | null
+    reporter?: { username: string; display_name: string | null } | null
+  }>>([])
   const [marketStats, setMarketStats] = useState({
     pending_sellers: 0, active_listings: 0, total_orders: 0, total_commission: 0, total_revenue: 0,
+    pending_reports: 0,
   })
 
   // XP Grant
@@ -160,7 +170,7 @@ export default function AdminPage() {
       if (data) setTournaments(data)
     }
     if (activeTab === 'market') {
-      const [pendingRes, listingsRes, ordersRes] = await Promise.all([
+      const [pendingRes, listingsRes, ordersRes, reportsRes] = await Promise.all([
         supabase
           .from('market_sellers')
           .select('*, profile:profiles(*)')
@@ -176,20 +186,38 @@ export default function AdminPage() {
           .from('market_orders')
           .select('amount, commission, status')
           .eq('status', 'confirmed'),
+        supabase
+          .from('market_reports')
+          .select('id, listing_id, reason, details, created_at, listing:market_listings(id,title,status), reporter:profiles!reporter_id(username, display_name)')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false }),
       ])
       const pend = (pendingRes.data || []) as unknown as (MarketSeller & { profile?: Profile })[]
       const lst = (listingsRes.data || []) as unknown as MarketListing[]
       const orders = (ordersRes.data || []) as { amount: number; commission: number; status: string }[]
+      const reps = (reportsRes.data || []) as unknown as typeof pendingReports
       setPendingSellers(pend)
       setMarketListings(lst)
+      setPendingReports(reps)
       setMarketStats({
         pending_sellers: pend.length,
         active_listings: lst.filter(l => l.status === 'active').length,
         total_orders: orders.length,
         total_commission: orders.reduce((s, o) => s + Number(o.commission), 0),
         total_revenue: orders.reduce((s, o) => s + Number(o.amount), 0),
+        pending_reports: reps.length,
       })
     }
+  }
+
+  async function resolveMarketReport(reportId: string, status: 'resolved' | 'dismissed') {
+    if (!currentUser?.id) return
+    await supabase
+      .from('market_reports')
+      .update({ status, resolved_by: currentUser.id, resolved_at: new Date().toISOString() })
+      .eq('id', reportId)
+    setPendingReports(prev => prev.filter(r => r.id !== reportId))
+    setMarketStats(s => ({ ...s, pending_reports: Math.max(0, s.pending_reports - 1) }))
   }
 
   async function approveSeller(sellerId: string) {
@@ -694,10 +722,16 @@ export default function AdminPage() {
       {activeTab === 'market' && isAdmin && (
         <div className="space-y-6">
           {/* Stats strip */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             <div className="vs-card vs-lit">
-              <p className="vs-label">PENDING</p>
+              <p className="vs-label">SELLER QUEUE</p>
               <p className="text-2xl font-semibold text-warning tabular-nums mt-1">{marketStats.pending_sellers}</p>
+            </div>
+            <div className="vs-card vs-lit">
+              <p className="vs-label">REPORTS</p>
+              <p className={`text-2xl font-semibold tabular-nums mt-1 ${marketStats.pending_reports > 0 ? 'text-danger' : 'text-success'}`}>
+                {marketStats.pending_reports}
+              </p>
             </div>
             <div className="vs-card vs-lit">
               <p className="vs-label">ACTIVE LISTINGS</p>
@@ -715,6 +749,58 @@ export default function AdminPage() {
               <p className="vs-label">COMMISSION</p>
               <p className="text-2xl font-semibold text-success tabular-nums mt-1">€{marketStats.total_commission.toFixed(2)}</p>
             </div>
+          </div>
+
+          {/* Pending listing reports */}
+          <div>
+            <h3 className="vs-counter text-[11px] tabular-nums mb-2">PENDING REPORTS</h3>
+            {pendingReports.length === 0 ? (
+              <div className="vs-card text-center py-6">
+                <Check size={20} className="text-success mx-auto mb-1" />
+                <p className="text-xs text-text-dim">No pending reports</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {pendingReports.map(r => (
+                  <div key={r.id} className="vs-card flex flex-col sm:flex-row sm:items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="vs-badge text-[9px] bg-warning/15 text-warning border border-warning/30 capitalize">
+                          {r.reason}
+                        </span>
+                        {r.listing && (
+                          <Link href={`/market/listing/${r.listing.id}`} className="text-sm font-medium hover:text-purple-light line-clamp-1">
+                            {r.listing.title}
+                          </Link>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-text-dim tabular-nums">
+                        Reported by @{r.reporter?.username || 'unknown'} · {timeAgo(r.created_at)}
+                      </p>
+                      {r.details && (
+                        <p className="text-xs text-text-muted mt-2 leading-relaxed whitespace-pre-wrap line-clamp-3">
+                          {r.details}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        onClick={() => resolveMarketReport(r.id, 'resolved')}
+                        className="vs-btn vs-btn-primary text-xs"
+                      >
+                        <Check size={13} /> RESOLVE
+                      </button>
+                      <button
+                        onClick={() => resolveMarketReport(r.id, 'dismissed')}
+                        className="vs-btn vs-btn-ghost text-xs"
+                      >
+                        <X size={13} /> DISMISS
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pending sellers */}

@@ -6,14 +6,17 @@
  * via RPC `create_market_order` so flow is testable end-to-end.
  */
 import { useEffect, useMemo, useState } from 'react'
+// (useEffect imported for save-state load)
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import {
   ShieldCheck, AlertTriangle, Lock, Star, ChevronLeft, ChevronRight,
-  ShoppingBag, Cpu, Wrench, Box, KeyRound, Info, X, ExternalLink
+  ShoppingBag, Cpu, Wrench, Box, KeyRound, Info, X, ExternalLink, Flag,
+  Heart,
 } from 'lucide-react'
+import { Sheet } from '@/components/ui/sheet'
 import type { MarketListing, MarketReview, Profile } from '@/types'
 import { MARKET_CATEGORIES } from '@/types'
 import { categoryAccent, formatPrice } from '@/lib/market-utils'
@@ -37,6 +40,13 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
   const [buyOpen, setBuyOpen] = useState(false)
   const [buying, setBuying] = useState(false)
   const [buyError, setBuyError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+  const [savePending, setSavePending] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportReason, setReportReason] = useState<'scam'|'prohibited'|'copyright'|'spam'|'other'>('scam')
+  const [reportDetails, setReportDetails] = useState('')
+  const [reportSubmitting, setReportSubmitting] = useState(false)
+  const [reportDone, setReportDone] = useState(false)
 
   const cat = MARKET_CATEGORIES[listing.category]
   const accent = categoryAccent(listing.category)
@@ -50,6 +60,57 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
   }, [reviews])
 
   const escrowed = listing.category === 'gear' || listing.category === 'vault'
+
+  // Load saved-state on mount
+  useEffect(() => {
+    if (!currentUserId) return
+    let cancelled = false
+    supabase
+      .from('market_wishlists')
+      .select('id')
+      .eq('user_id', currentUserId)
+      .eq('listing_id', listing.id)
+      .maybeSingle()
+      .then(({ data }) => { if (!cancelled) setSaved(!!data) })
+    return () => { cancelled = true }
+  }, [currentUserId, listing.id, supabase])
+
+  async function toggleSave() {
+    if (!currentUserId || savePending) return
+    setSavePending(true)
+    const next = !saved
+    setSaved(next)
+    try {
+      if (next) {
+        await supabase.from('market_wishlists').insert({ user_id: currentUserId, listing_id: listing.id })
+      } else {
+        await supabase.from('market_wishlists').delete().eq('user_id', currentUserId).eq('listing_id', listing.id)
+      }
+    } catch {
+      setSaved(!next)
+    } finally {
+      setSavePending(false)
+    }
+  }
+
+  async function submitReport() {
+    if (!currentUserId) return
+    setReportSubmitting(true)
+    try {
+      const { error } = await supabase.from('market_reports').insert({
+        listing_id: listing.id,
+        reporter_id: currentUserId,
+        reason: reportReason,
+        details: reportDetails.trim() || null,
+      })
+      if (!error) {
+        setReportDone(true)
+        setTimeout(() => { setReportOpen(false); setReportDone(false); setReportDetails('') }, 1500)
+      }
+    } finally {
+      setReportSubmitting(false)
+    }
+  }
 
   async function handleBuy() {
     if (!currentUserId) {
@@ -285,6 +346,29 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
             </button>
           )}
 
+          {/* Secondary actions (save / report) */}
+          {currentUserId && !isOwnListing && (
+            <div className="flex items-center justify-center gap-3 mt-3 text-xs">
+              <button
+                onClick={toggleSave}
+                disabled={savePending}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
+                  saved ? 'text-danger' : 'text-text-dim hover:text-danger'
+                }`}
+              >
+                <Heart size={13} fill={saved ? 'currentColor' : 'none'} />
+                {saved ? 'Saved' : 'Save'}
+              </button>
+              <span className="text-border">·</span>
+              <button
+                onClick={() => setReportOpen(true)}
+                className="flex items-center gap-1.5 px-2 py-1 rounded text-text-dim hover:text-warning transition-colors"
+              >
+                <Flag size={13} /> Report
+              </button>
+            </div>
+          )}
+
           {/* Escrow note for gear/vault */}
           {escrowed && (
             <div className="mt-4 p-3 rounded-lg bg-warning/10 border border-warning/25 flex gap-2">
@@ -397,6 +481,75 @@ export function ListingDetail({ listing, reviews, related, currentUserId, isOwnL
           </div>
         </div>
       )}
+
+      {/* Report sheet */}
+      <Sheet
+        open={reportOpen}
+        onClose={() => !reportSubmitting && setReportOpen(false)}
+        maxWidth="max-w-md"
+        title={<span className="flex items-center gap-2"><Flag size={16} className="text-warning" /> Report listing</span>}
+      >
+        <div className="p-4 space-y-4">
+          {reportDone ? (
+            <div className="text-center py-6">
+              <div className="w-12 h-12 rounded-full bg-success/15 border border-success/30 mx-auto flex items-center justify-center mb-3">
+                <ShieldCheck size={22} className="text-success" />
+              </div>
+              <p className="text-sm font-medium">Thanks — moderators will review it.</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-text-muted">
+                Report this listing if you suspect a scam, prohibited content, or copyright issue.
+                Moderators will review within 24h.
+              </p>
+
+              <div>
+                <label className="vs-label block mb-2">REASON</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { id: 'scam', label: 'Scam' },
+                    { id: 'prohibited', label: 'Prohibited' },
+                    { id: 'copyright', label: 'Copyright' },
+                    { id: 'spam', label: 'Spam' },
+                    { id: 'other', label: 'Other' },
+                  ] as const).map(r => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setReportReason(r.id)}
+                      data-active={reportReason === r.id}
+                      className="vs-tab justify-center"
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="vs-label block mb-1">DETAILS (OPTIONAL)</label>
+                <textarea
+                  value={reportDetails}
+                  onChange={e => setReportDetails(e.target.value)}
+                  placeholder="What looks off? Screenshots help moderators."
+                  maxLength={1000}
+                  className="vs-input text-sm resize-none min-h-[80px]"
+                />
+                <p className="text-[10px] text-text-dim mt-1 tabular-nums">{reportDetails.length} / 1000</p>
+              </div>
+
+              <button
+                onClick={submitReport}
+                disabled={reportSubmitting}
+                className="vs-btn vs-btn-primary text-sm w-full disabled:opacity-50"
+              >
+                {reportSubmitting ? 'Submitting...' : <><Flag size={13} /> Submit report</>}
+              </button>
+            </>
+          )}
+        </div>
+      </Sheet>
     </div>
   )
 }

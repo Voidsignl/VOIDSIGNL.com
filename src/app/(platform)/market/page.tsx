@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-browser'
 import type { MarketListing, MarketCategory, MarketSeller } from '@/types'
-import { Plus, Sparkles, ShieldCheck } from 'lucide-react'
+import { Plus, Sparkles, ShieldCheck, Heart } from 'lucide-react'
 import { MarketHero } from '@/components/market/MarketHero'
 import { CategoryGrid } from '@/components/market/CategoryGrid'
 import { ListingRow } from '@/components/market/ListingGrid'
@@ -148,6 +148,15 @@ export default function MarketHomePage() {
           </Link>
         </div>
       )}
+
+      {/* Saved listings shortcut (always visible bottom-right above sell CTA) */}
+      <Link
+        href="/market/saved"
+        className="fixed left-4 md:left-auto md:right-6 z-40 vs-btn vs-btn-ghost text-xs"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)', ...(isVerifiedSeller ? {} : {}) }}
+      >
+        <Heart size={12} /> Saved
+      </Link>
     </div>
   )
 }

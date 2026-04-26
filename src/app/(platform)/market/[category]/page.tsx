@@ -26,6 +26,8 @@ export default function MarketCategoryPage() {
   const [listings, setListings] = useState<MarketListing[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<MarketFilters>({ search: '', sort: 'newest' })
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [authed, setAuthed] = useState(false)
 
   // Validate category early
   useEffect(() => {
@@ -37,7 +39,19 @@ export default function MarketCategoryPage() {
   useEffect(() => {
     if (!VALID.includes(cat)) return
     void loadGames()
+    void loadSaved()
   }, [])
+
+  async function loadSaved() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    setAuthed(true)
+    const { data } = await supabase
+      .from('market_wishlists')
+      .select('listing_id')
+      .eq('user_id', user.id)
+    if (data) setSavedIds(new Set(data.map(r => r.listing_id)))
+  }
 
   useEffect(() => {
     if (!VALID.includes(cat)) return
@@ -139,6 +153,8 @@ export default function MarketCategoryPage() {
       <ListingGrid
         listings={listings}
         loading={loading}
+        showSaveHearts={authed}
+        savedIds={savedIds}
         emptyTitle="No matching listings"
         emptyDescription="Try clearing filters or check back when sellers post."
       />

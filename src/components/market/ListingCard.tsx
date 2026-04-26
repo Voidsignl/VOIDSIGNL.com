@@ -4,23 +4,53 @@
  */
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShieldCheck, AlertTriangle } from 'lucide-react'
+import { ShieldCheck, AlertTriangle, Heart } from 'lucide-react'
+import { useState } from 'react'
 import type { MarketListing } from '@/types'
 import { MARKET_CATEGORIES } from '@/types'
 import { formatPrice, CATEGORY_ICONS, categoryAccent } from '@/lib/market-utils'
 import { SellerBadge } from './SellerBadge'
+import { createClient } from '@/lib/supabase-browser'
 
 interface ListingCardProps {
   listing: MarketListing
   size?: 'default' | 'compact'
+  /** When true, show heart toggle. Pass initial state via `saved`. */
+  savable?: boolean
+  saved?: boolean
 }
 
-export function ListingCard({ listing, size = 'default' }: ListingCardProps) {
+export function ListingCard({ listing, size = 'default', savable = false, saved = false }: ListingCardProps) {
   const cat = MARKET_CATEGORIES[listing.category]
   const accent = categoryAccent(listing.category)
   const Icon = CATEGORY_ICONS[listing.category]
   const thumb = listing.images?.[0]
   const isCompact = size === 'compact'
+  const supabase = createClient()
+  const [isSaved, setIsSaved] = useState(saved)
+  const [savePending, setSavePending] = useState(false)
+
+  async function toggleSave(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (savePending) return
+    setSavePending(true)
+    const next = !isSaved
+    setIsSaved(next)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setIsSaved(saved); return }
+      if (next) {
+        await supabase.from('market_wishlists').insert({ user_id: user.id, listing_id: listing.id })
+      } else {
+        await supabase.from('market_wishlists').delete().eq('user_id', user.id).eq('listing_id', listing.id)
+      }
+    } catch {
+      setIsSaved(saved)
+    } finally {
+      setSavePending(false)
+    }
+  }
 
   return (
     <Link
@@ -51,8 +81,8 @@ export function ListingCard({ listing, size = 'default' }: ListingCardProps) {
           {cat.tag}
         </span>
 
-        {/* Top-right: high-risk or void verified */}
-        <div className="absolute top-2 right-2 flex gap-1">
+        {/* Top-right: badges + heart */}
+        <div className="absolute top-2 right-2 flex gap-1 items-start">
           {listing.void_verified && (
             <span className="vs-badge vs-badge-purple text-[9px]">
               <ShieldCheck size={9} /> VOID
@@ -62,6 +92,17 @@ export function ListingCard({ listing, size = 'default' }: ListingCardProps) {
             <span className="vs-badge text-[9px] bg-danger/20 text-danger border border-danger/40">
               <AlertTriangle size={9} /> HIGH RISK
             </span>
+          )}
+          {savable && (
+            <button
+              onClick={toggleSave}
+              aria-label={isSaved ? 'Remove from wishlist' : 'Save to wishlist'}
+              className={`w-7 h-7 rounded-full bg-void/70 backdrop-blur flex items-center justify-center transition-all active:scale-90 ${
+                isSaved ? 'text-danger' : 'text-white/80 hover:text-danger'
+              }`}
+            >
+              <Heart size={13} fill={isSaved ? 'currentColor' : 'none'} />
+            </button>
           )}
         </div>
 
