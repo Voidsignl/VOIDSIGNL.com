@@ -6,7 +6,8 @@ import type { Game, Profile } from '@/types'
 import Link from 'next/link'
 import {
   Users, Plus, X, Mic, Clock, MapPin, Monitor, Shield,
-  UserPlus, Check, Gamepad2, Search, Send, Inbox, Crown
+  UserPlus, Check, Gamepad2, Search, Send, Inbox, Crown,
+  Zap, ChevronDown
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar } from '@/components/ui/avatar'
@@ -57,6 +58,20 @@ export default function LfgPage() {
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
+  // Quick-filter chips (combineerbaar)
+  const [chipMicOnly, setChipMicOnly] = useState(false)
+  const [chipMyGamesOnly, setChipMyGamesOnly] = useState(false)
+  const [chipUrgent, setChipUrgent] = useState(false)  // <30 min left
+  const [userGames, setUserGames] = useState<string[]>([])
+
+  // Quick composer (inline)
+  const [quickOpen, setQuickOpen] = useState(false)
+  const [quickTitle, setQuickTitle] = useState('')
+  const [quickGame, setQuickGame] = useState('')
+  const [quickPartySize, setQuickPartySize] = useState(2)
+  const [quickMic, setQuickMic] = useState(false)
+  const [quickSubmitting, setQuickSubmitting] = useState(false)
+
   // Counts voor My LFG section
   const [myCounts, setMyCounts] = useState({ posts: 0, applied: 0, squads: 0 })
 
@@ -85,11 +100,25 @@ export default function LfgPage() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => { init() }, [])
-  useEffect(() => { if (userId) loadAll() }, [view, selectedGame, selectedPlatform, userId])
+  useEffect(() => {
+    if (userId) loadAll()
+  }, [view, selectedGame, selectedPlatform, userId, chipMicOnly, chipMyGamesOnly, chipUrgent])
 
   async function init() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) setUserId(user.id)
+    if (user) {
+      setUserId(user.id)
+      // Pre-fill quick composer met user's main game
+      const { data: ug } = await supabase
+        .from('user_games')
+        .select('game_id, is_main')
+        .eq('user_id', user.id)
+      if (ug) {
+        setUserGames(ug.map((u: { game_id: string }) => u.game_id))
+        const main = ug.find((u: { is_main: boolean }) => u.is_main)
+        if (main) setQuickGame((main as { game_id: string }).game_id)
+      }
+    }
     await loadGames()
     if (user) {
       await loadAll(user.id)
@@ -153,6 +182,12 @@ export default function LfgPage() {
       postQuery = postQuery.in('status', ['open']).gt('expires_at', new Date().toISOString())
       if (selectedGame) postQuery = postQuery.eq('game_id', selectedGame)
       if (selectedPlatform) postQuery = postQuery.eq('platform', selectedPlatform)
+      if (chipMicOnly) postQuery = postQuery.eq('mic_required', true)
+      if (chipMyGamesOnly && userGames.length > 0) postQuery = postQuery.in('game_id', userGames)
+      if (chipUrgent) {
+        const cutoff = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+        postQuery = postQuery.lt('expires_at', cutoff)
+      }
     }
 
     const { data } = await postQuery
@@ -204,6 +239,26 @@ export default function LfgPage() {
       loadAll()
     }
     setCreating(false)
+  }
+
+  async function quickPost() {
+    if (!userId || !quickTitle.trim() || !quickGame) return
+    setQuickSubmitting(true)
+    const { error } = await supabase.from('lfg_posts').insert({
+      user_id: userId,
+      game_id: quickGame,
+      title: quickTitle.trim(),
+      party_size: quickPartySize,
+      mic_required: quickMic,
+    })
+    if (!error) {
+      setQuickTitle('')
+      setQuickPartySize(2)
+      setQuickMic(false)
+      setQuickOpen(false)
+      loadAll()
+    }
+    setQuickSubmitting(false)
   }
 
   async function applyToPost(postId: string) {
@@ -321,36 +376,123 @@ export default function LfgPage() {
         </div>
       )}
 
+      {/* Quick composer — inline, snel posten */}
+      {view === 'browse' && userId && (
+        <div className="vs-card vs-lit mb-4">
+          {!quickOpen ? (
+            <button
+              onClick={() => setQuickOpen(true)}
+              className="w-full flex items-center gap-3 text-left text-sm text-text-dim hover:text-text-muted transition-colors"
+            >
+              <Zap size={16} className="text-purple shrink-0" />
+              <span className="flex-1">Quick LFG — wat zoek je?</span>
+              <ChevronDown size={14} className="opacity-50" />
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Zap size={16} className="text-purple shrink-0" />
+                <input
+                  autoFocus
+                  value={quickTitle}
+                  onChange={e => setQuickTitle(e.target.value)}
+                  placeholder="Need 2 for ranked grind…"
+                  maxLength={80}
+                  className="flex-1 bg-transparent text-sm text-text outline-none placeholder:text-text-dim"
+                />
+                <button onClick={() => setQuickOpen(false)} className="text-text-dim hover:text-text">
+                  <X size={14} />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                <select value={quickGame} onChange={e => setQuickGame(e.target.value)} className="bg-surface-2 border border-border rounded-md px-2.5 py-1 text-xs outline-none">
+                  <option value="">Select game…</option>
+                  {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                </select>
+                <select value={quickPartySize} onChange={e => setQuickPartySize(Number(e.target.value))} className="bg-surface-2 border border-border rounded-md px-2.5 py-1 text-xs outline-none">
+                  {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n} players</option>)}
+                </select>
+                <button
+                  onClick={() => setQuickMic(!quickMic)}
+                  data-active={quickMic}
+                  className="vs-tab text-xs"
+                >
+                  <Mic size={11} /> Mic
+                </button>
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="text-[11px] text-text-dim hover:text-cyan transition-colors ml-1"
+                >
+                  More options →
+                </button>
+                <button
+                  onClick={quickPost}
+                  disabled={!quickTitle.trim() || !quickGame || quickSubmitting}
+                  className="vs-btn vs-btn-cyan text-xs ml-auto disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {quickSubmitting ? <ScopeSpinner size={12} /> : <><Send size={11} /> Post</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Filters — alleen op browse view */}
       {view === 'browse' && (
-        <div className="flex items-center gap-3 mb-5 flex-wrap">
-          <div className="relative flex-1 max-w-xs">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search LFG posts..." className="vs-input text-xs pl-8 py-1.5" />
-          </div>
-          <div className="flex items-center gap-1 flex-wrap">
-            <button onClick={() => setSelectedGame(null)} data-active={!selectedGame} className="vs-tab text-xs">
-              All Games
-            </button>
-            {games.slice(0, 6).map(g => (
-              <button key={g.id} onClick={() => setSelectedGame(g.id)} data-active={selectedGame === g.id} className="vs-tab text-xs">
-                {g.name.split(':')[0]}
+        <>
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
+            <div className="relative flex-1 max-w-xs">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+              <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search LFG posts..." className="vs-input text-xs pl-8 py-1.5" />
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <button onClick={() => setSelectedGame(null)} data-active={!selectedGame} className="vs-tab text-xs">
+                All Games
               </button>
-            ))}
+              {games.slice(0, 6).map(g => (
+                <button key={g.id} onClick={() => setSelectedGame(g.id)} data-active={selectedGame === g.id} className="vs-tab text-xs">
+                  {g.name.split(':')[0]}
+                </button>
+              ))}
+            </div>
+            <select
+              value={selectedPlatform || ''}
+              onChange={e => setSelectedPlatform(e.target.value || null)}
+              className="bg-surface border border-border rounded-lg text-xs text-text-dim px-3 py-1.5 outline-none appearance-none"
+            >
+              <option value="">All Platforms</option>
+              <option value="PC">PC</option>
+              <option value="PlayStation">PlayStation</option>
+              <option value="Xbox">Xbox</option>
+              <option value="Switch">Switch</option>
+              <option value="Crossplay">Crossplay</option>
+            </select>
           </div>
-          <select
-            value={selectedPlatform || ''}
-            onChange={e => setSelectedPlatform(e.target.value || null)}
-            className="bg-surface border border-border rounded-lg text-xs text-text-dim px-3 py-1.5 outline-none appearance-none"
-          >
-            <option value="">All Platforms</option>
-            <option value="PC">PC</option>
-            <option value="PlayStation">PlayStation</option>
-            <option value="Xbox">Xbox</option>
-            <option value="Switch">Switch</option>
-            <option value="Crossplay">Crossplay</option>
-          </select>
-        </div>
+
+          {/* Quick filter chips */}
+          <div className="flex items-center gap-1.5 mb-5 flex-wrap">
+            {userId && userGames.length > 0 && (
+              <button onClick={() => setChipMyGamesOnly(!chipMyGamesOnly)} data-active={chipMyGamesOnly} className="vs-tab text-xs">
+                <Gamepad2 size={11} /> My games
+              </button>
+            )}
+            <button onClick={() => setChipMicOnly(!chipMicOnly)} data-active={chipMicOnly} className="vs-tab text-xs">
+              <Mic size={11} /> Mic only
+            </button>
+            <button onClick={() => setChipUrgent(!chipUrgent)} data-active={chipUrgent} className="vs-tab text-xs">
+              <Clock size={11} /> Closing soon
+            </button>
+            {(chipMyGamesOnly || chipMicOnly || chipUrgent) && (
+              <button
+                onClick={() => { setChipMyGamesOnly(false); setChipMicOnly(false); setChipUrgent(false) }}
+                className="text-[10px] text-text-dim hover:text-cyan ml-1"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       {/* Posts feed */}
@@ -442,7 +584,7 @@ function LfgPostCard({
   expiresIn: (d: string) => string
 }) {
   const isOwn = post.user_id === userId
-  const profile = post.profile as Profile | undefined
+  const profile = post.profile as (Profile & { last_seen_at?: string; is_verified?: boolean; level_name?: string }) | undefined
   const game = post.game as Game | undefined
   const responses = post.responses ?? []
   const accepted = responses.filter(r => r.status === 'accepted')
@@ -451,6 +593,9 @@ function LfgPostCard({
   const spotsLeft = post.party_size - filledTotal
   const hasApplied = !!post.my_response
   const myStatus = post.my_response?.status
+  const isOnline = profile?.last_seen_at
+    ? Date.now() - new Date(profile.last_seen_at).getTime() < 5 * 60 * 1000
+    : false
 
   // Slot rendering: 1 owner + accepted + empty
   const slots: ({ kind: 'owner' | 'member' | 'empty', profile?: Profile })[] = []
@@ -468,12 +613,19 @@ function LfgPostCard({
           size="md"
           variant="gradient"
           showInnerRing={profile?.is_founding_member}
+          online={isOnline}
         />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <h3 className="text-sm font-medium">{post.title}</h3>
             {game && <span className="vs-badge vs-badge-purple text-[9px]">{game.name}</span>}
+            {profile?.level_name && profile.level_name !== 'Recruit' && (
+              <span className="vs-badge vs-badge-cyan text-[9px]">{profile.level_name}</span>
+            )}
+            {profile?.is_verified && (
+              <span className="vs-badge vs-badge-success text-[9px]"><Shield size={8} /> Verified</span>
+            )}
           </div>
           {post.description && (
             <p className="text-xs text-text-muted mb-2 line-clamp-2">{post.description}</p>
