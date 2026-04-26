@@ -5,11 +5,14 @@ import { createClient } from '@/lib/supabase-browser'
 import type { Clip, ClipComment, Game, Profile } from '@/types'
 import {
   Film, Trophy, Heart, MessageCircle, Eye, Play, X, Upload,
-  ChevronLeft, ChevronRight, Clock, Flame, Send, Trash2
+  ChevronLeft, ChevronRight, Clock, Flame, Send, Trash2,
+  CloudUpload, AlertCircle, Check
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar } from '@/components/ui/avatar'
 import { ScopeSpinner } from '@/components/ui/loader'
+import { VideoPlayer } from '@/components/ui/video-player'
+import { CLIP_LIMITS, readVideoMeta, extractThumbnail, validateClipFile } from '@/lib/video-utils'
 
 type SortMode = 'recent' | 'popular'
 type UploadStep = 'form' | 'uploading' | 'done'
@@ -29,8 +32,13 @@ export default function ClipsPage() {
   const [showUpload, setShowUpload] = useState(false)
   const [uploadStep, setUploadStep] = useState<UploadStep>('form')
   const [uploadTitle, setUploadTitle] = useState('')
-  const [uploadUrl, setUploadUrl] = useState('')
   const [uploadGame, setUploadGame] = useState('')
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null)
+  const [uploadDuration, setUploadDuration] = useState<number | null>(null)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false)
 
   // Clip detail modal
   const [activeClip, setActiveClip] = useState<Clip | null>(null)
@@ -151,30 +159,112 @@ export default function ClipsPage() {
     }
   }
 
+  async function handleFileSelected(file: File) {
+    setUploadError(null)
+    const formatErr = validateClipFile(file)
+    if (formatErr) {
+      setUploadError(formatErr)
+      return
+    }
+    try {
+      const meta = await readVideoMeta(file)
+      if (meta.durationSec > CLIP_LIMITS.maxDurationSec) {
+        setUploadError(`Clip is ${meta.durationSec.toFixed(1)}s — max ${CLIP_LIMITS.maxDurationSec}s.`)
+        return
+      }
+      setUploadFile(file)
+      setUploadDuration(meta.durationSec)
+      // Preview-URL voor lokale playback
+      if (uploadPreview) URL.revokeObjectURL(uploadPreview)
+      setUploadPreview(URL.createObjectURL(file))
+    } catch (err) {
+      setUploadError((err as Error).message)
+    }
+  }
+
+  function resetUploadForm() {
+    if (uploadPreview) URL.revokeObjectURL(uploadPreview)
+    setUploadFile(null)
+    setUploadPreview(null)
+    setUploadDuration(null)
+    setUploadProgress(0)
+    setUploadError(null)
+    setUploadTitle('')
+    setUploadGame('')
+    setUploadStep('form')
+    setDragActive(false)
+  }
+
   async function handleUpload() {
-    if (!userId || !uploadTitle.trim() || !uploadUrl.trim()) return
+    if (!userId || !uploadTitle.trim() || !uploadFile) return
     setUploadStep('uploading')
+    setUploadError(null)
 
-    const { error } = await supabase.from('clips').insert({
-      user_id: userId,
-      title: uploadTitle.trim(),
-      video_url: uploadUrl.trim(),
-      game_id: uploadGame || null,
-    })
+    try {
+      const fileExt = uploadFile.name.split('.').pop()?.toLowerCase() || 'mp4'
+      const baseName = `${userId}/${crypto.randomUUID()}`
+      const videoPath = `${baseName}.${fileExt}`
 
-    if (!error) {
+      // 1. Upload video
+      setUploadProgress(15)
+      const { error: vidErr } = await supabase.storage
+        .from('clips-videos')
+        .upload(videoPath, uploadFile, { contentType: uploadFile.type, upsert: false })
+      if (vidErr) throw new Error(`Video upload mislukt: ${vidErr.message}`)
+      setUploadProgress(60)
+
+      const { data: { publicUrl: videoUrl } } = supabase.storage
+        .from('clips-videos')
+        .getPublicUrl(videoPath)
+
+      // 2. Genereer + upload thumbnail
+      let thumbnailUrl: string | null = null
+      try {
+        const thumbBlob = await extractThumbnail(uploadFile, 2)
+        const thumbPath = `${baseName}-thumb.jpg`
+        const { error: thumbErr } = await supabase.storage
+          .from('clips-videos')
+          .upload(thumbPath, thumbBlob, { contentType: 'image/jpeg', upsert: false })
+        if (!thumbErr) {
+          thumbnailUrl = supabase.storage.from('clips-videos').getPublicUrl(thumbPath).data.publicUrl
+        }
+      } catch (e) {
+        // Thumbnail-fout is niet kritiek — clip blijft uploaden zonder
+        console.warn('Thumbnail extraction failed:', e)
+      }
+      setUploadProgress(90)
+
+      // 3. Insert clip-record
+      const { error: insertErr } = await supabase.from('clips').insert({
+        user_id: userId,
+        title: uploadTitle.trim(),
+        video_url: videoUrl,
+        thumbnail_url: thumbnailUrl,
+        game_id: uploadGame || null,
+        source_type: 'native',
+      })
+      if (insertErr) throw new Error(`Opslaan mislukt: ${insertErr.message}`)
+
+      setUploadProgress(100)
       setUploadStep('done')
       setTimeout(() => {
         setShowUpload(false)
-        setUploadStep('form')
-        setUploadTitle('')
-        setUploadUrl('')
-        setUploadGame('')
+        resetUploadForm()
         loadClips()
+        loadCOTW()
       }, 1200)
-    } else {
+    } catch (err) {
+      setUploadError((err as Error).message)
       setUploadStep('form')
+      setUploadProgress(0)
     }
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleFileSelected(file)
   }
 
   async function openClipDetail(clip: Clip) {
@@ -483,19 +573,84 @@ export default function ClipsPage() {
 
       {/* Upload Modal */}
       {showUpload && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowUpload(false)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => { if (uploadStep === 'form') { setShowUpload(false); resetUploadForm() } }}
+        >
+          <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 animate-slide-up vs-lit max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <Upload size={16} className="text-purple" /> Upload Clip
               </h3>
-              <button onClick={() => setShowUpload(false)} className="text-text-dim hover:text-text">
+              <button
+                onClick={() => { if (uploadStep === 'form') { setShowUpload(false); resetUploadForm() } }}
+                disabled={uploadStep === 'uploading'}
+                className="text-text-dim hover:text-text disabled:opacity-30 disabled:cursor-not-allowed"
+              >
                 <X size={16} />
               </button>
             </div>
 
             {uploadStep === 'form' && (
               <div className="p-4 space-y-4">
+                {/* Drop zone OR preview */}
+                {!uploadFile ? (
+                  <label
+                    htmlFor="clip-file-input"
+                    onDragOver={e => { e.preventDefault(); setDragActive(true) }}
+                    onDragLeave={() => setDragActive(false)}
+                    onDrop={handleDrop}
+                    className={`block border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                      dragActive
+                        ? 'border-purple bg-purple/5'
+                        : 'border-border hover:border-border-hover bg-void/30'
+                    }`}
+                  >
+                    <input
+                      id="clip-file-input"
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/webm"
+                      onChange={e => e.target.files?.[0] && handleFileSelected(e.target.files[0])}
+                      className="hidden"
+                    />
+                    <CloudUpload size={32} className={`mx-auto mb-3 ${dragActive ? 'text-purple' : 'text-text-dim'}`} />
+                    <p className="text-sm font-medium mb-1">
+                      Drop your clip here or click to browse
+                    </p>
+                    <p className="text-[11px] text-text-dim">
+                      MP4, MOV or WebM · max {CLIP_LIMITS.maxBytes / 1024 / 1024} MB · max {CLIP_LIMITS.maxDurationSec}s
+                    </p>
+                  </label>
+                ) : (
+                  <div className="space-y-2">
+                    {uploadPreview && (
+                      <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                        <video
+                          src={uploadPreview}
+                          controls
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-text-dim">
+                      <span className="truncate flex-1">
+                        {uploadFile.name} · {(uploadFile.size / 1024 / 1024).toFixed(1)} MB
+                        {uploadDuration !== null && ` · ${uploadDuration.toFixed(1)}s`}
+                      </span>
+                      <button onClick={resetUploadForm} className="text-cyan hover:underline shrink-0 ml-2">
+                        Change
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {uploadError && (
+                  <div className="flex items-start gap-2 text-xs text-danger bg-danger/10 border border-danger/20 rounded-lg p-2">
+                    <AlertCircle size={13} className="mt-0.5 shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
+
                 <div>
                   <label className="vs-label block mb-1.5">TITLE</label>
                   <input
@@ -507,17 +662,7 @@ export default function ClipsPage() {
                     maxLength={100}
                   />
                 </div>
-                <div>
-                  <label className="vs-label block mb-1.5">VIDEO URL</label>
-                  <input
-                    type="url"
-                    value={uploadUrl}
-                    onChange={e => setUploadUrl(e.target.value)}
-                    placeholder="https://youtube.com/watch?v=... or Twitch clip URL"
-                    className="vs-input"
-                  />
-                  <p className="text-[11px] text-text-dim mt-1">YouTube, Twitch clips, or direct video links</p>
-                </div>
+
                 <div>
                   <label className="vs-label block mb-1.5">GAME (OPTIONAL)</label>
                   <select
@@ -531,29 +676,40 @@ export default function ClipsPage() {
                     ))}
                   </select>
                 </div>
+
                 <button
                   onClick={handleUpload}
-                  disabled={!uploadTitle.trim() || !uploadUrl.trim()}
+                  disabled={!uploadTitle.trim() || !uploadFile}
                   className="vs-btn vs-btn-primary w-full disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Upload Clip
+                  <Upload size={14} /> Upload Clip
                 </button>
               </div>
             )}
 
             {uploadStep === 'uploading' && (
-              <div className="p-8 text-center">
-                <ScopeSpinner size={36} className="mx-auto mb-3" />
-                <p className="text-sm text-text-dim">Uploading clip...</p>
+              <div className="p-8 text-center space-y-4">
+                <ScopeSpinner size={36} className="mx-auto" />
+                <div>
+                  <p className="text-sm text-text mb-2">Uploading clip…</p>
+                  <div className="h-1.5 bg-void rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple to-cyan rounded-full transition-all shadow-[0_0_8px_rgba(107,63,224,0.5)]"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-text-dim mt-1.5">{uploadProgress}%</p>
+                </div>
               </div>
             )}
 
             {uploadStep === 'done' && (
               <div className="p-8 text-center">
-                <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-3">
-                  <Film size={18} className="text-success" />
+                <div className="w-12 h-12 rounded-full bg-success/20 border border-success/30 flex items-center justify-center mx-auto mb-3 shadow-[0_0_20px_rgba(93,202,165,0.4)]">
+                  <Check size={20} className="text-success" />
                 </div>
-                <p className="text-sm font-medium">Clip uploaded!</p>
+                <p className="text-sm font-medium">Clip uploaded</p>
+                <p className="text-xs text-text-dim mt-0.5">Live in the feed</p>
               </div>
             )}
           </div>
@@ -592,14 +748,23 @@ export default function ClipsPage() {
               </button>
             </div>
 
-            {/* Video embed */}
+            {/* Video player — native voor onze uploads, iframe-fallback voor legacy externe URLs */}
             <div className="aspect-video bg-black shrink-0">
-              <iframe
-                src={getVideoEmbed(activeClip.video_url)}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              {(activeClip as any).source_type === 'native' ? (
+                <VideoPlayer
+                  src={activeClip.video_url}
+                  poster={activeClip.thumbnail_url}
+                  autoPlay
+                  className="w-full h-full"
+                />
+              ) : (
+                <iframe
+                  src={getVideoEmbed(activeClip.video_url)}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              )}
             </div>
 
             {/* Stats bar */}
