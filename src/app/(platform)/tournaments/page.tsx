@@ -1,14 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import type { Game, Profile } from '@/types'
 import Link from 'next/link'
 import {
   Trophy, Plus, X, Calendar, Users, MapPin, Monitor, Shield,
-  Clock, ChevronRight, Crown, Swords, Check, Gamepad2, Search, Zap
+  Clock, ChevronRight, Crown, Swords, Check, Gamepad2, Search, Zap,
+  Flame
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { Avatar } from '@/components/ui/avatar'
+import { ScopeSpinner } from '@/components/ui/loader'
 
 interface Tournament {
   id: string
@@ -46,6 +49,9 @@ export default function TournamentsPage() {
   // Filters
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selectedGame, setSelectedGame] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   // Create modal
   const [showCreate, setShowCreate] = useState(false)
@@ -75,6 +81,26 @@ export default function TournamentsPage() {
     if (user) setUserId(user.id)
     loadGames()
     loadTournaments()
+    // Real-time: nieuwe tournaments + registraties verschijnen direct
+    if (!channelRef.current) {
+      channelRef.current = supabase
+        .channel('tournaments-feed')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tournaments' }, () => loadTournaments())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tournament_registrations' }, () => loadTournaments())
+        .subscribe()
+    }
+  }
+
+  function timeUntil(date: string): { text: string; live: boolean; soon: boolean } {
+    const ms = new Date(date).getTime() - Date.now()
+    if (ms <= 0) return { text: 'Live', live: true, soon: false }
+    const minutes = Math.floor(ms / 60000)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+    const soon = ms < 60 * 60 * 1000 // <1h
+    if (days >= 1) return { text: `in ${days}d ${hours % 24}h`, live: false, soon: false }
+    if (hours >= 1) return { text: `in ${hours}h ${minutes % 60}m`, live: false, soon: false }
+    return { text: `in ${minutes}m`, live: false, soon }
   }
 
   async function loadGames() {
@@ -214,119 +240,171 @@ export default function TournamentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
-        <div className="flex items-center bg-surface rounded-lg border border-border overflow-hidden">
-          {(['all', 'registration', 'upcoming', 'in_progress', 'completed'] as StatusFilter[]).map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 text-xs transition-colors ${statusFilter === s ? 'bg-purple/15 text-purple' : 'text-text-dim hover:text-text-muted'}`}>
-              {s === 'all' ? 'All' : s === 'in_progress' ? 'Live' : formatLabel(s)}
-            </button>
-          ))}
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search tournaments..."
+            className="vs-input text-xs pl-8 py-1.5"
+          />
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setSelectedGame(null)} className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${!selectedGame ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'bg-surface border border-border text-text-dim hover:border-border-hover'}`}>
-            All Games
-          </button>
-          {games.slice(0, 5).map(g => (
-            <button key={g.id} onClick={() => setSelectedGame(g.id)} className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${selectedGame === g.id ? 'bg-cyan/15 text-cyan border border-cyan/30' : 'bg-surface border border-border text-text-dim hover:border-border-hover'}`}>
-              {g.name.split(':')[0]}
+        <div className="flex items-center gap-1 flex-wrap">
+          {(['all', 'registration', 'upcoming', 'in_progress', 'completed'] as StatusFilter[]).map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              data-active={statusFilter === s}
+              className="vs-tab text-xs"
+            >
+              {s === 'all' ? 'All' : s === 'in_progress' ? <><Flame size={11} /> Live</> : formatLabel(s)}
             </button>
           ))}
         </div>
       </div>
+      <div className="flex items-center gap-1 mb-5 flex-wrap">
+        <button onClick={() => setSelectedGame(null)} data-active={!selectedGame} className="vs-tab text-xs">
+          All Games
+        </button>
+        {games.slice(0, 5).map(g => (
+          <button
+            key={g.id}
+            onClick={() => setSelectedGame(g.id)}
+            data-active={selectedGame === g.id}
+            className="vs-tab text-xs"
+          >
+            {g.name.split(':')[0]}
+          </button>
+        ))}
+      </div>
 
       {/* Tournament list */}
       {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="vs-card animate-pulse">
-              <div className="h-5 bg-surface-2 rounded w-48 mb-3" />
-              <div className="h-3 bg-surface-2 rounded w-full mb-2" />
-              <div className="h-3 bg-surface-2 rounded w-2/3" />
-            </div>
-          ))}
-        </div>
-      ) : tournaments.length === 0 ? (
-        <EmptyState
-          icon={Trophy}
-          title="No tournaments found"
-          description="Create one and start competing."
-        />
-      ) : (
-        <div className="space-y-3">
-          {tournaments.map(t => {
-            const game = t.game as any
-            const organizer = t.organizer as any
-            const isFull = (t.registered_count || 0) >= t.max_teams
-            const canRegister = t.registration_open && !isFull && t.status === 'registration' && !t.user_registered
-
-            return (
-              <div key={t.id} className="vs-card hover:border-border-hover transition-all cursor-pointer" onClick={() => setActiveTournament(t)}>
-                <div className="flex items-start gap-4">
-                  {/* Trophy icon with status color */}
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    t.status === 'in_progress' ? 'bg-warning/15' :
-                    t.status === 'completed' ? 'bg-purple/15' :
-                    t.status === 'registration' ? 'bg-success/15' : 'bg-surface-2'
-                  }`}>
-                    <Trophy size={20} className={
-                      t.status === 'in_progress' ? 'text-warning' :
-                      t.status === 'completed' ? 'text-purple' :
-                      t.status === 'registration' ? 'text-success' : 'text-text-dim'
-                    } />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <h3 className="text-sm font-semibold">{t.name}</h3>
-                      {getStatusBadge(t.status)}
-                      {game && <span className="vs-badge vs-badge-purple text-[9px]">{game.name}</span>}
-                    </div>
-
-                    {t.description && <p className="text-xs text-text-muted mb-2 line-clamp-1">{t.description}</p>}
-
-                    <div className="flex items-center gap-4 text-[10px] text-text-dim flex-wrap">
-                      <span className="flex items-center gap-1"><Calendar size={10} /> {formatDate(t.starts_at)}</span>
-                      <span className="flex items-center gap-1"><Users size={10} /> {t.registered_count}/{t.max_teams} teams</span>
-                      <span className="flex items-center gap-1"><Swords size={10} /> {formatLabel(t.format)}</span>
-                      {t.team_size > 1 && <span className="flex items-center gap-1">{t.team_size}v{t.team_size}</span>}
-                      {t.platform && <span className="flex items-center gap-1"><Monitor size={10} /> {t.platform}</span>}
-                      {t.region && <span className="flex items-center gap-1"><MapPin size={10} /> {t.region}</span>}
-                      {t.prize_description && <span className="flex items-center gap-1 text-cyan"><Crown size={10} /> {t.prize_description}</span>}
-                    </div>
-                  </div>
-
-                  {/* Action */}
-                  <div className="shrink-0" onClick={e => e.stopPropagation()}>
-                    {t.user_registered ? (
-                      <button onClick={() => unregister(t.id)} className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
-                        <Check size={12} /> Registered
-                      </button>
-                    ) : canRegister ? (
-                      <button onClick={() => register(t.id)} className="vs-btn vs-btn-primary text-xs px-3 py-1.5">
-                        Register
-                      </button>
-                    ) : isFull ? (
-                      <span className="text-xs text-text-dim">Full</span>
-                    ) : null}
-                  </div>
-                </div>
-
-                {/* Fill bar */}
-                <div className="mt-3 h-1 bg-void rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${isFull ? 'bg-success' : 'bg-purple'}`}
-                    style={{ width: `${((t.registered_count || 0) / t.max_teams) * 100}%` }} />
-                </div>
-              </div>
+        <div className="flex justify-center py-12"><ScopeSpinner size={28} /></div>
+      ) : (() => {
+        const filtered = searchQuery
+          ? tournaments.filter(t =>
+              t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (t.description || '').toLowerCase().includes(searchQuery.toLowerCase())
             )
-          })}
-        </div>
-      )}
+          : tournaments
+        if (filtered.length === 0) {
+          return (
+            <EmptyState
+              icon={Trophy}
+              title={searchQuery ? `No tournaments match "${searchQuery}"` : 'No tournaments found'}
+              description={searchQuery ? 'Try a different keyword or remove filters.' : 'Create one and start competing.'}
+              cta={!searchQuery && userId ? { label: 'Create tournament', onClick: () => setShowCreate(true) } : undefined}
+            />
+          )
+        }
+        return (
+          <div className="space-y-3">
+            {filtered.map(t => {
+              const game = t.game as Game | undefined
+              const organizer = t.organizer as (Profile & { is_verified?: boolean; level_name?: string }) | undefined
+              const isFull = (t.registered_count || 0) >= t.max_teams
+              const canRegister = t.registration_open && !isFull && t.status === 'registration' && !t.user_registered
+              const tu = timeUntil(t.starts_at)
+
+              return (
+                <div key={t.id} className="vs-card vs-lit hover:border-border-hover transition-all cursor-pointer" onClick={() => setActiveTournament(t)}>
+                  <div className="flex items-start gap-4">
+                    {/* Trophy icon with status color */}
+                    <div className={`relative w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                      t.status === 'in_progress' ? 'bg-warning/15' :
+                      t.status === 'completed' ? 'bg-purple/15' :
+                      t.status === 'registration' ? 'bg-success/15' : 'bg-surface-2'
+                    }`}>
+                      <Trophy size={20} className={
+                        t.status === 'in_progress' ? 'text-warning' :
+                        t.status === 'completed' ? 'text-purple' :
+                        t.status === 'registration' ? 'text-success' : 'text-text-dim'
+                      } />
+                      {tu.live && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-warning opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-3 w-3 rounded-full bg-warning" />
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h3 className="text-sm font-semibold">{t.name}</h3>
+                        {getStatusBadge(t.status)}
+                        {game && <span className="vs-badge vs-badge-purple text-[9px]">{game.name}</span>}
+                      </div>
+
+                      {t.description && <p className="text-xs text-text-muted mb-2 line-clamp-1">{t.description}</p>}
+
+                      <div className="flex items-center gap-3 text-[10px] text-text-dim flex-wrap">
+                        <span className={`flex items-center gap-1 ${tu.soon ? 'text-warning' : tu.live ? 'text-warning' : ''}`}>
+                          <Calendar size={10} /> {tu.live ? '🔴 Live now' : tu.text}
+                        </span>
+                        <span className="flex items-center gap-1"><Users size={10} /> {t.registered_count}/{t.max_teams} teams</span>
+                        <span className="flex items-center gap-1"><Swords size={10} /> {formatLabel(t.format)}</span>
+                        {t.team_size > 1 && <span>{t.team_size}v{t.team_size}</span>}
+                        {t.platform && <span className="flex items-center gap-1"><Monitor size={10} /> {t.platform}</span>}
+                        {t.region && <span className="flex items-center gap-1"><MapPin size={10} /> {t.region}</span>}
+                        {t.prize_description && <span className="flex items-center gap-1 text-cyan"><Crown size={10} /> {t.prize_description}</span>}
+                      </div>
+
+                      {/* Organizer compact */}
+                      <div className="flex items-center gap-1.5 mt-2 text-[10px] text-text-dim">
+                        <span>by</span>
+                        <Link href={`/profile/${organizer?.username}`} className="flex items-center gap-1.5 hover:text-purple transition-colors" onClick={e => e.stopPropagation()}>
+                          <Avatar
+                            url={organizer?.avatar_url}
+                            name={organizer?.display_name || organizer?.username}
+                            size="xs"
+                            variant="gradient"
+                            showInnerRing={organizer?.is_founding_member}
+                          />
+                          <span>@{organizer?.username}</span>
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Action */}
+                    <div className="shrink-0" onClick={e => e.stopPropagation()}>
+                      {t.user_registered ? (
+                        <button onClick={() => unregister(t.id)} className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
+                          <Check size={12} /> Registered
+                        </button>
+                      ) : canRegister ? (
+                        <button onClick={() => register(t.id)} className="vs-btn vs-btn-primary text-xs px-3 py-1.5">
+                          Register
+                        </button>
+                      ) : isFull ? (
+                        <span className="text-xs text-text-dim">Full</span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Fill bar — gradient */}
+                  <div className="mt-3 h-1.5 bg-void rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        isFull
+                          ? 'bg-gradient-to-r from-success to-cyan shadow-[0_0_8px_rgba(93,202,165,0.4)]'
+                          : 'bg-gradient-to-r from-purple to-cyan shadow-[0_0_8px_rgba(107,63,224,0.4)]'
+                      }`}
+                      style={{ width: `${((t.registered_count || 0) / t.max_teams) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      })()}
 
       {/* Tournament detail modal */}
       {activeTournament && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setActiveTournament(null)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-lg mx-4 max-h-[85vh] overflow-y-auto animate-slide-up vs-lit" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-surface z-10">
               <div className="flex items-center gap-2">
                 <Trophy size={16} className="text-purple" />
@@ -380,10 +458,21 @@ export default function TournamentsPage() {
                 {activeTournament.region && <span className="flex items-center gap-1"><MapPin size={11} /> {activeTournament.region}</span>}
               </div>
 
-              <div className="text-xs text-text-dim">
-                Organized by{' '}
-                <Link href={`/profile/${(activeTournament.organizer as any)?.username}`} className="text-cyan hover:underline" onClick={() => setActiveTournament(null)}>
-                  @{(activeTournament.organizer as any)?.username}
+              <div className="flex items-center gap-2 text-xs text-text-dim">
+                <span>Organized by</span>
+                <Link
+                  href={`/profile/${(activeTournament.organizer as any)?.username}`}
+                  className="flex items-center gap-1.5 text-text hover:text-purple transition-colors"
+                  onClick={() => setActiveTournament(null)}
+                >
+                  <Avatar
+                    url={(activeTournament.organizer as any)?.avatar_url}
+                    name={(activeTournament.organizer as any)?.display_name || (activeTournament.organizer as any)?.username}
+                    size="xs"
+                    variant="gradient"
+                    showInnerRing={(activeTournament.organizer as any)?.is_founding_member}
+                  />
+                  <span>@{(activeTournament.organizer as any)?.username}</span>
                 </Link>
               </div>
 
@@ -411,7 +500,7 @@ export default function TournamentsPage() {
       {/* Create tournament modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowCreate(false)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div className="bg-surface border border-border rounded-xl w-full max-w-md mx-4 max-h-[85vh] overflow-y-auto animate-slide-up vs-lit" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-surface z-10">
               <h3 className="text-sm font-medium flex items-center gap-2"><Plus size={16} className="text-purple" /> Create Tournament</h3>
               <button onClick={() => setShowCreate(false)} className="text-text-dim hover:text-text"><X size={16} /></button>
