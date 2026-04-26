@@ -84,24 +84,32 @@ export default function LoginPage() {
           )}
 
           <div>
+            <label htmlFor="login-email" className="vs-label block mb-1.5">EMAIL</label>
             <input
+              id="login-email"
               type="email"
-              placeholder="Email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="vs-input"
+              autoComplete="email"
               required
+              aria-invalid={!!error && error.toLowerCase().includes('email')}
             />
           </div>
 
           <div>
+            <label htmlFor="login-password" className="vs-label block mb-1.5">PASSWORD</label>
             <input
+              id="login-password"
               type="password"
-              placeholder="Password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="vs-input"
+              autoComplete="current-password"
               required
+              aria-invalid={!!error && error.toLowerCase().includes('password')}
             />
           </div>
 

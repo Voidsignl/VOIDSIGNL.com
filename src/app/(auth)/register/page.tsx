@@ -110,39 +110,51 @@ export default function RegisterPage() {
           )}
 
           <div>
+            <label htmlFor="reg-username" className="vs-label block mb-1.5">USERNAME</label>
             <input
+              id="reg-username"
               type="text"
-              placeholder="Username"
+              placeholder="shadow"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
               className="vs-input"
+              autoComplete="username"
               required
               minLength={3}
               maxLength={24}
+              aria-invalid={!!error && error.toLowerCase().includes('username')}
             />
-            <p className="text-xs text-text-dim mt-1 ml-1">Letters, numbers, - and _ only</p>
+            <p className="text-xs text-text-dim mt-1 ml-1">3-24 chars · letters, numbers, - and _ only</p>
           </div>
 
           <div>
+            <label htmlFor="reg-email" className="vs-label block mb-1.5">EMAIL</label>
             <input
+              id="reg-email"
               type="email"
-              placeholder="Email"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="vs-input"
+              autoComplete="email"
               required
+              aria-invalid={!!error && error.toLowerCase().includes('email')}
             />
           </div>
 
           <div>
+            <label htmlFor="reg-password" className="vs-label block mb-1.5">PASSWORD</label>
             <input
+              id="reg-password"
               type="password"
-              placeholder="Password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="vs-input"
+              autoComplete="new-password"
               required
               minLength={6}
+              aria-invalid={!!error && error.toLowerCase().includes('password')}
             />
             <p className="text-xs text-text-dim mt-1 ml-1">Minimum 6 characters</p>
           </div>
