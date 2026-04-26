@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ScopeSpinner } from '@/components/ui/loader'
 
 type FeedTab = 'global' | 'following' | string // string = game_id
 type SortMode = 'recent' | 'popular'
@@ -714,7 +715,7 @@ function FeedContent() {
                   <div className="mt-3 pt-3 border-t border-border">
                     {isLoadingComments ? (
                       <div className="flex justify-center py-3">
-                        <div className="w-4 h-4 border-2 border-purple border-t-transparent rounded-full animate-spin" />
+                        <ScopeSpinner size={20} />
                       </div>
                     ) : comments.length === 0 ? (
                       <p className="text-xs text-text-dim text-center py-2">No comments yet</p>

@@ -157,7 +157,7 @@ export default function RankingsPage() {
       {!loading && users.length >= 3 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {/* 2nd place */}
-          <div className="vs-card text-center pt-8 pb-4 relative overflow-hidden">
+          <div className="vs-card vs-lit text-center pt-8 pb-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-300/40 to-transparent" />
             <Medal size={20} className="text-gray-300 mx-auto mb-2" />
             <Link href={`/profile/${users[1].username}`}>
@@ -177,7 +177,7 @@ export default function RankingsPage() {
           </div>
 
           {/* 1st place */}
-          <div className="vs-card text-center pt-6 pb-4 relative overflow-hidden border-yellow-400/20">
+          <div className="vs-card vs-lit text-center pt-6 pb-4 relative overflow-hidden border-yellow-400/20">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-400/60 to-transparent" />
             <Crown size={24} className="text-yellow-400 mx-auto mb-2" />
             <Link href={`/profile/${users[0].username}`}>
@@ -197,7 +197,7 @@ export default function RankingsPage() {
           </div>
 
           {/* 3rd place */}
-          <div className="vs-card text-center pt-8 pb-4 relative overflow-hidden">
+          <div className="vs-card vs-lit text-center pt-8 pb-4 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-600/40 to-transparent" />
             <Medal size={20} className="text-amber-600 mx-auto mb-2" />
             <Link href={`/profile/${users[2].username}`}>

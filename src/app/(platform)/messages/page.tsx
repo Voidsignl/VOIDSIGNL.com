@@ -7,6 +7,7 @@ import {
   MessageCircle, Send, Search, ArrowLeft, Plus, Check, CheckCheck,
   User, X, MoreHorizontal
 } from 'lucide-react'
+import { ScopeSpinner } from '@/components/ui/loader'
 
 interface Conversation {
   id: string
@@ -495,7 +496,7 @@ export default function MessagesPage() {
               <div className="max-h-64 overflow-y-auto">
                 {searchingUsers ? (
                   <div className="text-center py-4">
-                    <div className="w-4 h-4 border-2 border-purple border-t-transparent rounded-full animate-spin mx-auto" />
+                    <ScopeSpinner size={20} className="mx-auto" />
                   </div>
                 ) : searchResults.length === 0 ? (
                   <p className="text-xs text-text-dim text-center py-4">

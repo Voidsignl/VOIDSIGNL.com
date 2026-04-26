@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { VoidsignlLogo } from '@/components/ui/logo'
+import { VoidsignlLogo, VoidsignlMonogram } from '@/components/ui/logo'
 import { Search, Bell, Globe, X, User, Gamepad2, Newspaper, Trophy, Film, Users, BarChart3, Award, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -158,9 +158,10 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
 
   return (
     <nav className="h-[52px] bg-surface border-b border-border flex items-center justify-between px-3 md:px-5 shrink-0 z-50">
-      {/* Logo */}
+      {/* Logo — monogram in compact topnav, full wordmark op desktop */}
       <Link href={profile ? '/dashboard' : '/'} className="flex items-center gap-2 md:gap-3 shrink-0">
-        <VoidsignlLogo size={22} className="text-text" />
+        <VoidsignlMonogram size={26} className="text-text sm:hidden" />
+        <VoidsignlLogo size={24} variant="icon" className="text-text hidden sm:block" />
         <span className="text-xs md:text-sm font-bold tracking-[2px] md:tracking-[3px] hidden sm:block" style={{ fontFamily: 'var(--font-display)' }}>
           VOIDSIGNL
         </span>

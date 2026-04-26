@@ -15,6 +15,7 @@ import {
 import { ImageUpload } from '@/components/ui/image-upload'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ScopeSpinner } from '@/components/ui/loader'
 
 type ProfileTab = 'posts' | 'clips' | 'games'
 
@@ -861,8 +862,8 @@ export default function ProfilePage() {
 
           {/* Tab content */}
           {loadingContent ? (
-            <div className="vs-card animate-pulse py-12 text-center">
-              <div className="w-5 h-5 border-2 border-purple border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="vs-card py-12 text-center">
+              <ScopeSpinner size={28} className="mx-auto" />
             </div>
           ) : activeTab === 'posts' ? (
             posts.length === 0 ? (

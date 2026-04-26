@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar } from '@/components/ui/avatar'
+import { ScopeSpinner } from '@/components/ui/loader'
 
 type SortMode = 'recent' | 'popular'
 type UploadStep = 'form' | 'uploading' | 'done'
@@ -533,7 +534,7 @@ export default function ClipsPage() {
 
             {uploadStep === 'uploading' && (
               <div className="p-8 text-center">
-                <div className="w-8 h-8 border-2 border-purple border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <ScopeSpinner size={36} className="mx-auto mb-3" />
                 <p className="text-sm text-text-dim">Uploading clip...</p>
               </div>
             )}
@@ -608,7 +609,7 @@ export default function ClipsPage() {
             <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-3">
               {loadingComments ? (
                 <div className="text-center py-4">
-                  <div className="w-5 h-5 border-2 border-purple border-t-transparent rounded-full animate-spin mx-auto" />
+                  <ScopeSpinner size={22} className="mx-auto" />
                 </div>
               ) : clipComments.length === 0 ? (
                 <p className="text-sm text-text-dim text-center py-4">No comments yet. Be the first!</p>
