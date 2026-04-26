@@ -8,6 +8,8 @@ import {
   Heart, Users, UserPlus, Film, Trophy, Swords, Crown, Shield,
   Lock, Sparkles
 } from 'lucide-react'
+import { ScopeSpinner } from '@/components/ui/loader'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Achievement {
   id: string
@@ -119,7 +121,7 @@ export default function AchievementsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-text-dim text-sm animate-pulse">Loading achievements...</div>
+        <ScopeSpinner size={28} />
       </div>
     )
   }
@@ -131,14 +133,18 @@ export default function AchievementsPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-wide flex items-center gap-2">
             <Award size={20} className="text-purple" /> Achievements
+            {achievements.length > 0 && (
+              <span className="vs-counter text-[10px] text-text-dim tabular-nums ml-1">
+                {String(totalUnlocked).padStart(2, '0')} / {String(achievements.length).padStart(2, '0')}
+              </span>
+            )}
           </h1>
           <p className="text-sm text-text-dim mt-0.5">Unlock badges, earn XP, show off your grind</p>
         </div>
       </div>
 
       {/* Progress card */}
-      <div className="vs-card mb-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple/40 to-transparent" />
+      <div className="vs-card vs-lit mb-6 relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
           {/* Circular progress */}
           <div className="relative w-20 h-20 shrink-0">
@@ -146,32 +152,39 @@ export default function AchievementsPage() {
               <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
               <circle cx="40" cy="40" r="34" fill="none" stroke="#6B3FE0" strokeWidth="6"
                 strokeLinecap="round" strokeDasharray={`${progressPct * 2.136} 213.6`}
-                className="transition-all duration-1000" />
+                className="transition-all duration-1000"
+                style={{ filter: 'drop-shadow(0 0 6px rgba(107,63,224,0.5))' }} />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-lg font-bold text-purple">{progressPct}%</span>
+              <span className="text-lg font-bold text-purple tabular-nums">{progressPct}%</span>
             </div>
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <div className="flex flex-wrap items-center gap-4 md:gap-6 mb-3">
               <div>
-                <p className="text-2xl font-bold">{totalUnlocked}<span className="text-text-dim font-normal text-sm">/{achievements.length}</span></p>
-                <p className="text-[10px] text-text-dim tracking-wider">UNLOCKED</p>
+                <p className="text-2xl font-bold tabular-nums">
+                  {totalUnlocked}
+                  <span className="text-text-dim font-normal text-sm tabular-nums">/{achievements.length}</span>
+                </p>
+                <p className="vs-counter text-[10px] text-text-dim mt-0.5">UNLOCKED</p>
               </div>
               <div className="h-8 w-px bg-border" />
               <div>
-                <p className="text-2xl font-bold text-cyan">+{totalXP}</p>
-                <p className="text-[10px] text-text-dim tracking-wider">XP EARNED</p>
+                <p className="text-2xl font-bold text-cyan tabular-nums">+{totalXP.toLocaleString()}</p>
+                <p className="vs-counter text-[10px] text-text-dim mt-0.5">XP EARNED</p>
               </div>
               <div className="h-8 w-px bg-border" />
               <div>
-                <p className="text-2xl font-bold">{achievements.length - totalUnlocked}</p>
-                <p className="text-[10px] text-text-dim tracking-wider">REMAINING</p>
+                <p className="text-2xl font-bold tabular-nums">{achievements.length - totalUnlocked}</p>
+                <p className="vs-counter text-[10px] text-text-dim mt-0.5">REMAINING</p>
               </div>
             </div>
             <div className="h-2 bg-void rounded-full overflow-hidden">
-              <div className="h-full bg-purple rounded-full transition-all duration-1000" style={{ width: `${progressPct}%` }} />
+              <div
+                className="h-full bg-gradient-to-r from-purple to-cyan rounded-full transition-all duration-1000"
+                style={{ width: `${progressPct}%`, boxShadow: '0 0 8px rgba(107,63,224,0.6)' }}
+              />
             </div>
           </div>
 
@@ -183,8 +196,8 @@ export default function AchievementsPage() {
               const style = RARITY_STYLES[r]
               return (
                 <div key={r} className="text-center">
-                  <p className={`text-sm font-bold ${style.text}`}>{unlocked}/{total}</p>
-                  <p className="text-[8px] text-text-dim capitalize">{r}</p>
+                  <p className={`text-sm font-bold tabular-nums ${style.text}`}>{unlocked}/{total}</p>
+                  <p className="vs-counter text-[8px] text-text-dim mt-0.5">{r.toUpperCase()}</p>
                 </div>
               )
             })}
@@ -193,46 +206,69 @@ export default function AchievementsPage() {
       </div>
 
       {/* Category filter */}
-      <div className="flex items-center gap-1 mb-5 overflow-x-auto pb-1">
-        {(Object.entries(CATEGORY_LABELS) as [CategoryFilter, typeof CATEGORY_LABELS[string]][]).map(([key, val]) => (
-          <button
-            key={key}
-            onClick={() => setCategory(key)}
-            data-active={category === key}
-            className="vs-tab whitespace-nowrap"
-          >
-            {val.label}
-            <span className="ml-1 text-[10px] opacity-50">
-              ({key === 'all' ? achievements.length : achievements.filter(a => a.category === key).length})
-            </span>
-          </button>
-        ))}
+      <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1">
+        {(Object.entries(CATEGORY_LABELS) as [CategoryFilter, typeof CATEGORY_LABELS[string]][]).map(([key, val]) => {
+          const count = key === 'all' ? achievements.length : achievements.filter(a => a.category === key).length
+          return (
+            <button
+              key={key}
+              onClick={() => setCategory(key)}
+              data-active={category === key}
+              className="vs-tab whitespace-nowrap shrink-0"
+            >
+              {val.label}
+              {count > 0 && <span className="text-[10px] opacity-60 tabular-nums">({count})</span>}
+            </button>
+          )
+        })}
       </div>
+
+      {/* Empty filter state */}
+      {filtered.length === 0 && achievements.length > 0 && (
+        <EmptyState
+          icon={Award}
+          title="No achievements in this category"
+          description="Try a different filter."
+        />
+      )}
 
       {/* Unlocked */}
       {unlockedFiltered.length > 0 && (
         <div className="mb-8">
-          <p className="vs-label mb-3 flex items-center gap-2">
-            <Sparkles size={12} className="text-purple" /> UNLOCKED ({unlockedFiltered.length})
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="vs-label flex items-center gap-2">
+              <Sparkles size={12} className="text-purple" /> UNLOCKED
+            </p>
+            <span className="vs-counter text-[10px] text-text-dim tabular-nums">
+              {String(unlockedFiltered.length).padStart(2, '0')}
+            </span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {unlockedFiltered.map(a => {
               const Icon = ICON_MAP[a.icon] || Award
               const style = RARITY_STYLES[a.rarity]
+              const isHighRarity = a.rarity === 'epic' || a.rarity === 'legendary'
               return (
-                <div key={a.id} className={`vs-card flex items-center gap-3.5 border ${style.border} ${style.glow} hover:border-opacity-40 transition-all`}>
-                  <div className={`w-11 h-11 rounded-xl ${style.bg} flex items-center justify-center shrink-0`}>
+                <div
+                  key={a.id}
+                  className={`vs-card vs-brackets ${isHighRarity ? 'vs-lit' : ''} flex items-center gap-3.5 border ${style.border} ${style.glow} hover:border-opacity-40 transition-all`}
+                >
+                  <div className={`w-11 h-11 rounded-xl ${style.bg} border ${style.border} flex items-center justify-center shrink-0`}>
                     <Icon size={20} className={style.text} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium truncate">{a.name}</p>
-                      <span className={`text-[8px] uppercase tracking-wider ${style.text}`}>{a.rarity}</span>
+                      <span className={`vs-counter text-[8px] tabular-nums ${style.text}`}>{a.rarity.toUpperCase()}</span>
                     </div>
                     <p className="text-[11px] text-text-dim truncate">{a.description}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[9px] text-purple">+{a.xp_reward} XP</span>
-                      {a.unlocked_at && <span className="text-[9px] text-text-dim">· {timeAgo(a.unlocked_at)}</span>}
+                      <span className="text-[9px] text-purple tabular-nums">+{a.xp_reward} XP</span>
+                      {a.unlocked_at && (
+                        <span className="vs-counter text-[9px] text-text-dim tabular-nums">
+                          · {timeAgo(a.unlocked_at)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -245,27 +281,39 @@ export default function AchievementsPage() {
       {/* Locked */}
       {lockedFiltered.length > 0 && (
         <div>
-          <p className="vs-label mb-3 flex items-center gap-2">
-            <Lock size={12} className="text-text-dim" /> LOCKED ({lockedFiltered.length})
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="vs-label flex items-center gap-2">
+              <Lock size={12} className="text-text-dim" /> LOCKED
+            </p>
+            <span className="vs-counter text-[10px] text-text-dim tabular-nums">
+              {String(lockedFiltered.length).padStart(2, '0')}
+            </span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {lockedFiltered.map(a => {
               const Icon = ICON_MAP[a.icon] || Award
               const style = RARITY_STYLES[a.rarity]
               return (
-                <div key={a.id} className="vs-card flex items-center gap-3.5 opacity-50 hover:opacity-70 transition-all">
-                  <div className="w-11 h-11 rounded-xl bg-surface-2 flex items-center justify-center shrink-0">
+                <div
+                  key={a.id}
+                  className="vs-card vs-brackets flex items-center gap-3.5 opacity-55 hover:opacity-80 transition-all border-dashed"
+                  style={{ borderStyle: 'dashed' }}
+                >
+                  <div className="relative w-11 h-11 rounded-xl bg-surface-2 border border-border flex items-center justify-center shrink-0">
                     <Icon size={20} className="text-text-dim" />
+                    <div className="absolute inset-0 rounded-xl bg-void/40" />
+                    <Lock size={11} className="absolute text-text-dim" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium truncate">{a.name}</p>
-                      <span className={`text-[8px] uppercase tracking-wider ${style.text} opacity-60`}>{a.rarity}</span>
+                      <span className={`vs-counter text-[8px] tabular-nums ${style.text} opacity-60`}>
+                        {a.rarity.toUpperCase()}
+                      </span>
                     </div>
                     <p className="text-[11px] text-text-dim truncate">{a.description}</p>
-                    <span className="text-[9px] text-purple opacity-60">+{a.xp_reward} XP</span>
+                    <span className="text-[9px] text-purple opacity-60 tabular-nums">+{a.xp_reward} XP</span>
                   </div>
-                  <Lock size={13} className="text-text-dim shrink-0" />
                 </div>
               )
             })}
