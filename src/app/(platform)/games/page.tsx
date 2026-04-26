@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { Gamepad2, Check, Plus, Loader2, Star } from 'lucide-react'
+import { ScopeSpinner } from '@/components/ui/loader'
+import { EmptyState } from '@/components/ui/empty-state'
 
 type Game = {
   id: string
@@ -73,8 +75,8 @@ export default function GamesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-text-dim text-sm animate-pulse">Loading games…</div>
+      <div className="flex items-center justify-center h-64">
+        <ScopeSpinner size={28} />
       </div>
     )
   }
@@ -85,15 +87,24 @@ export default function GamesPage() {
         <div className="flex items-center gap-2 mb-1">
           <Gamepad2 size={20} className="text-purple" />
           <h1 className="text-xl font-medium">Games</h1>
+          {games.length > 0 && (
+            <span className="vs-counter text-[10px] text-text-dim tabular-nums ml-1">
+              {String(userGameIds.size).padStart(2, '0')} / {String(games.length).padStart(2, '0')}
+            </span>
+          )}
         </div>
         <p className="text-sm text-text-dim">
           Pick the games you play. Your main game gets pinned to your profile and feed.
         </p>
       </div>
 
-      <div className="mb-4 flex items-center justify-between text-xs text-text-dim">
-        <span>{userGameIds.size} selected</span>
-        <span>{games.length} available</span>
+      <div className="mb-4 flex items-center justify-between">
+        <span className="vs-counter text-[10px] text-text-dim tabular-nums">
+          {String(userGameIds.size).padStart(2, '0')} SELECTED
+        </span>
+        <span className="vs-counter text-[10px] text-text-dim tabular-nums">
+          {String(games.length).padStart(2, '0')} AVAILABLE
+        </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -104,13 +115,15 @@ export default function GamesPage() {
           return (
             <div
               key={game.id}
-              className={`relative bg-surface border rounded-xl p-4 transition-all ${
-                isAdded ? 'border-purple/30 bg-purple/[0.04]' : 'border-border hover:border-border-hover'
+              className={`vs-brackets relative bg-surface border rounded-xl p-4 transition-all ${
+                isAdded
+                  ? `vs-lit border-purple/30 bg-purple/[0.04] ${isMain ? 'shadow-[0_0_16px_rgba(107,63,224,0.18)]' : ''}`
+                  : 'border-border hover:border-border-hover'
               }`}
             >
               {isMain && (
-                <span className="absolute -top-2 left-3 inline-flex items-center gap-1 text-[9px] tracking-[1.5px] uppercase bg-purple text-white px-2 py-0.5 rounded-full">
-                  <Star size={9} fill="currentColor" /> Main
+                <span className="vs-counter absolute -top-2 left-3 inline-flex items-center gap-1 text-[9px] tabular-nums bg-purple text-white px-2 py-0.5 rounded-full">
+                  <Star size={9} fill="currentColor" /> MAIN
                 </span>
               )}
               <div className="flex items-center gap-3 mb-3">
@@ -159,10 +172,11 @@ export default function GamesPage() {
       </div>
 
       {games.length === 0 && (
-        <div className="vs-card text-center py-12">
-          <Gamepad2 size={28} className="mx-auto mb-2 text-text-dim opacity-50" />
-          <p className="text-sm text-text-dim">No games available yet.</p>
-        </div>
+        <EmptyState
+          icon={Gamepad2}
+          title="No games available yet"
+          description="Admins haven't added games to the catalog yet."
+        />
       )}
     </div>
   )

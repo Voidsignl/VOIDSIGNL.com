@@ -9,6 +9,9 @@ import {
   Clock, Globe, Gamepad2, MessageCircle, ChevronRight,
   Mic, MapPin, Shield, Zap, Calendar, Send, Award
 } from 'lucide-react'
+import { ScopeSpinner } from '@/components/ui/loader'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Avatar } from '@/components/ui/avatar'
 
 type PageTab = 'buddy' | 'coaches' | 'my-sessions'
 
@@ -262,7 +265,7 @@ export default function BuddyCoachPage() {
     return <span className={`text-[9px] px-2 py-0.5 rounded ${styles[status] || 'bg-text-dim/15 text-text-dim'}`}>{status}</span>
   }
 
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="text-text-dim text-sm animate-pulse">Loading...</div></div>
+  if (loading) return <div className="flex items-center justify-center h-64"><ScopeSpinner size={28} /></div>
 
   return (
     <div className="max-w-5xl mx-auto animate-fade-in">
@@ -275,17 +278,20 @@ export default function BuddyCoachPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-1.5 mb-6 overflow-x-auto pb-1">
         {[
-          { id: 'buddy' as PageTab, label: 'Find Buddy', icon: UserPlus },
-          { id: 'coaches' as PageTab, label: 'Coaches', icon: GraduationCap },
-          { id: 'my-sessions' as PageTab, label: 'My Sessions', icon: Calendar },
+          { id: 'buddy' as PageTab, label: 'Find Buddy', icon: UserPlus, count: buddyMatches.length },
+          { id: 'coaches' as PageTab, label: 'Coaches', icon: GraduationCap, count: coaches.length },
+          { id: 'my-sessions' as PageTab, label: 'My Sessions', icon: Calendar, count: sessions.length },
         ].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs transition-colors ${
-              tab === t.id ? 'bg-purple/15 text-purple' : 'text-text-dim hover:bg-surface hover:text-text-muted'
-            }`}>
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            data-active={tab === t.id}
+            className="vs-tab shrink-0"
+          >
             <t.icon size={13} /> {t.label}
+            {t.count > 0 && <span className="text-[10px] opacity-60 tabular-nums">({t.count})</span>}
           </button>
         ))}
       </div>
@@ -307,19 +313,25 @@ export default function BuddyCoachPage() {
 
           {/* Buddy matches */}
           {buddyMatches.length === 0 ? (
-            <div className="vs-card text-center py-12">
-              <UserPlus size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-              <p className="text-sm text-text-dim">No buddies looking right now</p>
-              <p className="text-xs text-text-dim mt-1">Turn on "Looking for buddy" and check back later</p>
-            </div>
+            <EmptyState
+              icon={UserPlus}
+              title="No buddies looking right now"
+              description={'Turn on "Looking for buddy" and check back later.'}
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {buddyMatches.map(match => (
                 <div key={match.id} className="vs-card hover:border-cyan/20 transition-all">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-cyan/15 flex items-center justify-center text-sm font-bold text-cyan">
-                      {(match.display_name || match.username)[0].toUpperCase()}
-                    </div>
+                    <Avatar
+                      url={(match as any).avatar_url}
+                      name={match.display_name || match.username}
+                      href={`/profile/${match.username}`}
+                      size="md"
+                      shape="rounded"
+                      variant="gradient"
+                      showInnerRing={(match as any).is_founding_member}
+                    />
                     <div className="flex-1 min-w-0">
                       <Link href={`/profile/${match.username}`} className="text-sm font-medium hover:text-cyan transition-colors">{match.display_name || match.username}</Link>
                       <p className="text-[10px] text-text-dim">@{match.username} · {match.level_name}</p>
@@ -355,42 +367,55 @@ export default function BuddyCoachPage() {
       {tab === 'coaches' && (
         <div>
           {/* Game filter */}
-          <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
-            <button onClick={() => { setCoachGameFilter(null); setTimeout(loadCoaches, 0) }}
-              className={`px-3 py-1.5 rounded-lg text-xs shrink-0 transition-colors ${!coachGameFilter ? 'bg-purple/15 text-purple' : 'bg-surface border border-border text-text-dim'}`}>
+          <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1">
+            <button
+              onClick={() => { setCoachGameFilter(null); setTimeout(loadCoaches, 0) }}
+              data-active={!coachGameFilter}
+              className="vs-tab shrink-0"
+            >
               All Games
             </button>
             {games.slice(0, 6).map(g => (
-              <button key={g.id} onClick={() => { setCoachGameFilter(g.id); setTimeout(loadCoaches, 0) }}
-                className={`px-3 py-1.5 rounded-lg text-xs shrink-0 transition-colors ${coachGameFilter === g.id ? 'bg-purple/15 text-purple' : 'bg-surface border border-border text-text-dim'}`}>
+              <button
+                key={g.id}
+                onClick={() => { setCoachGameFilter(g.id); setTimeout(loadCoaches, 0) }}
+                data-active={coachGameFilter === g.id}
+                className="vs-tab shrink-0"
+              >
                 {g.name.split(':')[0]}
               </button>
             ))}
           </div>
 
           {coaches.length === 0 ? (
-            <div className="vs-card text-center py-12">
-              <GraduationCap size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-              <p className="text-sm text-text-dim">No coaches available yet</p>
-              <p className="text-xs text-text-dim mt-1">Coaches need admin approval to appear here</p>
-            </div>
+            <EmptyState
+              icon={GraduationCap}
+              title="No coaches available yet"
+              description="Coaches need admin approval before they appear here."
+            />
           ) : (
             <div className="space-y-3">
               {coaches.map(coach => {
                 const p = coach.profile as any
                 const tier = TIERS[coach.hourly_tier as keyof typeof TIERS] || TIERS.standard
                 return (
-                  <div key={coach.id} className="vs-card hover:border-purple/20 transition-all">
+                  <div key={coach.id} className="vs-card vs-lit hover:border-purple/30 transition-all">
                     <div className="flex items-start gap-4">
-                      <div className="w-14 h-14 rounded-xl bg-purple/15 flex items-center justify-center text-lg font-bold text-purple shrink-0">
-                        {(p?.display_name || p?.username || '?')[0].toUpperCase()}
-                      </div>
+                      <Avatar
+                        url={p?.avatar_url}
+                        name={p?.display_name || p?.username}
+                        href={p?.username ? `/profile/${p.username}` : undefined}
+                        size="lg"
+                        shape="rounded"
+                        variant="gradient"
+                        showInnerRing={p?.is_founding_member}
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Link href={`/profile/${p?.username}`} className="text-sm font-semibold hover:text-purple transition-colors">{p?.display_name || p?.username}</Link>
                           <span className="vs-badge vs-badge-purple text-[8px]"><GraduationCap size={8} /> Coach</span>
                           {coach.avg_rating > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] text-yellow-400">
+                            <span className="flex items-center gap-0.5 text-[10px] text-yellow-400 tabular-nums">
                               <Star size={10} fill="currentColor" /> {coach.avg_rating.toFixed(1)}
                               <span className="text-text-dim">({coach.review_count})</span>
                             </span>
@@ -405,13 +430,13 @@ export default function BuddyCoachPage() {
                           ))}
                         </div>
                         <div className="flex items-center gap-3 text-[10px] text-text-dim">
-                          <span>{coach.total_sessions} sessions</span>
+                          <span className="tabular-nums">{coach.total_sessions} sessions</span>
                           {coach.languages.length > 0 && <span><Globe size={9} className="inline" /> {coach.languages.join(', ')}</span>}
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-lg font-bold text-cyan">{tier.price}</p>
-                        <p className="text-[9px] text-text-dim">per session</p>
+                        <p className="text-lg font-bold text-cyan tabular-nums">{tier.price}</p>
+                        <p className="vs-counter text-[9px] text-text-dim">PER SESSION</p>
                         <button onClick={() => setBookingCoach(coach)}
                           className="vs-btn vs-btn-primary text-[10px] px-4 py-1.5 mt-2">
                           Book
@@ -430,11 +455,12 @@ export default function BuddyCoachPage() {
       {tab === 'my-sessions' && (
         <div>
           {sessions.length === 0 ? (
-            <div className="vs-card text-center py-12">
-              <Calendar size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-              <p className="text-sm text-text-dim">No sessions yet</p>
-              <p className="text-xs text-text-dim mt-1">Book a coach to get started</p>
-            </div>
+            <EmptyState
+              icon={Calendar}
+              title="No sessions yet"
+              description="Book a coach to get started."
+              cta={{ label: 'Browse coaches', onClick: () => setTab('coaches') }}
+            />
           ) : (
             <div className="space-y-3">
               {sessions.map(session => {
@@ -452,7 +478,7 @@ export default function BuddyCoachPage() {
                         {getStatusBadge(session.status)}
                         {session.game && <span className="vs-badge vs-badge-purple text-[8px]">{(session.game as any)?.name}</span>}
                       </div>
-                      <span className="text-sm font-bold text-cyan">{tier.price}</span>
+                      <span className="text-sm font-bold text-cyan tabular-nums">{tier.price}</span>
                     </div>
                     {session.notes && <p className="text-xs text-text-muted mb-2">{session.notes}</p>}
                     <div className="flex items-center gap-3 text-[10px] text-text-dim">
@@ -495,12 +521,21 @@ export default function BuddyCoachPage() {
             </div>
             <div className="p-4 space-y-4">
               <div className="flex items-center gap-3 pb-3 border-b border-border">
-                <div className="w-10 h-10 rounded-xl bg-purple/15 flex items-center justify-center text-sm font-bold text-purple">
-                  {((bookingCoach.profile as any)?.display_name || (bookingCoach.profile as any)?.username || '?')[0].toUpperCase()}
-                </div>
+                <Avatar
+                  url={(bookingCoach.profile as any)?.avatar_url}
+                  name={(bookingCoach.profile as any)?.display_name || (bookingCoach.profile as any)?.username}
+                  size="md"
+                  shape="rounded"
+                  variant="gradient"
+                  showInnerRing={(bookingCoach.profile as any)?.is_founding_member}
+                />
                 <div>
                   <p className="text-sm font-medium">{(bookingCoach.profile as any)?.display_name || (bookingCoach.profile as any)?.username}</p>
-                  {bookingCoach.avg_rating > 0 && <p className="text-[10px] text-yellow-400"><Star size={9} fill="currentColor" className="inline" /> {bookingCoach.avg_rating.toFixed(1)} ({bookingCoach.review_count} reviews)</p>}
+                  {bookingCoach.avg_rating > 0 && (
+                    <p className="text-[10px] text-yellow-400 tabular-nums">
+                      <Star size={9} fill="currentColor" className="inline" /> {bookingCoach.avg_rating.toFixed(1)} ({bookingCoach.review_count} reviews)
+                    </p>
+                  )}
                 </div>
               </div>
 

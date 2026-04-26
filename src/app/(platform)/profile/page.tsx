@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
+import { ScopeSpinner } from '@/components/ui/loader'
 
 export default function ProfileRedirect() {
   const router = useRouter()
@@ -22,7 +23,7 @@ export default function ProfileRedirect() {
 
   return (
     <div className="flex items-center justify-center h-64">
-      <div className="text-text-dim text-sm animate-pulse">Loading profile...</div>
+      <ScopeSpinner size={28} />
     </div>
   )
 }
