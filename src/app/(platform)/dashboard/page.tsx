@@ -105,8 +105,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      {/* Stats row — followers/following clickable naar profile */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <div className="vs-card">
           <p className="vs-label mb-1">YOUR LEVEL</p>
           <p className="text-xl font-medium text-purple">{level.name}</p>
@@ -121,14 +121,27 @@ export default function DashboardPage() {
           <p className="vs-label mb-1">XP</p>
           <p className="text-xl font-medium text-cyan">{profile.xp.toLocaleString()}</p>
         </div>
-        <div className="vs-card">
+        <Link
+          href={`/profile/${profile.username}?tab=followers`}
+          className="vs-card hover:border-border-hover transition-colors"
+        >
           <p className="vs-label mb-1">FOLLOWERS</p>
           <p className="text-xl font-medium">{stats.followers}</p>
-        </div>
-        <div className="vs-card">
+        </Link>
+        <Link
+          href={`/profile/${profile.username}?tab=following`}
+          className="vs-card hover:border-border-hover transition-colors"
+        >
+          <p className="vs-label mb-1">FOLLOWING</p>
+          <p className="text-xl font-medium">{stats.following}</p>
+        </Link>
+        <Link
+          href={`/profile/${profile.username}`}
+          className="vs-card hover:border-border-hover transition-colors"
+        >
           <p className="vs-label mb-1">POSTS</p>
           <p className="text-xl font-medium">{stats.posts}</p>
-        </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-5">
@@ -151,11 +164,15 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Create post */}
+          {/* Create post — quick links naar de juiste compose-flows */}
           <div className="vs-card mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-purple flex items-center justify-center text-sm font-medium text-white shrink-0">
-                {profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()}
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple to-cyan flex items-center justify-center text-sm font-medium text-white shrink-0 overflow-hidden">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()
+                )}
               </div>
               <Link
                 href="/feed?compose=true"
@@ -165,12 +182,12 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="flex gap-2 mt-3 ml-12">
-              <button className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
+              <Link href="/clips" className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
                 <Upload size={13} /> Clip
-              </button>
-              <button className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
+              </Link>
+              <Link href="/lfg" className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
                 <Users size={13} /> LFG
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -249,9 +266,19 @@ export default function DashboardPage() {
 
           {/* Your games */}
           <div className="vs-card">
-            <p className="vs-label mb-3">YOUR GAMES</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="vs-label">YOUR GAMES</p>
+              <Link href="/games" className="text-[10px] text-cyan hover:text-cyan/80 transition-colors tracking-wide">
+                Manage →
+              </Link>
+            </div>
             {games.length === 0 ? (
-              <p className="text-xs text-text-dim">No games added yet</p>
+              <Link
+                href="/games"
+                className="block text-xs text-text-dim hover:text-purple transition-colors py-2"
+              >
+                + Add games you play
+              </Link>
             ) : (
               <div className="space-y-2">
                 {games.map((game, i) => (

@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase-browser'
 import {
   LayoutDashboard, Newspaper, Trophy, Users, BarChart3,
   Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield, Award,
-  Menu, X
+  Menu, LogOut, Gamepad2
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/achievements', icon: Award, label: 'Achievements' },
   { href: '/messages', icon: MessageCircle, label: 'Messages' },
   { href: '/profile', icon: User, label: 'Profile' },
+  { href: '/games', icon: Gamepad2, label: 'Games' },
   { divider: true },
   { href: '/admin', icon: Shield, label: 'Admin' },
 ] as const
@@ -37,6 +39,14 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const supabase = createClient()
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <>
@@ -65,6 +75,10 @@ export function Sidebar() {
                     : 'text-text-dim hover:bg-white/5 hover:text-text-muted'
                 }`}
               >
+                {/* Active indicator — left bar accent */}
+                {isActive && (
+                  <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-purple rounded-r-full shadow-[0_0_8px_rgba(107,63,224,0.6)]" />
+                )}
                 <Icon size={18} />
                 {collapsed ? (
                   <span className="absolute left-[52px] bg-surface-2 text-text text-[11px] px-3 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-border">
@@ -77,6 +91,24 @@ export function Sidebar() {
             )
           })}
         </div>
+
+        {/* Sign out + collapse */}
+        <button
+          onClick={handleSignOut}
+          className={`group relative flex items-center rounded-lg transition-all mb-1 ${
+            collapsed ? 'w-10 h-10 justify-center mx-auto' : 'mx-3 px-4 h-10 gap-3'
+          } text-text-dim hover:bg-danger/10 hover:text-danger`}
+          title="Sign out"
+        >
+          <LogOut size={18} />
+          {collapsed ? (
+            <span className="absolute left-[52px] bg-surface-2 text-text text-[11px] px-3 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-border">
+              Sign out
+            </span>
+          ) : (
+            <span className="text-sm">Sign out</span>
+          )}
+        </button>
 
         <button
           onClick={() => setCollapsed(!collapsed)}

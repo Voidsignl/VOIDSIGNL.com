@@ -290,15 +290,44 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Rankings */}
+      {/* Rankings — alleen zichtbaar voor ingelogde users.
+          Voor buitenstaanders: locked teaser.
+          NB: deze homepage redirect ingelogde users naar /dashboard, dus
+          deze sectie is altijd in "locked"-modus. Volledig leaderboard
+          staat op /rankings voor leden. */}
       <section className="py-16 md:py-24 px-4 md:px-8 border-t border-white/[0.04]" id="rankings">
         <div className="max-w-5xl mx-auto">
           <span className="text-xs text-purple tracking-[3px]" style={{ fontFamily: 'var(--font-display)' }}>03</span>
           <h2 className="text-[clamp(28px,4vw,42px)] font-semibold tracking-tight mt-2 mb-4">Global Rankings</h2>
           <div className="w-12 h-0.5 bg-purple rounded mb-8" />
+          <p className="text-text-muted text-[15px] max-w-xl leading-relaxed mb-8">
+            Live leaderboard van alle leden. Merit-based ranking via XP — Recruit tot Legend.
+          </p>
 
-          <div className="bg-[#16161c] border border-white/[0.04] rounded-xl overflow-hidden">
-            {/* Table header */}
+          {/* Locked teaser */}
+          <div className="relative bg-[#16161c] border border-white/[0.04] rounded-xl p-10 md:p-14 text-center overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-void/40 to-void pointer-events-none" />
+            <div className="absolute inset-0 opacity-[0.04]" style={{
+              backgroundImage: 'linear-gradient(rgba(107,63,224,0.4) 1px, transparent 1px)',
+              backgroundSize: '100% 32px',
+            }} />
+            <div className="relative">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple/15 border border-purple/20 mb-4">
+                <Shield size={20} className="text-purple" />
+              </div>
+              <p className="text-sm text-text-muted mb-1">Rankings zijn alleen voor leden</p>
+              <p className="text-[11px] text-text-dim tracking-wide mb-6">Get access to see who's at the top</p>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 text-xs text-cyan hover:text-cyan/80 transition-colors tracking-wide"
+              >
+                Request access <ArrowRight size={12} />
+              </Link>
+            </div>
+          </div>
+
+          {/* Hidden — de oude tabel-render staat onbruikbaar uit voor publiek */}
+          <div className="hidden">
             <div className="grid grid-cols-[30px_1fr_60px] md:grid-cols-[60px_1fr_120px_100px] px-3 md:px-6 py-3 border-b border-white/[0.04] text-[10px] text-text-dim tracking-[1.5px] uppercase">
               <span>#</span>
               <span>Player</span>
