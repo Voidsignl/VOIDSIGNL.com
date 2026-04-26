@@ -71,13 +71,13 @@ export function NotificationToast({ userId }: { userId: string }) {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed top-16 right-4 z-[60] space-y-2 w-80">
+    <div className="fixed top-16 right-3 left-3 sm:left-auto sm:right-4 z-[60] space-y-2 sm:w-80">
       {toasts.map(toast => {
         const Icon = ICON_MAP[toast.type] || Bell
         const color = COLOR_MAP[toast.type] || 'text-text-dim'
 
         const content = (
-          <div className="bg-surface border border-border rounded-xl p-3.5 shadow-xl shadow-black/30 flex items-start gap-3 animate-slide-up">
+          <div className="bg-surface border border-border rounded-xl p-3.5 shadow-xl shadow-black/30 flex items-start gap-3 animate-slide-up vs-lit">
             <div className={`w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center shrink-0 ${color}`}>
               <Icon size={15} />
             </div>

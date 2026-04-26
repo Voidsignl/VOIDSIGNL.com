@@ -316,44 +316,57 @@ export default function LfgPage() {
     const applicantId = response?.user_id
 
     if (applicantId && userId) {
-      // Start of pak bestaande conversation tussen owner en applicant
-      const userA = userId < applicantId ? userId : applicantId
-      const userB = userId < applicantId ? applicantId : userId
-      const { data: existing } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('user_a', userA)
-        .eq('user_b', userB)
-        .maybeSingle()
-
-      let convId = existing?.id
-      if (!convId) {
-        const { data: newConv } = await supabase
-          .from('conversations')
-          .insert({ user_a: userA, user_b: userB })
-          .select('id')
-          .maybeSingle()
-        convId = newConv?.id
-      }
-
-      // Welcome-message
-      if (convId) {
-        await supabase.from('messages').insert({
-          conversation_id: convId,
-          sender_id: userId,
-          content: `Welcome to the squad! 🎮 — ${post.title}`,
-        })
-        await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', convId)
-      }
-
-      // Notify de applicant
-      await supabase.from('notifications').insert({
-        user_id: applicantId,
-        type: 'lfg_accepted',
-        title: `You're in the squad`,
-        body: post.title,
-        link: convId ? `/messages?conv=${convId}` : '/messages',
+      // Upsert squad group chat (idempotent per LFG post)
+      const { data: convId, error: convErr } = await supabase.rpc('upsert_lfg_group_conversation', {
+        p_lfg_post_id: postId,
+        p_name: `Squad · ${post.title}`,
       })
+
+      if (!convErr && convId) {
+        // Add applicant to the squad group
+        await supabase.rpc('add_to_lfg_group', {
+          p_conversation_id: convId,
+          p_user_id: applicantId,
+        })
+
+        // Welcome message — only post once (when there's no chat history yet,
+        // or always; harmless either way since members see all messages)
+        const { count: existingMsgs } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('conversation_id', convId)
+
+        if (!existingMsgs || existingMsgs === 0) {
+          await supabase.from('messages').insert({
+            conversation_id: convId,
+            sender_id: userId,
+            content: `Squad assembled — ${post.title} 🎮`,
+          })
+        } else {
+          // Subsequent accept: post a "X joined" system note
+          const { data: applicantProfile } = await supabase
+            .from('profiles')
+            .select('display_name, username')
+            .eq('id', applicantId)
+            .maybeSingle()
+          const name = applicantProfile?.display_name || applicantProfile?.username || 'A teammate'
+          await supabase.from('messages').insert({
+            conversation_id: convId,
+            sender_id: userId,
+            content: `${name} joined the squad`,
+          })
+        }
+        await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', convId)
+
+        // Notify the applicant
+        await supabase.from('notifications').insert({
+          user_id: applicantId,
+          type: 'lfg_accepted',
+          title: `You're in the squad`,
+          body: post.title,
+          link: `/messages?conv=${convId}`,
+        })
+      }
     }
 
     loadAll()

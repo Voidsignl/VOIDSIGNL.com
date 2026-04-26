@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import type { Profile } from '@/types'
 import {
   MessageCircle, Send, Search, ArrowLeft, Plus, Check, CheckCheck,
-  User, X, MoreHorizontal
+  User, X, MoreHorizontal, Users,
 } from 'lucide-react'
 import { ScopeSpinner } from '@/components/ui/loader'
 import { Avatar } from '@/components/ui/avatar'
@@ -14,10 +14,17 @@ import { EmptyState } from '@/components/ui/empty-state'
 
 interface Conversation {
   id: string
-  user_a: string
-  user_b: string
+  user_a: string | null
+  user_b: string | null
   last_message_at: string
+  is_group: boolean
+  name: string | null
+  creator_id: string | null
+  lfg_post_id: string | null
+  /** For 1-to-1: the other user. For groups: undefined. */
   other_user?: Profile
+  /** For groups: list of member profiles. */
+  members?: Profile[]
   last_message?: string
   unread_count?: number
 }
@@ -96,27 +103,73 @@ export default function MessagesPage() {
   }
 
   async function loadConversations(uid: string) {
-    const { data: convs } = await supabase
+    // 1-to-1 convs where I am user_a/user_b
+    const { data: dmConvs } = await supabase
       .from('conversations')
       .select('*')
+      .eq('is_group', false)
       .or(`user_a.eq.${uid},user_b.eq.${uid}`)
-      .order('last_message_at', { ascending: false })
 
-    if (!convs) return
+    // Group convs where I'm an active participant
+    const { data: groupParticipations } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', uid)
+      .is('left_at', null)
 
-    // Load other user profiles and last messages
-    const enriched = await Promise.all(convs.map(async (conv) => {
-      const otherId = conv.user_a === uid ? conv.user_b : conv.user_a
+    const groupIds = (groupParticipations || []).map(p => p.conversation_id)
+    let groupConvs: Conversation[] = []
+    if (groupIds.length > 0) {
+      const { data } = await supabase
+        .from('conversations')
+        .select('*')
+        .in('id', groupIds)
+        .eq('is_group', true)
+      groupConvs = (data as Conversation[]) || []
+    }
 
-      const [profileRes, msgRes, unreadRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', otherId).single(),
+    const allConvs: Conversation[] = [...((dmConvs as Conversation[]) || []), ...groupConvs]
+
+    // Sort by last_message_at desc
+    allConvs.sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+
+    // Enrich each
+    const enriched = await Promise.all(allConvs.map(async (conv) => {
+      const [msgRes, unreadRes] = await Promise.all([
         supabase.from('messages').select('content').eq('conversation_id', conv.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('messages').select('id', { count: 'exact', head: true }).eq('conversation_id', conv.id).eq('is_read', false).neq('sender_id', uid),
       ])
 
+      let other_user: Profile | undefined
+      let members: Profile[] | undefined
+
+      if (conv.is_group) {
+        // Load active group members
+        const { data: parts } = await supabase
+          .from('conversation_participants')
+          .select('user_id')
+          .eq('conversation_id', conv.id)
+          .is('left_at', null)
+        const memberIds = (parts || []).map(p => p.user_id)
+        if (memberIds.length > 0) {
+          const { data: profs } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', memberIds)
+          members = (profs as Profile[]) || []
+        }
+      } else {
+        const otherId = conv.user_a === uid ? conv.user_b : conv.user_a
+        if (otherId) {
+          const { data } = await supabase.from('profiles').select('*').eq('id', otherId).maybeSingle()
+          other_user = (data as Profile) || undefined
+        }
+      }
+
       return {
         ...conv,
-        other_user: profileRes.data as Profile | undefined,
+        other_user,
+        members,
         last_message: msgRes.data?.content,
         unread_count: unreadRes.count || 0,
       } as Conversation
@@ -225,6 +278,10 @@ export default function MessagesPage() {
           user_a: userId < otherUser.id ? userId : otherUser.id,
           user_b: userId < otherUser.id ? otherUser.id : userId,
           last_message_at: new Date().toISOString(),
+          is_group: false,
+          name: null,
+          creator_id: null,
+          lfg_post_id: null,
           other_user: otherUser,
           unread_count: 0,
         }
@@ -268,11 +325,31 @@ export default function MessagesPage() {
   }
 
   const filteredConvs = convSearch
-    ? conversations.filter(c =>
-        c.other_user?.username.toLowerCase().includes(convSearch.toLowerCase()) ||
-        (c.other_user?.display_name || '').toLowerCase().includes(convSearch.toLowerCase())
-      )
+    ? conversations.filter(c => {
+        const q = convSearch.toLowerCase()
+        if (c.is_group) {
+          return (c.name || '').toLowerCase().includes(q) ||
+                 (c.members || []).some(m => m.username.toLowerCase().includes(q) || (m.display_name || '').toLowerCase().includes(q))
+        }
+        return (c.other_user?.username || '').toLowerCase().includes(q) ||
+               (c.other_user?.display_name || '').toLowerCase().includes(q)
+      })
     : conversations
+
+  function convDisplayName(c: Conversation): string {
+    if (c.is_group) {
+      return c.name || `Squad · ${(c.members || []).length} members`
+    }
+    return c.other_user?.display_name || c.other_user?.username || 'Unknown'
+  }
+
+  function convSubtitle(c: Conversation): string {
+    if (c.is_group) {
+      const memberCount = (c.members || []).length
+      return `${memberCount} member${memberCount === 1 ? '' : 's'}`
+    }
+    return `@${c.other_user?.username || ''}`
+  }
 
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0)
 
@@ -348,25 +425,50 @@ export default function MessagesPage() {
                     <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r bg-gradient-to-b from-purple to-cyan" />
                   )}
                   <div className="relative shrink-0">
-                    <Avatar
-                      url={conv.other_user?.avatar_url}
-                      name={conv.other_user?.display_name || conv.other_user?.username}
-                      size="md"
-                      shape="rounded"
-                      variant="gradient"
-                      showInnerRing={(conv.other_user as any)?.is_founding_member}
-                      online={!!(conv.other_user as any)?.last_seen_at && Date.now() - new Date((conv.other_user as any).last_seen_at).getTime() < 5 * 60 * 1000}
-                    />
+                    {conv.is_group ? (
+                      // Stacked avatars for group: show first 2 members
+                      <div className="relative w-10 h-10">
+                        {(conv.members || []).slice(0, 2).map((m, idx) => (
+                          <div
+                            key={m.id}
+                            className={`absolute ${idx === 0 ? 'top-0 left-0' : 'bottom-0 right-0'}`}
+                          >
+                            <Avatar
+                              url={m.avatar_url}
+                              name={m.display_name || m.username}
+                              size="xs"
+                              shape="rounded"
+                              variant="gradient"
+                            />
+                          </div>
+                        ))}
+                        {/* Members count badge */}
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-purple text-white text-[8px] flex items-center justify-center font-medium tabular-nums border border-[#12121a]">
+                          {(conv.members || []).length}
+                        </span>
+                      </div>
+                    ) : (
+                      <Avatar
+                        url={conv.other_user?.avatar_url}
+                        name={conv.other_user?.display_name || conv.other_user?.username}
+                        size="md"
+                        shape="rounded"
+                        variant="gradient"
+                        showInnerRing={(conv.other_user as any)?.is_founding_member}
+                        online={!!(conv.other_user as any)?.last_seen_at && Date.now() - new Date((conv.other_user as any).last_seen_at).getTime() < 5 * 60 * 1000}
+                      />
+                    )}
                     {hasUnread && (
                       <div className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-danger border-2 border-[#12121a]" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm truncate ${hasUnread ? 'font-semibold' : 'font-medium'}`}>
-                        {conv.other_user?.display_name || conv.other_user?.username || 'Unknown'}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-sm truncate flex items-center gap-1.5 ${hasUnread ? 'font-semibold' : 'font-medium'}`}>
+                        {conv.is_group && <Users size={11} className="text-purple-light shrink-0" />}
+                        {convDisplayName(conv)}
                       </span>
-                      <span className="text-[10px] text-text-dim shrink-0 ml-2">{timeAgo(conv.last_message_at)}</span>
+                      <span className="vs-counter text-[9px] text-text-dim shrink-0 tabular-nums">{timeAgo(conv.last_message_at)}</span>
                     </div>
                     <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-text-muted font-medium' : 'text-text-dim'}`}>
                       {conv.last_message || 'No messages yet'}
@@ -402,26 +504,60 @@ export default function MessagesPage() {
               >
                 <ArrowLeft size={18} />
               </button>
-              <Avatar
-                url={activeConv.other_user?.avatar_url}
-                name={activeConv.other_user?.display_name || activeConv.other_user?.username}
-                href={activeConv.other_user?.username ? `/profile/${activeConv.other_user.username}` : undefined}
-                size="sm"
-                shape="rounded"
-                variant="gradient"
-                showInnerRing={(activeConv.other_user as any)?.is_founding_member}
-                online={!!(activeConv.other_user as any)?.last_seen_at && Date.now() - new Date((activeConv.other_user as any).last_seen_at).getTime() < 5 * 60 * 1000}
-              />
-              <div className="flex-1 min-w-0">
-                {activeConv.other_user?.username ? (
-                  <Link href={`/profile/${activeConv.other_user.username}`} className="text-sm font-medium truncate hover:text-purple transition-colors block">
-                    {activeConv.other_user.display_name || activeConv.other_user.username}
-                  </Link>
-                ) : (
-                  <p className="text-sm font-medium truncate">Unknown</p>
-                )}
-                <p className="text-[10px] text-text-dim">@{activeConv.other_user?.username}</p>
-              </div>
+              {activeConv.is_group ? (
+                <>
+                  <div className="flex -space-x-2 shrink-0">
+                    {(activeConv.members || []).slice(0, 3).map(m => (
+                      <Avatar
+                        key={m.id}
+                        url={m.avatar_url}
+                        name={m.display_name || m.username}
+                        size="xs"
+                        shape="rounded"
+                        variant="gradient"
+                      />
+                    ))}
+                    {(activeConv.members || []).length > 3 && (
+                      <div className="w-6 h-6 rounded-md bg-surface-2 border border-border flex items-center justify-center vs-counter text-[8px] tabular-nums text-text-muted">
+                        +{(activeConv.members || []).length - 3}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate flex items-center gap-1.5">
+                      <Users size={11} className="text-purple-light shrink-0" />
+                      {convDisplayName(activeConv)}
+                    </p>
+                    <p className="vs-counter text-[10px] text-text-dim tabular-nums">
+                      {(activeConv.members || []).length} MEMBERS
+                      {activeConv.lfg_post_id && ' · LFG SQUAD'}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Avatar
+                    url={activeConv.other_user?.avatar_url}
+                    name={activeConv.other_user?.display_name || activeConv.other_user?.username}
+                    href={activeConv.other_user?.username ? `/profile/${activeConv.other_user.username}` : undefined}
+                    size="sm"
+                    shape="rounded"
+                    variant="gradient"
+                    showInnerRing={(activeConv.other_user as any)?.is_founding_member}
+                    online={!!(activeConv.other_user as any)?.last_seen_at && Date.now() - new Date((activeConv.other_user as any).last_seen_at).getTime() < 5 * 60 * 1000}
+                  />
+                  <div className="flex-1 min-w-0">
+                    {activeConv.other_user?.username ? (
+                      <Link href={`/profile/${activeConv.other_user.username}`} className="text-sm font-medium truncate hover:text-purple transition-colors block">
+                        {activeConv.other_user.display_name || activeConv.other_user.username}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-medium truncate">Unknown</p>
+                    )}
+                    <p className="text-[10px] text-text-dim">@{activeConv.other_user?.username}</p>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Messages */}
@@ -435,15 +571,39 @@ export default function MessagesPage() {
                 messages.map((msg, i) => {
                   const isMine = msg.sender_id === userId
                   const showDay = isNewDay(msg.created_at, messages[i - 1]?.created_at)
+                  const prevMsg = messages[i - 1]
+                  // In a group: show sender name on first message in a streak from same sender
+                  const isFirstFromSender =
+                    activeConv.is_group && !isMine &&
+                    (!prevMsg || prevMsg.sender_id !== msg.sender_id || isNewDay(msg.created_at, prevMsg.created_at))
+                  const sender = activeConv.is_group
+                    ? (activeConv.members || []).find(m => m.id === msg.sender_id)
+                    : undefined
 
                   return (
                     <div key={msg.id}>
                       {showDay && (
                         <div className="flex items-center gap-3 py-3">
                           <div className="flex-1 h-px bg-border" />
-                          <span className="text-[10px] text-text-dim">{formatDate(msg.created_at)}</span>
+                          <span className="vs-counter text-[10px] text-text-dim tabular-nums">{formatDate(msg.created_at)}</span>
                           <div className="flex-1 h-px bg-border" />
                         </div>
+                      )}
+                      {isFirstFromSender && sender && (
+                        <Link
+                          href={`/profile/${sender.username}`}
+                          className="flex items-center gap-2 ml-1 mt-2 mb-0.5 group/sender"
+                        >
+                          <Avatar
+                            url={sender.avatar_url}
+                            name={sender.display_name || sender.username}
+                            size="xs"
+                            variant="gradient"
+                          />
+                          <span className="text-[10px] text-text-muted group-hover/sender:text-purple-light transition-colors">
+                            {sender.display_name || sender.username}
+                          </span>
+                        </Link>
                       )}
                       <div className={`flex ${isMine ? 'justify-end' : 'justify-start'} mb-0.5`}>
                         <div className={`max-w-[70%] px-3.5 py-2 rounded-2xl text-sm leading-relaxed ${
@@ -453,10 +613,10 @@ export default function MessagesPage() {
                         }`}>
                           <p className="break-words whitespace-pre-wrap">{msg.content}</p>
                           <div className={`flex items-center gap-1 mt-0.5 ${isMine ? 'justify-end' : ''}`}>
-                            <span className={`text-[9px] ${isMine ? 'text-white/50' : 'text-text-dim'}`}>
+                            <span className={`vs-counter text-[9px] tabular-nums ${isMine ? 'text-white/50' : 'text-text-dim'}`}>
                               {formatMessageTime(msg.created_at)}
                             </span>
-                            {isMine && (
+                            {isMine && !activeConv.is_group && (
                               msg.is_read
                                 ? <CheckCheck size={10} className="text-white/50" />
                                 : <Check size={10} className="text-white/30" />
