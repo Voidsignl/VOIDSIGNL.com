@@ -16,8 +16,14 @@
   --color-border: rgba(255, 255, 255, 0.08);
   --color-border-hover: rgba(255, 255, 255, 0.15);
   --color-danger: #E24B4A;
+  --color-danger-dim: rgba(226, 75, 74, 0.12);
   --color-success: #5DCAA5;
+  --color-success-dim: rgba(93, 202, 165, 0.12);
   --color-warning: #EF9F27;
+  --color-warning-dim: rgba(239, 159, 39, 0.12);
+  --color-gold: #FFD700;
+  --color-silver: #C0C0C0;
+  --color-bronze: #CD7F32;
   --font-display: 'Space Mono', monospace;
   --font-body: 'Outfit', sans-serif;
 }
@@ -90,6 +96,32 @@
   }
   .vs-badge-purple { background: var(--color-purple-dim); color: var(--color-purple-light); }
   .vs-badge-cyan { background: var(--color-cyan-dim); color: var(--color-cyan); }
+  .vs-badge-success { background: var(--color-success-dim); color: var(--color-success); }
+  .vs-badge-danger { background: var(--color-danger-dim); color: var(--color-danger); }
+  .vs-badge-warning { background: var(--color-warning-dim); color: var(--color-warning); }
+
+  .vs-btn-danger {
+    background: var(--color-danger-dim);
+    color: var(--color-danger);
+    border: 0.5px solid rgba(226, 75, 74, 0.3);
+  }
+  .vs-btn-danger:hover { background: rgba(226, 75, 74, 0.2); border-color: rgba(226, 75, 74, 0.5); }
+
+  /* Tabs — gestandaardiseerd over alle pagina's */
+  .vs-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--color-text-dim);
+    transition: background-color 0.15s, color 0.15s;
+    cursor: pointer;
+  }
+  .vs-tab:hover { background: var(--color-surface-2); color: var(--color-text-muted); }
+  .vs-tab[data-active="true"] { background: var(--color-purple-dim); color: var(--color-purple-light); }
 
   .vs-label {
     font-family: var(--font-display);

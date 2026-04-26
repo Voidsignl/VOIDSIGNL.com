@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
-import { Plus, Upload, Users, TrendingUp, Trophy, Zap, Calendar } from 'lucide-react'
+import { Plus, Upload, Users, TrendingUp, Trophy, Zap, Calendar, Newspaper } from 'lucide-react'
 import { getLevelFromXP, getXPProgress } from '@/types'
 import type { Profile, Post, Game } from '@/types'
 import Link from 'next/link'
 import { OnlineFriends } from '@/components/ui/online-friends'
+import { Avatar } from '@/components/ui/avatar'
+import { EmptyState } from '@/components/ui/empty-state'
+
+type FeedTab = 'your' | 'global'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -15,6 +19,7 @@ export default function DashboardPage() {
   const [games, setGames] = useState<Game[]>([])
   const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 })
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<FeedTab | string>('your')
   const supabase = createClient()
   const router = useRouter()
 
@@ -147,17 +152,27 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-5">
         {/* Feed */}
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <button className="text-sm px-4 py-1.5 rounded-md bg-purple/15 text-purple">
+          <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+            <button
+              onClick={() => setActiveTab('your')}
+              data-active={activeTab === 'your'}
+              className="vs-tab"
+            >
               Your feed
             </button>
-            <button className="text-sm px-4 py-1.5 rounded-md text-text-dim hover:bg-surface transition-colors">
+            <button
+              onClick={() => setActiveTab('global')}
+              data-active={activeTab === 'global'}
+              className="vs-tab"
+            >
               Global
             </button>
             {games.slice(0, 3).map(game => (
               <button
                 key={game.id}
-                className="text-sm px-4 py-1.5 rounded-md text-text-dim hover:bg-surface transition-colors"
+                onClick={() => setActiveTab(`game:${game.id}`)}
+                data-active={activeTab === `game:${game.id}`}
+                className="vs-tab"
               >
                 {game.name.split(':')[0].split(' ')[0]}
               </button>
@@ -167,13 +182,12 @@ export default function DashboardPage() {
           {/* Create post — quick links naar de juiste compose-flows */}
           <div className="vs-card mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple to-cyan flex items-center justify-center text-sm font-medium text-white shrink-0 overflow-hidden">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()
-                )}
-              </div>
+              <Avatar
+                url={profile.avatar_url}
+                name={profile.display_name || profile.username}
+                size="md"
+                variant="gradient"
+              />
               <Link
                 href="/feed?compose=true"
                 className="flex-1 bg-void/50 rounded-lg px-4 py-2.5 text-sm text-text-dim hover:text-text-muted transition-colors cursor-pointer"
@@ -193,18 +207,23 @@ export default function DashboardPage() {
 
           {/* Posts */}
           {posts.length === 0 ? (
-            <div className="vs-card text-center py-12">
-              <p className="text-text-dim text-sm mb-2">No posts yet</p>
-              <p className="text-text-dim text-xs">Be the first to share something</p>
-            </div>
+            <EmptyState
+              icon={Newspaper}
+              title="No posts yet"
+              description="Your feed is empty. Follow members or create the first post to get the signal flowing."
+              cta={{ label: 'Create post', href: '/feed?compose=true' }}
+            />
           ) : (
             <div className="space-y-3">
               {posts.map(post => (
                 <div key={post.id} className="vs-card">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-purple/50 flex items-center justify-center text-xs font-medium text-white">
-                      {(post.profile as any)?.display_name?.[0]?.toUpperCase() || '?'}
-                    </div>
+                    <Avatar
+                      url={(post.profile as any)?.avatar_url}
+                      name={(post.profile as any)?.display_name || (post.profile as any)?.username}
+                      href={(post.profile as any)?.username ? `/profile/${(post.profile as any).username}` : undefined}
+                      size="sm"
+                    />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <Link

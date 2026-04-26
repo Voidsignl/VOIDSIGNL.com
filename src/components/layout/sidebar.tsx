@@ -51,7 +51,7 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop sidebar — hidden on mobile */}
-      <aside className={`hidden md:flex bg-[#12121a] border-r border-border flex-col shrink-0 transition-all duration-200 ${
+      <aside className={`hidden md:flex bg-surface-2 border-r border-border flex-col shrink-0 transition-all duration-200 ${
         collapsed ? 'w-[56px]' : 'w-[200px]'
       }`}>
         <div className="flex flex-col items-center py-3 gap-1 flex-1">
@@ -119,7 +119,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#12121a] border-t border-border">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface-2 border-t border-border">
         <div className="flex items-center justify-around h-14 px-2">
           {MOBILE_NAV.map(item => {
             const Icon = item.icon
@@ -152,7 +152,7 @@ export function Sidebar() {
       {/* Mobile "More" overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)}>
-          <div className="absolute bottom-14 left-0 right-0 bg-[#12121a] border-t border-border rounded-t-2xl p-4 animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div className="absolute bottom-14 left-0 right-0 bg-surface-2 border-t border-border rounded-t-2xl p-4 animate-slide-up" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full bg-border mx-auto mb-4" />
             <div className="grid grid-cols-4 gap-3">
               {NAV_ITEMS.filter(item => !('divider' in item) && !MOBILE_NAV.find(m => m.href === item.href)).map(item => {

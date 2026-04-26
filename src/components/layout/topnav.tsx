@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import type { Profile } from '@/types'
 import { useLang } from '@/lib/lang-context'
+import { Avatar } from '@/components/ui/avatar'
 
 interface TopnavProps {
   profile: Profile | null
@@ -293,15 +294,13 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
                 </span>
               )}
             </Link>
-            <Link href={`/profile/${profile.username}`} className="flex items-center">
-              <div className="w-7 h-7 rounded-full bg-purple flex items-center justify-center text-[11px] font-medium text-white overflow-hidden">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()
-                )}
-              </div>
-            </Link>
+            <Avatar
+              url={profile.avatar_url}
+              name={profile.display_name || profile.username}
+              href={`/profile/${profile.username}`}
+              size="sm"
+              variant="gradient"
+            />
           </>
         ) : (
           <Link href="/login" className="text-sm text-cyan hover:text-cyan/80 transition-colors">

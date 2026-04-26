@@ -326,69 +326,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Hidden — de oude tabel-render staat onbruikbaar uit voor publiek */}
-          <div className="hidden">
-            <div className="grid grid-cols-[30px_1fr_60px] md:grid-cols-[60px_1fr_120px_100px] px-3 md:px-6 py-3 border-b border-white/[0.04] text-[10px] text-text-dim tracking-[1.5px] uppercase">
-              <span>#</span>
-              <span>Player</span>
-              <span className="hidden md:block">Status</span>
-              <span className="text-right">Score</span>
-            </div>
-
-            {/* Rows — show real players if available, otherwise founders.
-                Top 3 krijgen podium-treatment: goud/zilver/brons accent + Trophy icon */}
-            {(topPlayers.length > 0 ? topPlayers : FOUNDERS.map((f, i) => ({
-              username: f.name.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-              display_name: f.name,
-              xp: 0,
-              level_name: 'Recruit',
-              is_founding_member: true,
-            }))).map((player, i) => {
-              const podium = i === 0
-                ? { hex: '#FFD700', label: 'gold', glow: 'shadow-[inset_3px_0_0_#FFD700]', tint: 'bg-gradient-to-r from-[#FFD700]/[0.06] to-transparent', avatarRing: 'border-[#FFD700]/40', avatarBg: 'bg-[#FFD700]/15 text-[#FFD700]' }
-                : i === 1
-                ? { hex: '#C0C0C0', label: 'silver', glow: 'shadow-[inset_3px_0_0_#C0C0C0]', tint: 'bg-gradient-to-r from-[#C0C0C0]/[0.05] to-transparent', avatarRing: 'border-[#C0C0C0]/40', avatarBg: 'bg-[#C0C0C0]/15 text-[#C0C0C0]' }
-                : i === 2
-                ? { hex: '#CD7F32', label: 'bronze', glow: 'shadow-[inset_3px_0_0_#CD7F32]', tint: 'bg-gradient-to-r from-[#CD7F32]/[0.05] to-transparent', avatarRing: 'border-[#CD7F32]/40', avatarBg: 'bg-[#CD7F32]/15 text-[#CD7F32]' }
-                : null;
-              return (
-                <div
-                  key={i}
-                  className={`grid grid-cols-[30px_1fr_60px] md:grid-cols-[60px_1fr_120px_100px] px-3 md:px-6 py-3 md:py-4 border-b border-white/[0.03] items-center hover:bg-white/[0.02] transition-colors ${podium ? `${podium.tint} ${podium.glow}` : ''}`}
-                >
-                  <span className="text-xs flex items-center gap-1.5" style={{ fontFamily: 'var(--font-display)' }}>
-                    {podium ? (
-                      <Trophy size={13} style={{ color: podium.hex }} fill={i === 0 ? podium.hex : 'none'} strokeWidth={2} />
-                    ) : null}
-                    <span className={podium ? 'text-text font-medium' : 'text-text-dim'}>
-                      {String(i + 1).padStart(3, '0')}
-                    </span>
-                  </span>
-                  <div className="flex items-center gap-2 md:gap-3 min-w-0">
-                    <div className={`w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-[9px] md:text-[10px] font-bold shrink-0 border ${podium ? `${podium.avatarBg} ${podium.avatarRing}` : 'bg-purple/15 text-purple border-transparent'}`}>
-                      {((player as any).display_name || (player as any).username || '?').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs md:text-sm font-medium truncate">{(player as any).display_name || (player as any).username}</p>
-                      <p className="text-[9px] md:text-[10px] text-text-dim truncate">@{(player as any).username}</p>
-                    </div>
-                  </div>
-                  <span className={`hidden md:block text-[10px] ${(player as any).is_founding_member ? 'text-purple' : 'text-text-dim'}`}>
-                    {(player as any).is_founding_member ? 'Inner' : (player as any).level_name}
-                  </span>
-                  <span className="text-xs md:text-sm text-right" style={{ fontFamily: 'var(--font-display)' }}>
-                    {(player as any).xp > 0 ? (player as any).xp.toLocaleString() : '—'}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="text-center mt-6">
-            <Link href="/rankings" className="text-xs text-text-dim hover:text-cyan transition-colors tracking-wide">
-              View full leaderboard →
-            </Link>
-          </div>
         </div>
       </section>
 
