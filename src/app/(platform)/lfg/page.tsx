@@ -36,7 +36,9 @@ interface LfgPost {
   mic_required: boolean
   status: string
   created_at: string
+  bumped_at: string
   expires_at: string
+  discord_link: string | null
   profile?: Profile
   game?: Game
   responses?: LfgResponse[]
@@ -92,6 +94,7 @@ export default function LfgPage() {
   const [formPartySize, setFormPartySize] = useState(2)
   const [formMic, setFormMic] = useState(false)
   const [formMinRank, setFormMinRank] = useState('')
+  const [formDiscord, setFormDiscord] = useState('')
   const [creating, setCreating] = useState(false)
 
   // Live pulse — totalen
@@ -146,11 +149,12 @@ export default function LfgPage() {
   async function loadAll(uid: string | null = userId) {
     setLoading(true)
 
-    // Build base query — depends on view-mode
+    // Build base query — depends on view-mode. Sort by bumped_at zodat
+    // gebumpte posts naar boven komen (bumped_at = created_at by default).
     let postQuery = supabase
       .from('lfg_posts')
       .select('*, profile:profiles(*), game:games(*), responses:lfg_responses(id, user_id, message, status, created_at, profile:profiles(*))')
-      .order('created_at', { ascending: false })
+      .order('bumped_at', { ascending: false })
       .limit(50)
 
     if (view === 'mine' && uid) {
@@ -231,11 +235,13 @@ export default function LfgPage() {
       min_rank: formMinRank.trim() || null,
       party_size: formPartySize,
       mic_required: formMic,
+      discord_link: formDiscord.trim() || null,
     })
     if (!error) {
       setShowCreate(false)
       setFormTitle(''); setFormDesc(''); setFormGame(''); setFormPlatform('')
       setFormRegion(''); setFormPartySize(2); setFormMic(false); setFormMinRank('')
+      setFormDiscord('')
       loadAll()
     }
     setCreating(false)
@@ -263,11 +269,30 @@ export default function LfgPage() {
 
   async function applyToPost(postId: string) {
     if (!userId) return
-    await supabase.from('lfg_responses').insert({
-      lfg_post_id: postId,
-      user_id: userId,
-      message: applyNote.trim() || null,
-    })
+    const { data: insertedResp } = await supabase
+      .from('lfg_responses')
+      .insert({
+        lfg_post_id: postId,
+        user_id: userId,
+        message: applyNote.trim() || null,
+      })
+      .select('id')
+      .maybeSingle()
+
+    // Notify post-eigenaar
+    const post = posts.find(p => p.id === postId)
+    if (post && insertedResp) {
+      const { data: { user: me } } = await supabase.auth.getUser()
+      const myProfile = me ? await supabase.from('profiles').select('display_name, username').eq('id', me.id).maybeSingle() : null
+      const applicantName = myProfile?.data?.display_name || myProfile?.data?.username || 'Someone'
+      await supabase.from('notifications').insert({
+        user_id: post.user_id,
+        type: 'lfg_apply',
+        title: `${applicantName} applied to your LFG`,
+        body: post.title,
+        link: '/lfg',
+      })
+    }
     setApplyingPostId(null)
     setApplyNote('')
     loadAll()
@@ -275,11 +300,62 @@ export default function LfgPage() {
 
   async function acceptResponse(responseId: string, postId: string) {
     await supabase.from('lfg_responses').update({ status: 'accepted' }).eq('id', responseId)
-    // Update filled-counter atomically — bump door 1
     const post = posts.find(p => p.id === postId)
-    if (post) {
-      await supabase.from('lfg_posts').update({ filled: (post.filled ?? 0) + 1 }).eq('id', postId)
+    if (!post) { loadAll(); return }
+
+    const newFilled = (post.filled ?? 0) + 1
+    const willBeFull = newFilled >= post.party_size - 1 // -1 omdat poster zelf ook telt; party_size includes lead
+
+    // Bump filled + auto-close als vol
+    const update: Record<string, unknown> = { filled: newFilled }
+    if (willBeFull) update.status = 'closed'
+    await supabase.from('lfg_posts').update(update).eq('id', postId)
+
+    // Vind applicant
+    const response = post.responses?.find(r => r.id === responseId)
+    const applicantId = response?.user_id
+
+    if (applicantId && userId) {
+      // Start of pak bestaande conversation tussen owner en applicant
+      const userA = userId < applicantId ? userId : applicantId
+      const userB = userId < applicantId ? applicantId : userId
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('user_a', userA)
+        .eq('user_b', userB)
+        .maybeSingle()
+
+      let convId = existing?.id
+      if (!convId) {
+        const { data: newConv } = await supabase
+          .from('conversations')
+          .insert({ user_a: userA, user_b: userB })
+          .select('id')
+          .maybeSingle()
+        convId = newConv?.id
+      }
+
+      // Welcome-message
+      if (convId) {
+        await supabase.from('messages').insert({
+          conversation_id: convId,
+          sender_id: userId,
+          content: `Welcome to the squad! 🎮 — ${post.title}`,
+        })
+        await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', convId)
+      }
+
+      // Notify de applicant
+      await supabase.from('notifications').insert({
+        user_id: applicantId,
+        type: 'lfg_accepted',
+        title: `You're in the squad`,
+        body: post.title,
+        link: convId ? `/messages?conv=${convId}` : '/messages',
+      })
     }
+
     loadAll()
   }
 
@@ -290,6 +366,11 @@ export default function LfgPage() {
 
   async function closePost(postId: string) {
     await supabase.from('lfg_posts').update({ status: 'closed' }).eq('id', postId)
+    loadAll()
+  }
+
+  async function bumpPost(postId: string) {
+    await supabase.from('lfg_posts').update({ bumped_at: new Date().toISOString() }).eq('id', postId)
     loadAll()
   }
 
@@ -527,6 +608,7 @@ export default function LfgPage() {
               onCancelApply={() => { setApplyingPostId(null); setApplyNote('') }}
               onApply={() => applyToPost(post.id)}
               onClose={() => closePost(post.id)}
+              onBump={() => bumpPost(post.id)}
               responsesOpen={openResponsesId === post.id}
               onToggleResponses={() => setOpenResponsesId(openResponsesId === post.id ? null : post.id)}
               onAcceptResponse={(rid) => acceptResponse(rid, post.id)}
@@ -551,6 +633,7 @@ export default function LfgPage() {
           formPartySize={formPartySize} setFormPartySize={setFormPartySize}
           formMic={formMic} setFormMic={setFormMic}
           formMinRank={formMinRank} setFormMinRank={setFormMinRank}
+          formDiscord={formDiscord} setFormDiscord={setFormDiscord}
           creating={creating}
           onSubmit={createPost}
         />
@@ -563,7 +646,7 @@ export default function LfgPage() {
 
 function LfgPostCard({
   post, userId, applying, applyNote, setApplyNote,
-  onStartApply, onCancelApply, onApply, onClose,
+  onStartApply, onCancelApply, onApply, onClose, onBump,
   responsesOpen, onToggleResponses, onAcceptResponse, onDeclineResponse,
   timeAgo, expiresIn,
 }: {
@@ -576,6 +659,7 @@ function LfgPostCard({
   onCancelApply: () => void
   onApply: () => void
   onClose: () => void
+  onBump: () => void
   responsesOpen: boolean
   onToggleResponses: () => void
   onAcceptResponse: (responseId: string) => void
@@ -638,6 +722,20 @@ function LfgPostCard({
             {post.mic_required && <span className="flex items-center gap-1 text-cyan"><Mic size={10} /> Mic required</span>}
             {post.min_rank && <span className="flex items-center gap-1"><Shield size={10} /> {post.min_rank}+</span>}
             <span className="flex items-center gap-1"><Clock size={10} /> {expiresIn(post.expires_at)}</span>
+            {post.discord_link && (
+              <a
+                href={post.discord_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1 text-[#5865F2] hover:underline"
+              >
+                <svg width="11" height="11" viewBox="0 0 71 55" fill="currentColor">
+                  <path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.7 40.7 0 00-1.8 3.7 54 54 0 00-16.2 0A26.4 26.4 0 0025.4.3a.2.2 0 00-.2-.1 58.3 58.3 0 00-14.7 4.6.2.2 0 00-.1.1C1.5 18.7-.9 32 .3 45.1v.1a58.8 58.8 0 0017.9 9.1.2.2 0 00.3-.1 42 42 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.7.2.2 0 010-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.7.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.9.2.2 0 00.3.1A58.6 58.6 0 0070.7 45.2v-.1c1.4-15-2.3-28-9.8-39.6a.2.2 0 00-.1-.1zM23.7 37c-3.4 0-6.2-3.1-6.2-7s2.7-7 6.2-7 6.3 3.2 6.2 7-2.8 7-6.2 7zm23 0c-3.4 0-6.2-3.1-6.2-7s2.7-7 6.2-7 6.3 3.2 6.2 7-2.7 7-6.2 7z" />
+                </svg>
+                Discord
+              </a>
+            )}
           </div>
 
           {/* Author + time */}
@@ -659,9 +757,14 @@ function LfgPostCard({
                   <Inbox size={12} /> {pending.length} {pending.length === 1 ? 'applicant' : 'applicants'}
                 </button>
               )}
-              <button onClick={onClose} className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
-                Close
-              </button>
+              <div className="flex gap-1.5">
+                <button onClick={onBump} className="vs-btn vs-btn-ghost text-xs px-2.5 py-1.5" title="Bump to top">
+                  <Zap size={11} /> Bump
+                </button>
+                <button onClick={onClose} className="vs-btn vs-btn-ghost text-xs px-2.5 py-1.5">
+                  Close
+                </button>
+              </div>
             </div>
           ) : hasApplied ? (
             <span className={`vs-btn text-xs px-3 py-1.5 cursor-default ${
@@ -810,6 +913,7 @@ function CreatePostModal(props: {
   formPartySize: number; setFormPartySize: (n: number) => void
   formMic: boolean; setFormMic: (b: boolean) => void
   formMinRank: string; setFormMinRank: (v: string) => void
+  formDiscord: string; setFormDiscord: (v: string) => void
   creating: boolean
   onSubmit: () => void
 }) {
@@ -818,6 +922,7 @@ function CreatePostModal(props: {
     formTitle, setFormTitle, formDesc, setFormDesc, formGame, setFormGame,
     formPlatform, setFormPlatform, formRegion, setFormRegion,
     formPartySize, setFormPartySize, formMic, setFormMic, formMinRank, setFormMinRank,
+    formDiscord, setFormDiscord,
     creating, onSubmit,
   } = props
 
@@ -878,6 +983,17 @@ function CreatePostModal(props: {
           <div>
             <label className="vs-label block mb-1">MIN RANK (OPTIONAL)</label>
             <input value={formMinRank} onChange={e => setFormMinRank(e.target.value)} className="vs-input text-sm" placeholder="e.g. Gold, Diamond, Platinum..." />
+          </div>
+          <div>
+            <label className="vs-label block mb-1">DISCORD INVITE (OPTIONAL)</label>
+            <input
+              value={formDiscord}
+              onChange={e => setFormDiscord(e.target.value)}
+              className="vs-input text-sm"
+              placeholder="https://discord.gg/..."
+              type="url"
+            />
+            <p className="text-[10px] text-text-dim mt-1">Members kunnen hierop joinen voor voice chat</p>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={formMic} onChange={e => setFormMic(e.target.checked)} className="accent-purple w-4 h-4" />
