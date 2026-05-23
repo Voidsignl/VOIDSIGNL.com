@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { messageSchema } from '@/lib/validations'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
+import { logApiError } from '@/lib/logError'
 
 const PAGE_SIZE = 50
 
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ conv
     return NextResponse.json({ data: (data ?? []).reverse() })
 
   } catch (error) {
+    await logApiError('/api/messages/[conversationId]', 'GET', 500, error)
     console.error('Messages conversation GET error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
@@ -86,6 +88,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ con
     return NextResponse.json({ data }, { status: 201 })
 
   } catch (error) {
+    await logApiError('/api/messages/[conversationId]', 'POST', 500, error)
     console.error('Message POST error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }

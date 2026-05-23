@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { clipCreateSchema } from '@/lib/validations'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
+import { logApiError } from '@/lib/logError'
 
 const PAGE_SIZE = 20
 
@@ -65,6 +66,7 @@ export async function GET(req: NextRequest) {
     })
 
   } catch (error) {
+    await logApiError('/api/clips', 'GET', 500, error)
     console.error('Clips GET error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
@@ -98,6 +100,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data }, { status: 201 })
 
   } catch (error) {
+    await logApiError('/api/clips', 'POST', 500, error)
     console.error('Clips POST error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }

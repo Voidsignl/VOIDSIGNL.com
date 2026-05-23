@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
+import { logApiError } from '@/lib/logError'
 
 export async function GET(req: NextRequest) {
   try {
@@ -67,6 +68,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ grouped, stats })
 
   } catch (error) {
+    await logApiError('/api/achievements', 'GET', 500, error)
     console.error('Achievements API error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }

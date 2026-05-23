@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
+import { logApiError } from '@/lib/logError'
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ data: data ?? [] })
   } catch (error) {
+    await logApiError('/api/games', 'GET', 500, error)
     console.error('Games GET error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }

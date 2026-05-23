@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   Shield, Users, Newspaper, Film, Trophy, Gamepad2,
   BarChart3, Search, Check, X, Star, Trash2,
-  TrendingUp, Zap, ShieldCheck, Sparkles, GraduationCap,
+  TrendingUp, Zap, ShieldCheck, Sparkles, GraduationCap, Activity,
 } from 'lucide-react'
 
 type AdminTab = 'overview' | 'users' | 'content' | 'games' | 'tournaments'
@@ -269,6 +269,11 @@ export default function AdminPage() {
         {isAdmin && (
           <Link href="/admin/infra" className="vs-tab whitespace-nowrap">
             <ShieldCheck size={13} /> Infra
+          </Link>
+        )}
+        {isAdmin && (
+          <Link href="/admin/system" className="vs-tab whitespace-nowrap">
+            <Activity size={13} /> System
           </Link>
         )}
       </div>

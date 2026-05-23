@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, rateLimitResponse } from '@/lib/rateLimit'
+import { logApiError } from '@/lib/logError'
 
 const PAGE_SIZE = 50
 
@@ -71,6 +72,7 @@ export async function GET(req: NextRequest) {
     })
 
   } catch (error) {
+    await logApiError('/api/ranking', 'GET', 500, error)
     console.error('Ranking API error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
+import { logApiError } from '@/lib/logError'
 
 export async function GET(
   _req: NextRequest,
@@ -84,6 +85,7 @@ export async function GET(
       membership,
     })
   } catch (error) {
+    await logApiError('/api/clans/[slug]', 'GET', 500, error)
     console.error('Clan detail GET error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }
