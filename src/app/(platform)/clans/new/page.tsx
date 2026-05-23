@@ -162,7 +162,7 @@ export default function NewClanPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-purple text-white font-mono text-sm rounded-xl hover:bg-purple/85 transition-colors disabled:opacity-40"
+          className="w-full py-3 bg-purple text-white font-mono text-sm uppercase tracking-wider rounded-xl hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40"
         >
           {loading ? 'Bezig...' : 'Clan aanmaken (−500 XP)'}
         </button>

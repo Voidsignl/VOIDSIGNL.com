@@ -216,7 +216,7 @@ export default function ClanDetailPage() {
               {isMember && !isOwner && (
                 <button
                   onClick={handleLeave}
-                  className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-colors duration-200 flex-shrink-0"
+                  className="px-4 py-2 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-danger hover:text-danger transition-colors duration-200 flex-shrink-0"
                 >
                   Verlaten
                 </button>

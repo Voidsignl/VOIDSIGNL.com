@@ -98,14 +98,14 @@ export default function NewThreadPage() {
         <div className="flex gap-3">
           <Link
             href={`/forums/${slug}`}
-            className="flex-1 py-3 border border-border text-text-dim font-mono text-sm rounded-xl hover:border-purple hover:text-text transition-colors duration-200 text-center"
+            className="flex-1 py-3 border border-border text-text-dim font-mono text-sm uppercase tracking-wider rounded-xl hover:border-purple hover:text-text transition-colors duration-200 text-center"
           >
             Annuleer
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 py-3 bg-purple text-white font-mono text-sm rounded-xl hover:bg-purple/85 transition-colors disabled:opacity-40"
+            className="flex-1 py-3 bg-purple text-white font-mono text-sm uppercase tracking-wider rounded-xl hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40"
           >
             {loading ? 'Bezig...' : 'Thread plaatsen'}
           </button>

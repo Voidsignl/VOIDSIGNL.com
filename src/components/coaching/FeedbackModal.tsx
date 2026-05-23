@@ -108,14 +108,14 @@ export default function FeedbackModal({ session, onClose, onSubmit }: FeedbackMo
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple transition-colors duration-200"
+              className="flex-1 py-2.5 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
             >
               Later
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-2.5 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40"
+              className="flex-1 py-2.5 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40"
             >
               {loading ? '...' : 'Review plaatsen'}
             </button>

@@ -250,7 +250,7 @@ export default function ThreadPage() {
               <button
                 type="submit"
                 disabled={posting || !newReply.trim()}
-                className="px-6 py-2.5 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40"
+                className="px-6 py-2.5 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40"
               >
                 {posting ? 'Bezig...' : 'Plaatsen'}
               </button>

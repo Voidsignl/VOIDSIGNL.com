@@ -88,7 +88,7 @@ export default function CategoryPage() {
           <p className="text-text-dim text-sm mb-6">Nog geen threads. Start de discussie.</p>
           <Link
             href={`/forums/${slug}/new`}
-            className="px-5 py-2.5 bg-purple text-white font-mono text-sm rounded-lg hover:bg-purple/85 transition-colors"
+            className="px-5 py-2.5 bg-purple text-white font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200"
           >
             + Nieuwe thread
           </Link>
