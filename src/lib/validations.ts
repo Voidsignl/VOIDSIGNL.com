@@ -39,13 +39,21 @@ export const buddySearchSchema = z.object({
   page:      z.coerce.number().min(1).default(1),
 })
 
-// Clip upload
+// Clip upload (MD8: 'upload' source ipv 'native')
 export const clipCreateSchema = z.object({
   title: z.string().min(2).max(100),
-  video_url: z.string().url(),
+  description: z.string().max(500).optional(),
+  video_url: z.string().url().optional(),
   thumbnail_url: z.string().url().optional(),
   game_id: z.string().uuid().optional(),
-  source_type: z.enum(['native', 'youtube', 'twitch']),
+  source_type: z.enum(['upload', 'youtube', 'twitch']),
+  duration_seconds: z.number().min(1).max(600).optional(),
+})
+
+// Clip comment
+export const clipCommentSchema = z.object({
+  clip_id: z.string().uuid(),
+  content: z.string().min(1).max(1000),
 })
 
 // Coaching session book

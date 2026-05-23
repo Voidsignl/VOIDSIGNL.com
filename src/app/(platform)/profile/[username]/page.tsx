@@ -21,6 +21,7 @@ import { ProfileQR } from '@/components/ui/profile-qr'
 import AchievementGrid from '@/components/achievements/AchievementGrid'
 import type { AchievementCardData } from '@/components/achievements/AchievementCard'
 import { ProfileBuddiesStrip } from '@/components/buddy/ProfileBuddiesStrip'
+import { ProfileClipsStrip } from '@/components/clips/ProfileClipsStrip'
 
 type ProfileTab = 'posts' | 'clips' | 'games' | 'achievements'
 
@@ -874,6 +875,9 @@ export default function ProfilePage() {
         <div>
           {/* Buddies mini-strip */}
           <ProfileBuddiesStrip userId={profile.id} />
+
+          {/* Clips mini-strip */}
+          <ProfileClipsStrip userId={profile.id} />
 
           {/* Tabs */}
           <div className="flex items-center gap-2 mb-4">
