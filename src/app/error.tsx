@@ -10,7 +10,8 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('App error boundary:', error)
+    // Productie-veilig: alleen de digest loggen, geen stack trace
+    console.error('Error digest:', error.digest)
   }, [error])
 
   return (

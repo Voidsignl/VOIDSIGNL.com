@@ -409,6 +409,11 @@ export default function AdminPage() {
             )}
           </button>
         ))}
+        {isAdmin && (
+          <Link href="/admin/infra" className="vs-tab whitespace-nowrap">
+            <ShieldCheck size={13} /> Infra
+          </Link>
+        )}
       </div>
 
       {/* Overview */}
