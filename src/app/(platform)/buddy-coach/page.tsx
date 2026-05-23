@@ -600,8 +600,8 @@ export default function BuddyCoachPage() {
                   {[1, 2, 3, 4, 5].map(n => (
                     <button key={n} onClick={() => setReviewRating(n)}
                       className="transition-transform hover:scale-110">
-                      <Star size={28} fill={n <= reviewRating ? '#FBBF24' : 'none'}
-                        className={n <= reviewRating ? 'text-yellow-400' : 'text-text-dim'} />
+                      <Star size={28} fill={n <= reviewRating ? '#f59e0b' : 'none'}
+                        className={n <= reviewRating ? 'text-warning' : 'text-text-dim'} />
                     </button>
                   ))}
                 </div>
