@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   Shield, Users, Newspaper, Film, Trophy, Gamepad2,
   BarChart3, Search, Check, X, Star, Trash2,
-  TrendingUp, Zap, ShieldCheck, Sparkles,
+  TrendingUp, Zap, ShieldCheck, Sparkles, GraduationCap,
 } from 'lucide-react'
 
 type AdminTab = 'overview' | 'users' | 'content' | 'games' | 'tournaments'
@@ -256,6 +256,11 @@ export default function AdminPage() {
             <tab.icon size={13} /> {tab.label}
           </button>
         ))}
+        {isAdmin && (
+          <Link href="/admin/coaches" className="vs-tab whitespace-nowrap">
+            <GraduationCap size={13} /> Coaches
+          </Link>
+        )}
         {isAdmin && (
           <Link href="/admin/infra" className="vs-tab whitespace-nowrap">
             <ShieldCheck size={13} /> Infra

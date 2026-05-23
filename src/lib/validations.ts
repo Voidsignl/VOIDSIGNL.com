@@ -56,7 +56,43 @@ export const clipCommentSchema = z.object({
   content: z.string().min(1).max(1000),
 })
 
-// Coaching session book
+// Coach aanmelding (MD9)
+export const coachApplicationSchema = z.object({
+  bio: z.string().min(50).max(1000),
+  specializations: z.array(z.string()).min(1).max(8),
+  languages: z.array(z.enum(['nl', 'en'])).min(1),
+  discord_handle: z.string().min(2).max(50),
+  hourly_tier: z.enum(['basic', 'standard', 'premium']),
+  game_ids: z.array(z.string().uuid()).min(1).max(10),
+})
+
+// Sessie boeken (MD9)
+export const sessionBookSchema = z.object({
+  coach_id: z.string().uuid(),
+  game_id: z.string().uuid().optional(),
+  tier: z.enum(['basic', 'standard', 'premium']),
+  notes: z.string().max(500).optional(),
+  scheduled_at: z.string().datetime(),
+})
+
+// Review indienen (MD9)
+export const coachReviewSchema = z.object({
+  session_id: z.string().uuid(),
+  coach_id: z.string().uuid(),
+  rating: z.number().min(1).max(5),
+  content: z.string().min(10).max(1000),
+})
+
+// Beschikbaarheid (MD9)
+export const availabilitySchema = z.object({
+  slots: z.array(z.object({
+    day_of_week: z.number().min(0).max(6),
+    start_time: z.string().regex(/^\d{2}:\d{2}$/),
+    end_time: z.string().regex(/^\d{2}:\d{2}$/),
+  })),
+})
+
+// Coaching session book (legacy MD3)
 export const coachingBookSchema = z.object({
   coach_id: z.string().uuid(),
   game_id: z.string().uuid().optional(),
