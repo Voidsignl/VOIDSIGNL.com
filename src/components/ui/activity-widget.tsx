@@ -35,8 +35,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   xp: Star,
   level_up: Star,
   cotw: Trophy,
-  lfg_response: Users,
-  lfg_accepted: Users,
 }
 
 const COLOR_MAP: Record<string, string> = {
@@ -52,8 +50,6 @@ const COLOR_MAP: Record<string, string> = {
   xp: 'text-purple-light',
   level_up: 'text-cyan',
   cotw: 'text-yellow-400',
-  lfg_response: 'text-cyan',
-  lfg_accepted: 'text-success',
 }
 
 interface ActivityWidgetProps {

@@ -6,31 +6,12 @@ import { useRouter } from 'next/navigation'
 import type { Profile, Game } from '@/types'
 import Link from 'next/link'
 import {
-  Shield, Users, Newspaper, Film, Trophy, Flag, Gamepad2,
-  BarChart3, Search, ChevronDown, Check, X, Ban, Star,
-  AlertTriangle, Eye, Trash2, UserCog, Settings, TrendingUp,
-  MessageCircle, Clock, Zap, ShoppingBag, ShieldCheck, EyeOff,
-  Sparkles,
+  Shield, Users, Newspaper, Film, Trophy, Gamepad2,
+  BarChart3, Search, Check, X, Star, Trash2,
+  TrendingUp, Zap, ShieldCheck, Sparkles,
 } from 'lucide-react'
-import type { MarketSeller, MarketListing } from '@/types'
-import { MARKET_CATEGORIES } from '@/types'
-import { formatPrice } from '@/lib/market-utils'
 
-type AdminTab = 'overview' | 'users' | 'content' | 'reports' | 'games' | 'tournaments' | 'market'
-
-interface Report {
-  id: string
-  reporter_id: string
-  target_type: string
-  target_id: string
-  reason: string
-  status: string
-  admin_notes: string | null
-  resolved_by: string | null
-  created_at: string
-  resolved_at: string | null
-  reporter?: Profile
-}
+type AdminTab = 'overview' | 'users' | 'content' | 'games' | 'tournaments'
 
 export default function AdminPage() {
   const supabase = createClient()
@@ -40,53 +21,25 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview')
   const [currentUser, setCurrentUser] = useState<Profile | null>(null)
 
-  // Overview stats
   const [stats, setStats] = useState({
-    members: 0, posts: 0, clips: 0, tournaments: 0, reports_pending: 0,
-    new_members_7d: 0, new_posts_7d: 0
+    members: 0, posts: 0, clips: 0, tournaments: 0,
+    new_members_7d: 0, new_posts_7d: 0,
   })
 
-  // Users
   const [users, setUsers] = useState<Profile[]>([])
   const [userSearch, setUserSearch] = useState('')
   const [userRoleFilter, setUserRoleFilter] = useState<string>('all')
 
-  // Content (posts)
   const [posts, setPosts] = useState<any[]>([])
 
-  // Reports
-  const [reports, setReports] = useState<Report[]>([])
-  const [reportFilter, setReportFilter] = useState<string>('pending')
-
-  // Games
   const [games, setGames] = useState<Game[]>([])
   const [newGameName, setNewGameName] = useState('')
   const [newGameSlug, setNewGameSlug] = useState('')
 
-  // Tournaments
   const [tournaments, setTournaments] = useState<any[]>([])
 
-  // Spotlight (currently featured profile id)
   const [spotlightId, setSpotlightId] = useState<string | null>(null)
 
-  // Market admin state
-  const [pendingSellers, setPendingSellers] = useState<(MarketSeller & { profile?: Profile })[]>([])
-  const [marketListings, setMarketListings] = useState<MarketListing[]>([])
-  const [pendingReports, setPendingReports] = useState<Array<{
-    id: string
-    listing_id: string
-    reason: string
-    details: string | null
-    created_at: string
-    listing?: { id: string; title: string; status: string } | null
-    reporter?: { username: string; display_name: string | null } | null
-  }>>([])
-  const [marketStats, setMarketStats] = useState({
-    pending_sellers: 0, active_listings: 0, total_orders: 0, total_commission: 0, total_revenue: 0,
-    pending_reports: 0,
-  })
-
-  // XP Grant
   const [xpModal, setXpModal] = useState<{ userId: string; username: string } | null>(null)
   const [xpAmount, setXpAmount] = useState(10)
   const [xpReason, setXpReason] = useState('')
@@ -129,22 +82,20 @@ export default function AdminPage() {
   async function loadOverview() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
 
-    const [members, posts, clips, tournaments, pendingReports, newMembers, newPosts] = await Promise.all([
+    const [members, postsCount, clips, tournamentsCount, newMembers, newPosts] = await Promise.all([
       supabase.from('profiles').select('*', { count: 'exact', head: true }),
       supabase.from('posts').select('*', { count: 'exact', head: true }),
       supabase.from('clips').select('*', { count: 'exact', head: true }),
       supabase.from('tournaments').select('*', { count: 'exact', head: true }),
-      supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
       supabase.from('posts').select('*', { count: 'exact', head: true }).gte('created_at', sevenDaysAgo),
     ])
 
     setStats({
       members: members.count || 0,
-      posts: posts.count || 0,
+      posts: postsCount.count || 0,
       clips: clips.count || 0,
-      tournaments: tournaments.count || 0,
-      reports_pending: pendingReports.count || 0,
+      tournaments: tournamentsCount.count || 0,
       new_members_7d: newMembers.count || 0,
       new_posts_7d: newPosts.count || 0,
     })
@@ -165,12 +116,6 @@ export default function AdminPage() {
         .limit(50)
       if (data) setPosts(data)
     }
-    if (activeTab === 'reports') {
-      let query = supabase.from('reports').select('*, reporter:profiles!reporter_id(username, display_name)').order('created_at', { ascending: false }).limit(50)
-      if (reportFilter !== 'all') query = query.eq('status', reportFilter)
-      const { data } = await query
-      if (data) setReports(data as any)
-    }
     if (activeTab === 'games') {
       const { data } = await supabase.from('games').select('*').order('name')
       if (data) setGames(data)
@@ -183,83 +128,6 @@ export default function AdminPage() {
         .limit(50)
       if (data) setTournaments(data)
     }
-    if (activeTab === 'market') {
-      const [pendingRes, listingsRes, ordersRes, reportsRes] = await Promise.all([
-        supabase
-          .from('market_sellers')
-          .select('*, profile:profiles(*)')
-          .is('verified_at', null)
-          .is('rejected_at', null)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('market_listings')
-          .select('*, seller:market_sellers(*, profile:profiles(username, display_name)), game:games(id,name)')
-          .order('created_at', { ascending: false })
-          .limit(100),
-        supabase
-          .from('market_orders')
-          .select('amount, commission, status')
-          .eq('status', 'confirmed'),
-        supabase
-          .from('market_reports')
-          .select('id, listing_id, reason, details, created_at, listing:market_listings(id,title,status), reporter:profiles!reporter_id(username, display_name)')
-          .eq('status', 'pending')
-          .order('created_at', { ascending: false }),
-      ])
-      const pend = (pendingRes.data || []) as unknown as (MarketSeller & { profile?: Profile })[]
-      const lst = (listingsRes.data || []) as unknown as MarketListing[]
-      const orders = (ordersRes.data || []) as { amount: number; commission: number; status: string }[]
-      const reps = (reportsRes.data || []) as unknown as typeof pendingReports
-      setPendingSellers(pend)
-      setMarketListings(lst)
-      setPendingReports(reps)
-      setMarketStats({
-        pending_sellers: pend.length,
-        active_listings: lst.filter(l => l.status === 'active').length,
-        total_orders: orders.length,
-        total_commission: orders.reduce((s, o) => s + Number(o.commission), 0),
-        total_revenue: orders.reduce((s, o) => s + Number(o.amount), 0),
-        pending_reports: reps.length,
-      })
-    }
-  }
-
-  async function resolveMarketReport(reportId: string, status: 'resolved' | 'dismissed') {
-    if (!currentUser?.id) return
-    await supabase
-      .from('market_reports')
-      .update({ status, resolved_by: currentUser.id, resolved_at: new Date().toISOString() })
-      .eq('id', reportId)
-    setPendingReports(prev => prev.filter(r => r.id !== reportId))
-    setMarketStats(s => ({ ...s, pending_reports: Math.max(0, s.pending_reports - 1) }))
-  }
-
-  async function approveSeller(sellerId: string) {
-    if (!currentUser?.id) return
-    await supabase
-      .from('market_sellers')
-      .update({ verified_at: new Date().toISOString(), approved_by: currentUser.id })
-      .eq('id', sellerId)
-    setPendingSellers(prev => prev.filter(s => s.id !== sellerId))
-    setMarketStats(s => ({ ...s, pending_sellers: Math.max(0, s.pending_sellers - 1) }))
-  }
-
-  async function rejectSeller(sellerId: string) {
-    if (!confirm('Reject this seller application?')) return
-    await supabase.from('market_sellers').update({ rejected_at: new Date().toISOString() }).eq('id', sellerId)
-    setPendingSellers(prev => prev.filter(s => s.id !== sellerId))
-    setMarketStats(s => ({ ...s, pending_sellers: Math.max(0, s.pending_sellers - 1) }))
-  }
-
-  async function toggleVoidVerified(listingId: string, current: boolean) {
-    await supabase.from('market_listings').update({ void_verified: !current }).eq('id', listingId)
-    setMarketListings(prev => prev.map(l => l.id === listingId ? { ...l, void_verified: !current } : l))
-  }
-
-  async function removeListing(listingId: string) {
-    if (!confirm('Remove this listing? It will be hidden from the market.')) return
-    await supabase.from('market_listings').update({ status: 'removed' }).eq('id', listingId)
-    setMarketListings(prev => prev.map(l => l.id === listingId ? { ...l, status: 'removed' as const } : l))
   }
 
   async function updateUserRole(userId: string, role: string) {
@@ -291,15 +159,6 @@ export default function AdminPage() {
     setPosts(prev => prev.filter(p => p.id !== postId))
   }
 
-  async function resolveReport(reportId: string, status: 'resolved' | 'dismissed') {
-    await supabase.from('reports').update({
-      status,
-      resolved_by: currentUser?.id,
-      resolved_at: new Date().toISOString(),
-    }).eq('id', reportId)
-    setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r))
-  }
-
   async function toggleGameApproval(gameId: string, current: boolean) {
     await supabase.from('games').update({ is_approved: !current }).eq('id', gameId)
     setGames(prev => prev.map(g => g.id === gameId ? { ...g, is_approved: !current } as any : g))
@@ -326,11 +185,10 @@ export default function AdminPage() {
   async function grantXP() {
     if (!xpModal || xpAmount <= 0) return
     setGrantingXp(true)
-    
+
     const { error } = await supabase.rpc('add_xp', { user_uuid: xpModal.userId, amount: xpAmount })
-    
+
     if (!error) {
-      // Send notification to user
       await supabase.from('notifications').insert({
         user_id: xpModal.userId,
         type: 'xp',
@@ -338,8 +196,7 @@ export default function AdminPage() {
         body: xpReason.trim() || `Granted by ${currentUser?.display_name || currentUser?.username}`,
         link: '/achievements',
       })
-      
-      // Refresh user list
+
       setUsers(prev => prev.map(u => u.id === xpModal.userId ? { ...u, xp: u.xp + xpAmount } as any : u))
       setXpModal(null)
       setXpAmount(10)
@@ -369,10 +226,8 @@ export default function AdminPage() {
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'content', label: 'Content', icon: Newspaper },
-    { id: 'reports', label: 'Reports', icon: Flag },
     { id: 'games', label: 'Games', icon: Gamepad2, adminOnly: true },
     { id: 'tournaments', label: 'Tournaments', icon: Trophy },
-    { id: 'market', label: 'Market', icon: ShoppingBag, adminOnly: true },
   ]
 
   return (
@@ -387,11 +242,6 @@ export default function AdminPage() {
             Logged in as <span className="text-cyan">{currentUser?.username}</span> · {(currentUser as any)?.role}
           </p>
         </div>
-        {stats.reports_pending > 0 && (
-          <button onClick={() => setActiveTab('reports')} className="vs-badge bg-danger/15 text-danger text-xs py-1.5 px-3 cursor-pointer hover:bg-danger/25 transition-colors">
-            <AlertTriangle size={12} /> {stats.reports_pending} pending reports
-          </button>
-        )}
       </div>
 
       {/* Tabs */}
@@ -404,9 +254,6 @@ export default function AdminPage() {
             className="vs-tab whitespace-nowrap"
           >
             <tab.icon size={13} /> {tab.label}
-            {tab.id === 'reports' && stats.reports_pending > 0 && (
-              <span className="w-4 h-4 rounded-full bg-danger text-white text-[9px] flex items-center justify-center">{stats.reports_pending}</span>
-            )}
           </button>
         ))}
         {isAdmin && (
@@ -436,7 +283,7 @@ export default function AdminPage() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="vs-card">
               <p className="vs-label mb-1">NEW MEMBERS (7D)</p>
               <p className="text-xl font-semibold text-success flex items-center gap-2">
@@ -447,12 +294,6 @@ export default function AdminPage() {
               <p className="vs-label mb-1">NEW POSTS (7D)</p>
               <p className="text-xl font-semibold text-success flex items-center gap-2">
                 +{stats.new_posts_7d} <TrendingUp size={14} />
-              </p>
-            </div>
-            <div className="vs-card cursor-pointer hover:border-danger/30 transition-all" onClick={() => setActiveTab('reports')}>
-              <p className="vs-label mb-1">PENDING REPORTS</p>
-              <p className={`text-xl font-semibold ${stats.reports_pending > 0 ? 'text-danger' : 'text-success'}`}>
-                {stats.reports_pending}
               </p>
             </div>
           </div>
@@ -573,58 +414,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Reports */}
-      {activeTab === 'reports' && (
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            {['pending', 'resolved', 'dismissed', 'all'].map(f => (
-              <button key={f} onClick={() => { setReportFilter(f); setTimeout(loadTabData, 0) }}
-                className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${reportFilter === f ? 'bg-purple/15 text-purple' : 'text-text-dim hover:bg-surface'}`}>
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {reports.length === 0 ? (
-            <div className="vs-card text-center py-12">
-              <Flag size={28} className="mx-auto text-text-dim opacity-40 mb-2" />
-              <p className="text-sm text-text-dim">{reportFilter === 'pending' ? 'No pending reports' : 'No reports found'}</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {reports.map(report => (
-                <div key={report.id} className={`vs-card ${report.status === 'pending' ? 'border-warning/20' : ''}`}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] px-2 py-0.5 rounded ${
-                          report.status === 'pending' ? 'bg-warning/15 text-warning' :
-                          report.status === 'resolved' ? 'bg-success/15 text-success' : 'bg-text-dim/15 text-text-dim'
-                        }`}>{report.status}</span>
-                        <span className="text-[10px] text-text-dim bg-surface-2 px-2 py-0.5 rounded">{report.target_type}</span>
-                        <span className="text-[10px] text-text-dim">{timeAgo(report.created_at)}</span>
-                      </div>
-                      <p className="text-sm mb-1">{report.reason}</p>
-                      <p className="text-[10px] text-text-dim">
-                        Reported by {(report as any).reporter?.username || 'Unknown'} · Target: {report.target_id.slice(0, 8)}...
-                      </p>
-                    </div>
-                    {report.status === 'pending' && (
-                      <div className="flex gap-1.5 shrink-0">
-                        <button onClick={() => resolveReport(report.id, 'resolved')}
-                          className="vs-btn vs-btn-primary text-[10px] px-2.5 py-1"><Check size={11} /> Resolve</button>
-                        <button onClick={() => resolveReport(report.id, 'dismissed')}
-                          className="vs-btn vs-btn-ghost text-[10px] px-2.5 py-1"><X size={11} /> Dismiss</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Games */}
       {activeTab === 'games' && isAdmin && (
         <div>
@@ -703,7 +492,6 @@ export default function AdminPage() {
                 <p className="text-sm">Grant XP to <span className="font-semibold text-purple">{xpModal.username}</span></p>
               </div>
 
-              {/* Quick amounts */}
               <div>
                 <label className="vs-label block mb-2">AMOUNT</label>
                 <div className="grid grid-cols-4 gap-2 mb-2">
@@ -759,222 +547,6 @@ export default function AdminPage() {
                 )}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Market */}
-      {activeTab === 'market' && isAdmin && (
-        <div className="space-y-6">
-          {/* Stats strip */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-            <div className="vs-card vs-lit">
-              <p className="vs-label">SELLER QUEUE</p>
-              <p className="text-2xl font-semibold text-warning tabular-nums mt-1">{marketStats.pending_sellers}</p>
-            </div>
-            <div className="vs-card vs-lit">
-              <p className="vs-label">REPORTS</p>
-              <p className={`text-2xl font-semibold tabular-nums mt-1 ${marketStats.pending_reports > 0 ? 'text-danger' : 'text-success'}`}>
-                {marketStats.pending_reports}
-              </p>
-            </div>
-            <div className="vs-card vs-lit">
-              <p className="vs-label">ACTIVE LISTINGS</p>
-              <p className="text-2xl font-semibold text-cyan tabular-nums mt-1">{marketStats.active_listings}</p>
-            </div>
-            <div className="vs-card vs-lit">
-              <p className="vs-label">CONFIRMED ORDERS</p>
-              <p className="text-2xl font-semibold tabular-nums mt-1">{marketStats.total_orders}</p>
-            </div>
-            <div className="vs-card vs-lit">
-              <p className="vs-label">REVENUE</p>
-              <p className="text-2xl font-semibold tabular-nums mt-1">€{marketStats.total_revenue.toFixed(2)}</p>
-            </div>
-            <div className="vs-card vs-lit">
-              <p className="vs-label">COMMISSION</p>
-              <p className="text-2xl font-semibold text-success tabular-nums mt-1">€{marketStats.total_commission.toFixed(2)}</p>
-            </div>
-          </div>
-
-          {/* Pending listing reports */}
-          <div>
-            <h3 className="vs-counter text-[11px] tabular-nums mb-2">PENDING REPORTS</h3>
-            {pendingReports.length === 0 ? (
-              <div className="vs-card text-center py-6">
-                <Check size={20} className="text-success mx-auto mb-1" />
-                <p className="text-xs text-text-dim">No pending reports</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {pendingReports.map(r => (
-                  <div key={r.id} className="vs-card flex flex-col sm:flex-row sm:items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="vs-badge text-[9px] bg-warning/15 text-warning border border-warning/30 capitalize">
-                          {r.reason}
-                        </span>
-                        {r.listing && (
-                          <Link href={`/market/listing/${r.listing.id}`} className="text-sm font-medium hover:text-purple-light line-clamp-1">
-                            {r.listing.title}
-                          </Link>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-text-dim tabular-nums">
-                        Reported by @{r.reporter?.username || 'unknown'} · {timeAgo(r.created_at)}
-                      </p>
-                      {r.details && (
-                        <p className="text-xs text-text-muted mt-2 leading-relaxed whitespace-pre-wrap line-clamp-3">
-                          {r.details}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button
-                        onClick={() => resolveMarketReport(r.id, 'resolved')}
-                        className="vs-btn vs-btn-primary text-xs"
-                      >
-                        <Check size={13} /> RESOLVE
-                      </button>
-                      <button
-                        onClick={() => resolveMarketReport(r.id, 'dismissed')}
-                        className="vs-btn vs-btn-ghost text-xs"
-                      >
-                        <X size={13} /> DISMISS
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Pending sellers */}
-          <div>
-            <h3 className="vs-counter text-[11px] tabular-nums mb-2">PENDING SELLER APPLICATIONS</h3>
-            {pendingSellers.length === 0 ? (
-              <div className="vs-card text-center py-8">
-                <Check size={20} className="text-success mx-auto mb-1" />
-                <p className="text-xs text-text-dim">No pending applications</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {pendingSellers.map(s => (
-                  <div key={s.id} className="vs-card flex flex-col sm:flex-row sm:items-start gap-3">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-purple/15 flex items-center justify-center text-xs font-bold text-purple shrink-0">
-                        {(s.profile?.display_name || s.profile?.username || '?')[0]?.toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <Link href={`/profile/${s.profile?.username}`} className="text-sm font-medium hover:text-purple-light">
-                          {s.profile?.display_name || s.profile?.username}
-                        </Link>
-                        <p className="text-[10px] text-text-dim tabular-nums">
-                          @{s.profile?.username} · applied {timeAgo(s.created_at)}
-                        </p>
-                        {s.application_note && (
-                          <p className="text-xs text-text-muted mt-2 leading-relaxed whitespace-pre-wrap line-clamp-4">
-                            {s.application_note}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button onClick={() => approveSeller(s.id)} className="vs-btn vs-btn-primary text-xs">
-                        <Check size={13} /> APPROVE
-                      </button>
-                      <button onClick={() => rejectSeller(s.id)} className="vs-btn vs-btn-danger text-xs">
-                        <X size={13} /> REJECT
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* All listings */}
-          <div>
-            <h3 className="vs-counter text-[11px] tabular-nums mb-2">ALL LISTINGS</h3>
-            {marketListings.length === 0 ? (
-              <div className="vs-card text-center py-8">
-                <ShoppingBag size={20} className="text-text-dim mx-auto mb-1" />
-                <p className="text-xs text-text-dim">No listings yet</p>
-              </div>
-            ) : (
-              <div className="vs-card vs-lit p-0 overflow-x-auto">
-                <table className="w-full text-sm min-w-[640px]">
-                  <thead className="bg-surface-2 border-b border-border">
-                    <tr className="text-left vs-counter text-[10px] tabular-nums">
-                      <th className="px-4 py-2.5">TITLE</th>
-                      <th className="px-4 py-2.5">SELLER</th>
-                      <th className="px-4 py-2.5">CATEGORY</th>
-                      <th className="px-4 py-2.5 text-right">PRICE</th>
-                      <th className="px-4 py-2.5">STATUS</th>
-                      <th className="px-4 py-2.5 text-right">ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {marketListings.map(l => (
-                      <tr key={l.id} className="hover:bg-surface/50 transition-colors">
-                        <td className="px-4 py-2.5">
-                          <Link href={`/market/listing/${l.id}`} className="text-text hover:text-purple-light line-clamp-1">
-                            {l.void_verified && <ShieldCheck size={11} className="text-purple-light inline mr-1" />}
-                            {l.title}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2.5 text-xs">
-                          <Link href={`/profile/${l.seller?.profile?.username || ''}`} className="text-text-muted hover:text-text">
-                            @{l.seller?.profile?.username || 'unknown'}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span className="vs-badge text-[9px] bg-surface-2 text-text-muted border border-border">
-                            {MARKET_CATEGORIES[l.category].tag}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-cyan tabular-nums">
-                          {formatPrice(l.price, l.currency)}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <span className={`vs-badge text-[9px] capitalize ${
-                            l.status === 'active' ? 'vs-badge-success' :
-                            l.status === 'sold' ? 'vs-badge-cyan' :
-                            l.status === 'removed' ? 'vs-badge-danger' :
-                            'vs-badge-warning'
-                          }`}>
-                            {l.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2.5 text-right">
-                          <div className="inline-flex gap-1">
-                            <button
-                              onClick={() => toggleVoidVerified(l.id, l.void_verified)}
-                              className={`p-1.5 rounded transition-colors ${
-                                l.void_verified
-                                  ? 'text-purple-light bg-purple/10 hover:bg-purple/20'
-                                  : 'text-text-dim hover:text-purple-light hover:bg-purple/10'
-                              }`}
-                              title={l.void_verified ? 'Remove VOID Verified' : 'Mark VOID Verified'}
-                            >
-                              <ShieldCheck size={13} />
-                            </button>
-                            {l.status !== 'removed' && (
-                              <button
-                                onClick={() => removeListing(l.id)}
-                                className="p-1.5 rounded text-text-dim hover:text-danger hover:bg-danger/10 transition-colors"
-                                title="Remove listing"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         </div>
       )}

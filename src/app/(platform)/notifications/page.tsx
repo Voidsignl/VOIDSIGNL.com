@@ -36,7 +36,6 @@ const TYPE_CONFIG: Record<string, { icon: any; color: string; category: string }
   clip_like:       { icon: Film, color: 'text-danger', category: 'social' },
   tournament:      { icon: Trophy, color: 'text-warning', category: 'competitive' },
   tournament_start:{ icon: Swords, color: 'text-danger', category: 'competitive' },
-  lfg_response:    { icon: Users, color: 'text-cyan', category: 'competitive' },
   achievement:     { icon: Award, color: 'text-yellow-400', category: 'system' },
   xp:              { icon: Star, color: 'text-purple', category: 'system' },
   level_up:        { icon: Star, color: 'text-cyan', category: 'system' },

@@ -21,7 +21,7 @@ const ICON_MAP: Record<string, any> = {
   buddy_request: Users, buddy_accepted: Users, message: MessageCircle,
   clip_like: Film, tournament: Trophy, tournament_start: Swords,
   achievement: Award, xp: Star, level_up: Star, system: Bell,
-  welcome: Star, cotw: Trophy, lfg_response: Users,
+  welcome: Star, cotw: Trophy,
 }
 
 const COLOR_MAP: Record<string, string> = {

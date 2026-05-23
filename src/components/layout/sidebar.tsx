@@ -5,9 +5,9 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import {
-  LayoutDashboard, Newspaper, Trophy, Users, BarChart3,
+  LayoutDashboard, Newspaper, Trophy, BarChart3,
   Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield, Award,
-  Menu, LogOut, Gamepad2, ShoppingBag
+  Menu, LogOut, Gamepad2
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -20,8 +20,6 @@ interface SidebarProps {
 const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/feed', icon: Newspaper, label: 'Feed' },
-  { href: '/lfg', icon: Users, label: 'LFG' },
-  { href: '/market', icon: ShoppingBag, label: 'Market' },
   { href: '/tournaments', icon: Trophy, label: 'Tournaments' },
   { href: '/rankings', icon: BarChart3, label: 'Rankings' },
   { divider: true },
@@ -37,10 +35,10 @@ const NAV_ITEMS = [
 // Bottom nav: 5 most-used. Center "Home" sits raised on mobile for thumb-reach.
 const MOBILE_NAV = [
   { href: '/feed', icon: Newspaper, label: 'Feed' },
-  { href: '/market', icon: ShoppingBag, label: 'Market' },
+  { href: '/clips', icon: Film, label: 'Clips' },
   { href: '/dashboard', icon: LayoutDashboard, label: 'Home', center: true },
   { href: '/messages', icon: MessageCircle, label: 'DMs' },
-  { href: '/clips', icon: Film, label: 'Clips' },
+  { href: '/rankings', icon: BarChart3, label: 'Rankings' },
 ] as const
 
 export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) {

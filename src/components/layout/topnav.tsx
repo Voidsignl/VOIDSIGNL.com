@@ -3,10 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { VoidsignlLogo, VoidsignlMonogram } from '@/components/ui/logo'
 import {
-  Search, Bell, BellOff, Globe, X, User, Gamepad2, Newspaper, Trophy, Film, Users,
+  Search, Bell, Globe, X, User, Gamepad2, Newspaper, Trophy, Film, Users,
   BarChart3, Award, MessageCircle, CheckCheck, ArrowRight,
 } from 'lucide-react'
-import { usePushSubscription } from '@/hooks/use-push-subscription'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -98,7 +97,6 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
   const router = useRouter()
   const { lang, setLang, t } = useLang()
   const debounceRef = useRef<NodeJS.Timeout>(null)
-  const push = usePushSubscription(profile?.id ?? null)
 
   // Close on click outside
   useEffect(() => {
@@ -455,30 +453,6 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
                       NOTIFICATIONS{notificationCount > 0 ? ` · ${String(notificationCount).padStart(2, '0')}` : ''}
                     </p>
                     <div className="flex items-center gap-3">
-                      {push.status !== 'unsupported' && (
-                        push.status === 'subscribed' ? (
-                          <button
-                            onClick={push.unsubscribe}
-                            disabled={push.status === 'subscribed' && false}
-                            className="text-[10px] text-text-dim hover:text-text-muted transition-colors flex items-center gap-1"
-                            title="Disable browser push notifications"
-                          >
-                            <Bell size={10} className="text-success" /> ON
-                          </button>
-                        ) : push.status === 'denied' ? (
-                          <span className="text-[10px] text-text-dim flex items-center gap-1" title="Re-enable in browser site settings">
-                            <BellOff size={10} /> Blocked
-                          </span>
-                        ) : (
-                          <button
-                            onClick={push.subscribe}
-                            disabled={push.status === 'pending'}
-                            className="text-[10px] text-cyan hover:text-cyan/80 transition-colors flex items-center gap-1"
-                          >
-                            <Bell size={10} /> Enable push
-                          </button>
-                        )
-                      )}
                       {notificationCount > 0 && (
                         <button
                           onClick={markAllRead}

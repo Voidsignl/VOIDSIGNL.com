@@ -21,7 +21,6 @@ interface Conversation {
   is_group: boolean
   name: string | null
   creator_id: string | null
-  lfg_post_id: string | null
   /** For 1-to-1: the other user. For groups: undefined. */
   other_user?: Profile
   /** For groups: list of member profiles. */
@@ -307,7 +306,6 @@ export default function MessagesPage() {
           is_group: false,
           name: null,
           creator_id: null,
-          lfg_post_id: null,
           other_user: otherUser,
           unread_count: 0,
         }
@@ -556,7 +554,6 @@ export default function MessagesPage() {
                     </p>
                     <p className="vs-counter text-[10px] text-text-dim tabular-nums">
                       {(activeConv.members || []).length} MEMBERS
-                      {activeConv.lfg_post_id && ' · LFG SQUAD'}
                     </p>
                   </div>
                 </>

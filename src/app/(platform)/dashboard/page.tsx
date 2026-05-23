@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Plus, Upload, Users, TrendingUp, Trophy, Zap, Calendar, Newspaper } from 'lucide-react'
+import { Plus, Upload, TrendingUp, Trophy, Zap, Calendar, Newspaper } from 'lucide-react'
 import { getLevelFromXP, getXPProgress } from '@/types'
 import type { Profile, Post, Game } from '@/types'
 import Link from 'next/link'
@@ -205,9 +205,6 @@ export default function DashboardPage() {
               <Link href="/clips" className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
                 <Upload size={13} /> Clip
               </Link>
-              <Link href="/lfg" className="vs-btn vs-btn-ghost text-xs px-3 py-1.5">
-                <Users size={13} /> LFG
-              </Link>
             </div>
           </div>
 
@@ -355,9 +352,6 @@ export default function DashboardPage() {
               </Link>
               <Link href="/clips/upload" className="flex items-center gap-2 text-sm text-cyan hover:text-cyan/80 transition-colors">
                 <Upload size={14} /> Upload clip
-              </Link>
-              <Link href="/lfg" className="flex items-center gap-2 text-sm text-cyan hover:text-cyan/80 transition-colors">
-                <Users size={14} /> Find teammates
               </Link>
             </div>
           </div>

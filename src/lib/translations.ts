@@ -94,20 +94,6 @@ const translations: Record<string, Record<Lang, string>> = {
   'tournaments.noTournaments': { en: 'No tournaments found', nl: 'Geen toernooien gevonden' },
   'tournaments.createOne': { en: 'Create one and start competing', nl: 'Maak er een en start met strijden' },
 
-  // LFG
-  'lfg.title': { en: 'LFG', nl: 'LFG' },
-  'lfg.subtitle': { en: 'Find teammates, squad up', nl: 'Vind teamgenoten, squad up' },
-  'lfg.create': { en: 'Create LFG', nl: 'LFG maken' },
-  'lfg.join': { en: 'Join', nl: 'Meedoen' },
-  'lfg.applied': { en: 'Applied', nl: 'Aangemeld' },
-  'lfg.full': { en: 'Full', nl: 'Vol' },
-  'lfg.close': { en: 'Close', nl: 'Sluiten' },
-  'lfg.spotsLeft': { en: 'spots left', nl: 'plekken over' },
-  'lfg.spotLeft': { en: 'spot left', nl: 'plek over' },
-  'lfg.micRequired': { en: 'Mic required', nl: 'Microfoon vereist' },
-  'lfg.noPosts': { en: 'No LFG posts right now', nl: 'Geen LFG berichten op dit moment' },
-  'lfg.createAndFind': { en: 'Create one and find your squad', nl: 'Maak er een en vind je squad' },
-
   // Messages
   'messages.title': { en: 'Messages', nl: 'Berichten' },
   'messages.newMessage': { en: 'New Message', nl: 'Nieuw bericht' },
@@ -209,29 +195,6 @@ const translations: Record<string, Record<Lang, string>> = {
   'widget.liveNow': { en: 'Live now', nl: 'Nu live' },
   'widget.seeAll': { en: 'See all →', nl: 'Alles bekijken →' },
   'widget.nothingYet': { en: 'Nothing yet — check back when others interact with you.', nl: 'Nog niets — kom terug zodra anderen interactie met je hebben.' },
-
-  // Market
-  'market.title': { en: 'THE VOID MARKET', nl: 'THE VOID MARKET' },
-  'market.subtitle': { en: 'Only for those who know.', nl: 'Alleen voor wie het weet.' },
-  'market.secureMembers': { en: 'SECURE · MEMBERS-ONLY · ESCROWED', nl: 'BEVEILIGD · ALLEEN LEDEN · ESCROW' },
-  'market.browseVault': { en: 'Browse the vault', nl: 'Doorzoek de kluis' },
-  'market.recentDrops': { en: 'Newest listings', nl: 'Nieuwste aanbod' },
-  'market.voidVerified': { en: 'Curated by VOIDSIGNL', nl: 'Gecureerd door VOIDSIGNL' },
-  'market.sellOnVoid': { en: 'SELL ON VOID', nl: 'VERKOOP OP VOID' },
-  'market.applyForSeller': { en: 'Want to sell on VOID? Apply for seller access', nl: 'Wil je verkopen? Vraag verkoper-toegang aan' },
-  'market.saved': { en: 'Saved', nl: 'Opgeslagen' },
-  'market.wishlist': { en: 'Wishlist', nl: 'Wenslijst' },
-  'market.report': { en: 'Report', nl: 'Rapporteren' },
-  'market.boost': { en: 'Boost listing', nl: 'Boost listing' },
-  'market.featured': { en: 'FEATURED', nl: 'UITGELICHT' },
-  'market.bundles': { en: 'BUNDLES', nl: 'BUNDELS' },
-  'market.newBundle': { en: 'New bundle', nl: 'Nieuwe bundel' },
-  'market.itemsOff': { en: '% OFF', nl: '% KORTING' },
-
-  // Push
-  'push.enable': { en: 'Enable push', nl: 'Push aanzetten' },
-  'push.on': { en: 'ON', nl: 'AAN' },
-  'push.blocked': { en: 'Blocked', nl: 'Geblokkeerd' },
 
   // PWA
   'pwa.install': { en: 'Install VOIDSIGNL', nl: 'Installeer VOIDSIGNL' },
