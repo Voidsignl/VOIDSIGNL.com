@@ -132,14 +132,14 @@ export default function CreatePostBox({ user, onPost }: CreatePostBoxProps) {
                 <button
                   type="button"
                   onClick={() => { setExpanded(false); setContent(''); setImages([]) }}
-                  className="px-3 py-1.5 font-mono text-xs text-text-dim hover:text-text transition-colors"
+                  className="px-3 py-1.5 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
                 >
                   Annuleer
                 </button>
                 <button
                   type="submit"
                   disabled={loading || (!content.trim() && images.length === 0)}
-                  className="px-4 py-1.5 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40"
+                  className="px-4 py-1.5 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40"
                 >
                   {loading ? '...' : 'Posten'}
                 </button>

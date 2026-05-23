@@ -51,14 +51,14 @@ export default function RepostModal({ postId, onClose, onSuccess }: RepostModalP
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple transition-colors duration-200"
+            className="flex-1 py-2.5 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
           >
             Annuleer
           </button>
           <button
             onClick={handleRepost}
             disabled={loading}
-            className="flex-1 py-2.5 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5"
+            className="flex-1 py-2.5 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40 flex items-center justify-center gap-1.5"
           >
             {loading ? '...' : <><Repeat2 size={12} /> Delen</>}
           </button>

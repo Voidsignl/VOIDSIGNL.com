@@ -184,7 +184,7 @@ export default function ClipUploadModal({ games, onClose, onSuccess }: ClipUploa
           <button
             type="submit"
             disabled={uploading}
-            className="w-full py-3 bg-purple text-white font-mono text-sm rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40"
+            className="w-full py-3 bg-purple text-white font-mono text-sm uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40"
           >
             {uploading ? 'Bezig...' : 'Clip plaatsen'}
           </button>
