@@ -43,7 +43,7 @@ const PAGES: SearchResult[] = [
   { type: 'page', id: 'clips', title: 'Clips', subtitle: 'Video clips', link: '/clips' },
   { type: 'page', id: 'tournaments', title: 'Tournaments', subtitle: 'Compete', link: '/tournaments' },
   { type: 'page', id: 'lfg', title: 'LFG', subtitle: 'Find teammates', link: '/lfg' },
-  { type: 'page', id: 'rankings', title: 'Rankings', subtitle: 'Leaderboard', link: '/rankings' },
+  { type: 'page', id: 'rankings', title: 'Ranking', subtitle: 'Leaderboard', link: '/ranking' },
   { type: 'page', id: 'achievements', title: 'Achievements', subtitle: 'Badges & XP', link: '/achievements' },
   { type: 'page', id: 'messages', title: 'Messages', subtitle: 'Direct messages', link: '/messages' },
   { type: 'page', id: 'buddy-coach', title: 'Buddy & Coach', subtitle: 'Find buddy or coach', link: '/buddy-coach' },

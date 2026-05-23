@@ -64,6 +64,12 @@ export const clanCreateSchema = z.object({
 // Generic UUID param check
 export const uuidSchema = z.string().uuid()
 
+// Ranking zoekfunctie
+export const rankingSearchSchema = z.object({
+  q: z.string().min(1).max(50),
+  tab: z.enum(['global', 'clips', 'coaching', 'clans']).default('global'),
+})
+
 export function validate<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data)
   if (!result.success) {

@@ -21,7 +21,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/feed', icon: Newspaper, label: 'Feed' },
   { href: '/tournaments', icon: Trophy, label: 'Tournaments' },
-  { href: '/rankings', icon: BarChart3, label: 'Rankings' },
+  { href: '/ranking', icon: BarChart3, label: 'Ranking' },
   { divider: true },
   { href: '/clips', icon: Film, label: 'Clips' },
   { href: '/achievements', icon: Award, label: 'Achievements' },
@@ -38,7 +38,7 @@ const MOBILE_NAV = [
   { href: '/clips', icon: Film, label: 'Clips' },
   { href: '/dashboard', icon: LayoutDashboard, label: 'Home', center: true },
   { href: '/messages', icon: MessageCircle, label: 'DMs' },
-  { href: '/rankings', icon: BarChart3, label: 'Rankings' },
+  { href: '/ranking', icon: BarChart3, label: 'Ranking' },
 ] as const
 
 export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) {
