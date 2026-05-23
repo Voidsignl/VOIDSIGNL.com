@@ -137,6 +137,21 @@ export const clanCreateSchema = z.object({
 // Generic UUID param check
 export const uuidSchema = z.string().uuid()
 
+// Bericht sturen (MD11)
+export const messageSchema = z.object({
+  conversation_id: z.string().uuid(),
+  content: z.string().max(2000).optional(),
+  message_type: z.enum(['text', 'image', 'gif', 'sticker']).default('text'),
+  media_url: z.string().url().optional(),
+  gif_url: z.string().url().optional(),
+  sticker_id: z.string().optional(),
+})
+
+// DM starten (MD11)
+export const startDmSchema = z.object({
+  username: z.string().min(1).max(50),
+})
+
 // Ranking zoekfunctie
 export const rankingSearchSchema = z.object({
   q: z.string().min(1).max(50),
