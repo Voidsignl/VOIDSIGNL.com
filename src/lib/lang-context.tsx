@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { t as translate, type Lang } from '@/lib/translations'
 
@@ -16,9 +16,18 @@ const LangContext = createContext<LangContextType>({
   t: (key) => key,
 })
 
+type SupabaseClient = ReturnType<typeof createClient>
+
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>('en')
-  const supabase = createClient()
+  // Lazy init: only create the Supabase client in the browser, never during
+  // SSR/prerender (otherwise @supabase/ssr crashes on missing NEXT_PUBLIC_* envs).
+  const supabaseRef = useRef<SupabaseClient | null>(null)
+  function getSupabase(): SupabaseClient | null {
+    if (typeof window === 'undefined') return null
+    if (!supabaseRef.current) supabaseRef.current = createClient()
+    return supabaseRef.current
+  }
 
   useEffect(() => {
     // Load from localStorage first for instant display
@@ -30,6 +39,8 @@ export function LangProvider({ children }: { children: ReactNode }) {
   }, [])
 
   async function loadProfileLang() {
+    const supabase = getSupabase()
+    if (!supabase) return
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       const { data } = await supabase.from('profiles').select('preferred_language').eq('id', user.id).single()
@@ -45,6 +56,8 @@ export function LangProvider({ children }: { children: ReactNode }) {
     setLangState(newLang)
     localStorage.setItem('voidsignl_lang', newLang)
 
+    const supabase = getSupabase()
+    if (!supabase) return
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       await supabase.from('profiles').update({ preferred_language: newLang }).eq('id', user.id)
