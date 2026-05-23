@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { Topnav } from '@/components/layout/topnav'
 import { Sidebar } from '@/components/layout/sidebar'
 import { NotificationToast } from '@/components/ui/notification-toast'
+import AchievementChecker from '@/components/achievements/AchievementChecker'
 import { useHeartbeat } from '@/hooks/use-heartbeat'
 import type { Profile } from '@/types'
 
@@ -113,6 +114,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
       </div>
       {/* Notification popups */}
       {profile && <NotificationToast userId={profile.id} />}
+      <AchievementChecker />
     </div>
   )
 }

@@ -18,8 +18,10 @@ import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ScopeSpinner } from '@/components/ui/loader'
 import { ProfileQR } from '@/components/ui/profile-qr'
+import AchievementGrid from '@/components/achievements/AchievementGrid'
+import type { AchievementCardData } from '@/components/achievements/AchievementCard'
 
-type ProfileTab = 'posts' | 'clips' | 'games'
+type ProfileTab = 'posts' | 'clips' | 'games' | 'achievements'
 
 export default function ProfilePage() {
   const params = useParams()
@@ -49,6 +51,13 @@ export default function ProfilePage() {
   const [clips, setClips] = useState<Clip[]>([])
   const [userGames, setUserGames] = useState<(UserGame & { game: Game })[]>([])
   const [loadingContent, setLoadingContent] = useState(false)
+
+  // Achievements
+  const [achievementsData, setAchievementsData] = useState<{
+    grouped: Record<string, AchievementCardData[]>
+    stats: { total: number; unlocked: number; xp_from_achievements: number }
+  } | null>(null)
+  const [achievementsLoading, setAchievementsLoading] = useState(false)
 
   // Edit mode
   const [editing, setEditing] = useState(false)
@@ -250,6 +259,17 @@ export default function ProfilePage() {
         .order('created_at', { ascending: false })
         .limit(20)
       if (data) setClips(data as unknown as Clip[])
+    } else if (activeTab === 'achievements' && !achievementsData) {
+      setAchievementsLoading(true)
+      try {
+        const res = await fetch(`/api/achievements?userId=${profile.id}`, { cache: 'no-store' })
+        if (res.ok) {
+          const json = await res.json()
+          setAchievementsData({ grouped: json.grouped ?? {}, stats: json.stats ?? { total: 0, unlocked: 0, xp_from_achievements: 0 } })
+        }
+      } finally {
+        setAchievementsLoading(false)
+      }
     }
 
     setLoadingContent(false)
@@ -857,6 +877,7 @@ export default function ProfilePage() {
               { id: 'posts' as ProfileTab, label: 'Posts', icon: Newspaper, count: postCount },
               { id: 'clips' as ProfileTab, label: 'Clips', icon: Film, count: clipCount },
               { id: 'games' as ProfileTab, label: 'Games', icon: Gamepad2, count: userGames.length },
+              { id: 'achievements' as ProfileTab, label: 'Achievements', icon: Trophy, count: 0 },
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1006,7 +1027,7 @@ export default function ProfilePage() {
                 ))}
               </div>
             )
-          ) : (
+          ) : activeTab === 'games' ? (
             // Games tab
             userGames.length === 0 ? (
               <EmptyState
@@ -1039,6 +1060,21 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
+            )
+          ) : (
+            // Achievements tab
+            achievementsLoading ? (
+              <div className="vs-card py-12 text-center">
+                <ScopeSpinner size={28} className="mx-auto" />
+              </div>
+            ) : !achievementsData ? (
+              <EmptyState
+                icon={Trophy}
+                title="Geen achievements geladen"
+                description="Probeer het opnieuw door te wisselen van tab."
+              />
+            ) : (
+              <AchievementGrid grouped={achievementsData.grouped} stats={achievementsData.stats} />
             )
           )}
         </div>

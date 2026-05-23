@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import { LangProvider } from "@/lib/lang-context"
+import { AchievementProvider } from "@/context/AchievementContext"
 import { PWAProvider } from "@/components/ui/pwa-provider"
 
 export const metadata: Metadata = {
@@ -49,7 +50,9 @@ export default function RootLayout({
         />
         <div className="relative z-10">
           <LangProvider>
-            {children}
+            <AchievementProvider>
+              {children}
+            </AchievementProvider>
           </LangProvider>
         </div>
         <PWAProvider />
