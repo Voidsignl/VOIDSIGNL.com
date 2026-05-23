@@ -16,9 +16,27 @@ export const postCreateSchema = z.object({
   image_url: z.string().url().optional(),
 })
 
-// Buddy request
+// Buddy request sturen
 export const buddyRequestSchema = z.object({
   receiver_id: z.string().uuid(),
+  message: z.string().max(200).optional(),
+})
+
+// Buddy request beantwoorden
+export const buddyResponseSchema = z.object({
+  request_id: z.string().uuid(),
+  action: z.enum(['accept', 'decline']),
+})
+
+// Buddy zoeken filters
+export const buddySearchSchema = z.object({
+  game_id:   z.string().uuid().optional(),
+  language:  z.enum(['nl', 'en']).optional(),
+  platform:  z.string().optional(),
+  playtime:  z.string().optional(),
+  min_level: z.coerce.number().min(1).max(10).optional(),
+  max_level: z.coerce.number().min(1).max(10).optional(),
+  page:      z.coerce.number().min(1).default(1),
 })
 
 // Clip upload

@@ -20,6 +20,7 @@ import { ScopeSpinner } from '@/components/ui/loader'
 import { ProfileQR } from '@/components/ui/profile-qr'
 import AchievementGrid from '@/components/achievements/AchievementGrid'
 import type { AchievementCardData } from '@/components/achievements/AchievementCard'
+import { ProfileBuddiesStrip } from '@/components/buddy/ProfileBuddiesStrip'
 
 type ProfileTab = 'posts' | 'clips' | 'games' | 'achievements'
 
@@ -871,6 +872,9 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-5">
         {/* Main content */}
         <div>
+          {/* Buddies mini-strip */}
+          <ProfileBuddiesStrip userId={profile.id} />
+
           {/* Tabs */}
           <div className="flex items-center gap-2 mb-4">
             {[
