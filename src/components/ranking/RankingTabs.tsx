@@ -10,7 +10,7 @@ const TABS: Tab[] = [
   { key: 'global', label: 'Global' },
   { key: 'clips', label: 'Clips' },
   { key: 'coaching', label: 'Coaching' },
-  { key: 'clans', label: 'Clans', comingSoon: true },
+  { key: 'clans', label: 'Clans' },
 ]
 
 interface RankingTabsProps {

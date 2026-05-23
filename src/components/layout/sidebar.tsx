@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase-browser'
 import {
   LayoutDashboard, Newspaper, Trophy, BarChart3,
   Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield, Award,
-  Menu, LogOut, Gamepad2, Users, GraduationCap, MessagesSquare,
+  Menu, LogOut, Gamepad2, Users, GraduationCap, MessagesSquare, Swords,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { href: '/feed', icon: Newspaper, label: 'Feed' },
   { href: '/forums', icon: MessagesSquare, label: 'Forums' },
   { href: '/buddies', icon: Users, label: 'Buddies' },
+  { href: '/clans', icon: Swords, label: 'Clans' },
   { href: '/coaching', icon: GraduationCap, label: 'Coaching' },
   { href: '/tournaments', icon: Trophy, label: 'Tournaments' },
   { href: '/ranking', icon: BarChart3, label: 'Ranking' },

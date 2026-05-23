@@ -21,6 +21,7 @@ export interface Profile {
   streak_count?: number
   streak_best?: number
   last_streak_date?: string | null
+  clan_id?: string | null
   created_at: string
   updated_at: string
 }

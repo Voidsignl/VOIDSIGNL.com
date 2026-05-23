@@ -45,6 +45,9 @@ export default function ProfilePage() {
   const [postCount, setPostCount] = useState(0)
   const [clipCount, setClipCount] = useState(0)
 
+  // Clan badge
+  const [clanInfo, setClanInfo] = useState<{ name: string; slug: string } | null>(null)
+
   // Social state
   const [isFollowing, setIsFollowing] = useState(false)
   const [buddyStatus, setBuddyStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none')
@@ -239,6 +242,18 @@ export default function ProfilePage() {
       .eq('user_id', p.id)
       .order('is_main', { ascending: false })
     if (gamesData) setUserGames(gamesData as any)
+
+    // Load clan badge
+    if (p.clan_id) {
+      const { data: clan } = await supabase
+        .from('clans')
+        .select('name, slug')
+        .eq('id', p.clan_id)
+        .maybeSingle()
+      setClanInfo(clan ?? null)
+    } else {
+      setClanInfo(null)
+    }
 
     setLoading(false)
   }
@@ -559,6 +574,14 @@ export default function ProfilePage() {
                 )}
               </div>
               <p className="text-sm text-text-dim">@{profile.username}</p>
+              {clanInfo && (
+                <Link
+                  href={`/clans/${clanInfo.slug}`}
+                  className="inline-flex mt-1.5 font-mono text-[10px] px-2 py-0.5 rounded-full bg-purple/12 border border-purple/25 text-purple hover:bg-purple/20 transition-colors"
+                >
+                  ⬡ {clanInfo.name}
+                </Link>
+              )}
             </div>
 
             {/* Actions */}

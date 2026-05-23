@@ -125,13 +125,30 @@ export const forumReplySchema = z.object({
   body: z.string().min(1).max(5000),
 })
 
-// Clan create (MD3 scope)
+// Clan create (MD16)
 export const clanCreateSchema = z.object({
   name: z.string().min(3).max(50),
-  slug: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/),
+  slug: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/, 'Alleen kleine letters, cijfers en koppeltekens'),
   description: z.string().max(500).optional(),
   is_open: z.boolean().default(true),
   max_members: z.number().min(5).max(500).default(50),
+})
+
+// Clan update (MD16)
+export const clanUpdateSchema = z.object({
+  description: z.string().max(500).optional(),
+  is_open: z.boolean().optional(),
+  max_members: z.number().min(5).max(500).optional(),
+})
+
+// Clan war uitdaging (MD16)
+export const clanWarSchema = z.object({
+  challenged_clan_id: z.string().uuid(),
+})
+
+// Clan bericht (MD16)
+export const clanMessageSchema = z.object({
+  content: z.string().min(1).max(1000),
 })
 
 // Generic UUID param check
