@@ -140,7 +140,7 @@ export default function GameSearchModal({ onSelect, onClose }: GameSearchModalPr
                 <button
                   onClick={() => handleRequest(game)}
                   disabled={requesting === game.igdb_id}
-                  className="px-3 py-1.5 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40 flex-shrink-0"
+                  className="px-3 py-1.5 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40 flex-shrink-0"
                 >
                   {requesting === game.igdb_id ? '...' : '+ Aanvragen'}
                 </button>

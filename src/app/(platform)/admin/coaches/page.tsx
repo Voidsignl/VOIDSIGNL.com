@@ -195,13 +195,13 @@ export default function AdminCoachesPage() {
                   <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => handleApprove(coach.id)}
-                      className="px-4 py-2 bg-success text-white font-mono text-xs rounded-lg hover:bg-success/85 transition-colors flex items-center gap-1.5"
+                      className="px-4 py-2 bg-success text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-success/85 transition-colors duration-200 flex items-center gap-1.5"
                     >
                       <Check size={12} /> Goedkeuren
                     </button>
                     <button
                       onClick={() => handleReject(coach.id)}
-                      className="px-4 py-2 border border-danger text-danger font-mono text-xs rounded-lg hover:bg-danger/10 transition-colors flex items-center gap-1.5"
+                      className="px-4 py-2 border border-danger text-danger font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-danger/10 transition-colors duration-200 flex items-center gap-1.5"
                     >
                       <X size={12} /> Afwijzen
                     </button>

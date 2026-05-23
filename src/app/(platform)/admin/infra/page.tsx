@@ -144,7 +144,7 @@ export default function InfraPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-[#6B3FE0] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-purple border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -265,8 +265,8 @@ export default function InfraPage() {
                       <div
                         className={`w-5 h-5 rounded-full flex items-center justify-center ${
                           check.is_done
-                            ? 'bg-[rgba(34,197,94,0.15)] text-[#22c55e]'
-                            : 'bg-[rgba(239,68,68,0.1)] text-[#ef4444]'
+                            ? 'bg-success/15 text-success'
+                            : 'bg-danger/10 text-danger'
                         }`}
                       >
                         {check.is_done ? <Check size={11} /> : <X size={11} />}
