@@ -16,6 +16,7 @@ interface ProfileSummary {
   avatar_url: string | null
   accent_color: string | null
   level_name: string | null
+  role: string | null
 }
 
 const NAV_ICONS = {
@@ -89,6 +90,11 @@ const NAV_ICONS = {
       <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   ),
+  admin: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 2l9 4v6c0 5-3.5 9.5-9 10-5.5-.5-9-5-9-10V6l9-4z" />
+    </svg>
+  ),
 } as const
 
 interface NavItem {
@@ -136,7 +142,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
       if (!data.user) return
       const { data: p } = await supabase
         .from('profiles')
-        .select('username, avatar_url, accent_color, level_name')
+        .select('username, avatar_url, accent_color, level_name, role')
         .eq('id', data.user.id)
         .maybeSingle()
       if (p) setProfile(p as ProfileSummary)
@@ -227,6 +233,28 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
               </Link>
             )
           })}
+
+          {/* Admin link — alleen zichtbaar voor admins */}
+          {profile?.role === 'admin' && (() => {
+            const active = isActive('/admin')
+            return (
+              <Link
+                href="/admin"
+                className={`
+                  relative flex items-center gap-3 px-3 py-2.5 rounded-lg mt-2
+                  font-mono text-xs uppercase tracking-wider
+                  transition-colors duration-200
+                  ${active ? 'bg-cyan/15 text-text' : 'text-text-muted hover:bg-surface hover:text-text'}
+                `}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-cyan rounded-full" />
+                )}
+                <span className={active ? 'text-cyan' : 'text-cyan/70'}>{NAV_ICONS.admin}</span>
+                <span>Admin</span>
+              </Link>
+            )
+          })()}
         </nav>
 
         {/* Profile + sign-out */}
@@ -350,6 +378,24 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
                   </Link>
                 )
               })}
+
+              {/* Admin tile — alleen voor admins */}
+              {profile?.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  onClick={() => setMoreOpen(false)}
+                  className={`flex flex-col items-center gap-2 py-4 rounded-xl border transition-colors duration-200 ${
+                    isActive('/admin')
+                      ? 'bg-cyan/15 border-cyan/30 text-text'
+                      : 'bg-surface-2 border-border text-cyan'
+                  }`}
+                >
+                  {NAV_ICONS.admin}
+                  <span className="font-mono uppercase text-center text-[9px] tracking-wider leading-tight">
+                    Admin
+                  </span>
+                </Link>
+              )}
 
               {/* Sign-out tile */}
               <button
