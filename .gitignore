@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code / agent tooling
+agentdb.rvf
+agentdb.rvf.lock
+ruvector.db
+.claude/
+.agents/
+
+# supabase local snapshots
+supabase/snapshots/
