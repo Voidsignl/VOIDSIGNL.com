@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { usePushSubscription } from '@/hooks/use-push-subscription'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import type { Profile } from '@/types'
@@ -340,9 +341,9 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
               return (
                 <button key={`${r.type}-${r.id}`} onClick={() => handleSelect(r)}
                   className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2 transition-colors text-left">
-                  <div className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center shrink-0 overflow-hidden">
+                  <div className="relative w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center shrink-0 overflow-hidden">
                     {r.type === 'member' && r.avatar ? (
-                      <img src={r.avatar} alt="" className="w-full h-full object-cover" />
+                      <Image src={r.avatar} alt="" fill sizes="32px" className="object-cover" />
                     ) : (
                       <Icon size={14} className={typeColor[r.type]} />
                     )}
@@ -389,9 +390,9 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
               return (
                 <button key={`${r.type}-${r.id}`} onClick={() => handleSelect(r)}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors text-left border-b border-border/50">
-                  <div className="w-9 h-9 rounded-lg bg-surface flex items-center justify-center shrink-0 overflow-hidden">
+                  <div className="relative w-9 h-9 rounded-lg bg-surface flex items-center justify-center shrink-0 overflow-hidden">
                     {r.type === 'member' && r.avatar ? (
-                      <img src={r.avatar} alt="" className="w-full h-full object-cover" />
+                      <Image src={r.avatar} alt="" fill sizes="36px" className="object-cover" />
                     ) : (
                       <Icon size={15} className={typeColor[r.type]} />
                     )}

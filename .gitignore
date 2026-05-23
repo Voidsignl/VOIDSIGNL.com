@@ -49,3 +49,7 @@ ruvector.db
 
 # supabase local snapshots
 supabase/snapshots/
+
+# archives
+*.tar.gz
+*.zip

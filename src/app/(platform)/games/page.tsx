@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase-browser'
 import { Gamepad2, Check, Plus, Loader2, Star } from 'lucide-react'
 import { ScopeSpinner } from '@/components/ui/loader'
@@ -127,9 +128,9 @@ export default function GamesPage() {
                 </span>
               )}
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple/20 to-cyan/20 border border-border flex items-center justify-center overflow-hidden shrink-0">
+                <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-purple/20 to-cyan/20 border border-border flex items-center justify-center overflow-hidden shrink-0">
                   {game.cover_url ? (
-                    <img src={game.cover_url} alt="" className="w-full h-full object-cover" />
+                    <Image src={game.cover_url} alt="" fill sizes="40px" className="object-cover" />
                   ) : (
                     <Gamepad2 size={16} className="text-text-dim" />
                   )}

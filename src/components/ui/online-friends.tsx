@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Circle, Users, Wifi } from 'lucide-react'
 
 interface OnlineFriend {
@@ -87,7 +88,7 @@ export function OnlineFriends({ userId }: { userId: string }) {
               <div className="relative shrink-0">
                 <div className="w-8 h-8 rounded-full bg-purple/20 flex items-center justify-center text-[10px] font-bold text-purple overflow-hidden">
                   {friend.avatar_url ? (
-                    <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
+                    <Image src={friend.avatar_url} alt="" fill sizes="32px" className="object-cover" />
                   ) : (
                     (friend.display_name || friend.username)[0].toUpperCase()
                   )}

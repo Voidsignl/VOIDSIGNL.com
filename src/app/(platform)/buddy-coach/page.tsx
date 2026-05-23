@@ -104,7 +104,7 @@ export default function BuddyCoachPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setUserId(user.id)
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
       if (data) {
         setProfile(data as Profile)
         setIsLookingForBuddy((data as any).buddy_looking || false)

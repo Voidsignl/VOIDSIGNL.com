@@ -7,6 +7,7 @@
  * inner-circle ring.
  */
 import Link from 'next/link'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'
@@ -82,7 +83,7 @@ export function Avatar({
         )}
       >
         {url ? (
-          <img src={url} alt={name ?? ''} className="w-full h-full object-cover" />
+          <Image src={url} alt={name ?? ''} fill sizes="(max-width: 768px) 56px, 112px" className="object-cover" />
         ) : (
           <span style={{ fontFamily: 'var(--font-display)' }}>{initials}</span>
         )}

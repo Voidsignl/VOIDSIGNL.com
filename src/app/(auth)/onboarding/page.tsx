@@ -47,7 +47,7 @@ export default function OnboardingPage() {
         .from('profiles')
         .select('username, display_name, is_onboarded')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
       if (profile) {
         if (profile.is_onboarded) {
           router.push('/dashboard')
@@ -70,7 +70,7 @@ export default function OnboardingPage() {
       .select('username')
       .eq('username', username)
       .neq('id', (await supabase.auth.getUser()).data.user?.id)
-      .single()
+      .maybeSingle()
 
     if (existing) {
       setError('Username already taken')

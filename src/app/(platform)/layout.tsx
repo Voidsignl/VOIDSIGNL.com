@@ -70,7 +70,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
   }, [])
 
   async function loadProfile(uid: string) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
+    const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
     if (data) setProfile(data as Profile)
   }
 

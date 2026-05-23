@@ -103,7 +103,7 @@ export default function AdminPage() {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator' && !profile.is_founding_member)) {
       router.push('/dashboard')

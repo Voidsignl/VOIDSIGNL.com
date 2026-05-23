@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
       // Supabase Storage public buckets
       {
         protocol: 'https',
-        hostname: 'lpznoxzzotnslwwnxqoo.supabase.co',
+        hostname: 'dfppzlixnmznlqlmthxy.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
       // Marketplace seed imagery

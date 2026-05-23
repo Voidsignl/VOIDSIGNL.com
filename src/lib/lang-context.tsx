@@ -43,7 +43,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
     if (!supabase) return
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data } = await supabase.from('profiles').select('preferred_language').eq('id', user.id).single()
+      const { data } = await supabase.from('profiles').select('preferred_language').eq('id', user.id).maybeSingle()
       if (data?.preferred_language) {
         const l = data.preferred_language as Lang
         setLangState(l)

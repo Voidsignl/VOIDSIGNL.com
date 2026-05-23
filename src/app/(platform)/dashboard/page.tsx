@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Plus, Upload, Users, TrendingUp, Trophy, Zap, Calendar, Newspaper } from 'lucide-react'
 import { getLevelFromXP, getXPProgress } from '@/types'
 import type { Profile, Post, Game } from '@/types'
@@ -40,7 +41,7 @@ export default function DashboardPage() {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
     if (profileData) {
       setProfile(profileData as Profile)
@@ -256,7 +257,14 @@ export default function DashboardPage() {
                   <p className="text-sm text-text/80 mb-3 leading-relaxed">{post.content}</p>
                   {post.image_url && (
                     <div className="rounded-lg overflow-hidden mb-3 bg-surface-2">
-                      <img src={post.image_url} alt="" className="w-full" />
+                      <Image
+                        src={post.image_url}
+                        alt=""
+                        width={1200}
+                        height={800}
+                        sizes="(max-width: 768px) 100vw, 600px"
+                        className="w-full h-auto"
+                      />
                     </div>
                   )}
                   {post.video_url && (

@@ -83,6 +83,8 @@ export function ImageUpload({ bucket, userId, currentUrl, onUpload, type }: Imag
       <div className="relative group">
         <div className="w-20 h-20 rounded-xl bg-purple/30 border-4 border-surface flex items-center justify-center text-2xl font-bold text-purple overflow-hidden">
           {(currentUrl || preview) ? (
+            // Preview is een data-URL (FileReader) — Image moet unoptimized zijn.
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={preview || currentUrl!} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
             '?'
@@ -108,6 +110,8 @@ export function ImageUpload({ bucket, userId, currentUrl, onUpload, type }: Imag
   return (
     <div className="relative group h-28 bg-gradient-to-br from-purple/20 via-surface-2 to-cyan/10 overflow-hidden">
       {(currentUrl || preview) && (
+        // Preview is een data-URL (FileReader).
+        // eslint-disable-next-line @next/next/no-img-element
         <img src={preview || currentUrl!} alt="Banner" className="w-full h-full object-cover" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />

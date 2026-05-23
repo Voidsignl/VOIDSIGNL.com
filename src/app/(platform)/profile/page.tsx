@@ -13,7 +13,7 @@ export default function ProfileRedirect() {
     async function redirect() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-      const { data } = await supabase.from('profiles').select('username').eq('id', user.id).single()
+      const { data } = await supabase.from('profiles').select('username').eq('id', user.id).maybeSingle()
       if (data?.username) {
         router.replace(`/profile/${data.username}`)
       }

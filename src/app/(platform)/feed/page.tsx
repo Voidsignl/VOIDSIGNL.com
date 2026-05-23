@@ -100,7 +100,7 @@ function FeedContent() {
   }
 
   async function loadProfile(uid: string) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', uid).single()
+    const { data } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
     if (data) setProfile(data as Profile)
   }
 
@@ -447,9 +447,10 @@ function FeedContent() {
                     maxLength={2000}
                   />
 
-                  {/* Image URL preview */}
+                  {/* Image URL preview — user-supplied URL kan elk domein zijn, dus geen Next.js optimization */}
                   {composerImageUrl && (
                     <div className="relative mt-2 rounded-lg overflow-hidden bg-surface-2 border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={composerImageUrl} alt="Preview" className="w-full max-h-48 object-cover" onError={() => {}} />
                       <button
                         onClick={() => setComposerImageUrl('')}
@@ -645,9 +646,10 @@ function FeedContent() {
                   {post.content}
                 </p>
 
-                {/* Image */}
+                {/* Image — post.image_url kan een externe URL zijn (composer staat dat toe), dus geen Next.js optimization */}
                 {post.image_url && (
                   <div className="rounded-lg overflow-hidden mb-3 bg-surface-2 border border-border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={post.image_url} alt="" className="w-full max-h-[400px] object-cover" />
                   </div>
                 )}

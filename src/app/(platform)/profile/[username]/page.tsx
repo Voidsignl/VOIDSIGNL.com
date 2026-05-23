@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-browser'
 import { getLevelFromXP, getXPProgress } from '@/types'
 import type { Profile, Post, Clip, Game, UserGame } from '@/types'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   User, Edit3, Save, X, Heart, MessageCircle, Eye, Film, Trophy,
   Newspaper, Users, UserPlus, UserCheck, UserX, Shield, Star,
@@ -159,7 +160,7 @@ export default function ProfilePage() {
       .from('profiles')
       .select('*')
       .eq('username', username)
-      .single()
+      .maybeSingle()
 
     if (error || !profileData) {
       setNotFound(true)
@@ -463,7 +464,7 @@ export default function ProfilePage() {
         ) : (
           <div className="h-28 bg-gradient-to-br from-purple/20 via-surface-2 to-cyan/10 relative overflow-hidden">
             {profile.banner_url && (
-              <img src={profile.banner_url} alt="" className="w-full h-full object-cover" />
+              <Image src={profile.banner_url} alt="" fill sizes="100vw" className="object-cover" priority />
             )}
             <div className="absolute inset-0 vs-scanlines opacity-40 pointer-events-none" />
             <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent" />
@@ -897,8 +898,8 @@ export default function ProfilePage() {
                     </div>
                     <p className="text-sm text-text/85 leading-relaxed whitespace-pre-wrap break-words">{post.content}</p>
                     {post.image_url && (
-                      <div className="rounded-lg overflow-hidden mt-3 bg-surface-2 border border-border">
-                        <img src={post.image_url} alt="" className="w-full max-h-[300px] object-cover" />
+                      <div className="relative rounded-lg overflow-hidden mt-3 bg-surface-2 border border-border h-[300px]">
+                        <Image src={post.image_url} alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" />
                       </div>
                     )}
                     {/* Interactive like/comment */}
