@@ -22,6 +22,8 @@ import AchievementGrid from '@/components/achievements/AchievementGrid'
 import type { AchievementCardData } from '@/components/achievements/AchievementCard'
 import { ProfileBuddiesStrip } from '@/components/buddy/ProfileBuddiesStrip'
 import { ProfileClipsStrip } from '@/components/clips/ProfileClipsStrip'
+import FollowButton from '@/components/follow/FollowButton'
+import FollowModal from '@/components/follow/FollowModal'
 
 type ProfileTab = 'posts' | 'clips' | 'games' | 'achievements'
 
@@ -582,12 +584,14 @@ export default function ProfilePage() {
               ) : currentUserId && (
                 <>
                   <ProfileQR username={profile.username} displayName={profile.display_name} />
-                  <button
-                    onClick={toggleFollow}
-                    className={`vs-btn text-xs ${isFollowing ? 'vs-btn-ghost' : 'vs-btn-primary'}`}
-                  >
-                    {isFollowing ? <><UserCheck size={13} /> Following</> : <><UserPlus size={13} /> Follow</>}
-                  </button>
+                  <FollowButton
+                    userId={profile.id}
+                    initialFollowing={isFollowing}
+                    onFollowChange={(f) => {
+                      setIsFollowing(f)
+                      setFollowerCount(c => f ? c + 1 : Math.max(0, c - 1))
+                    }}
+                  />
                   {buddyStatus === 'none' && (
                     <button onClick={sendBuddyRequest} className="vs-btn vs-btn-cyan text-xs">
                       <Users size={13} /> Add Buddy
@@ -1156,58 +1160,16 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Followers/Following Modal */}
+      {/* Followers/Following Modal (MD12 component) */}
       {showListModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowListModal(null)}>
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm mx-4 max-h-[70vh] flex flex-col animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-              <h3 className="text-sm font-medium">
-                {showListModal === 'followers' ? `Followers (${followerCount})` : `Following (${followingCount})`}
-              </h3>
-              <button onClick={() => setShowListModal(null)} className="text-text-dim hover:text-text"><X size={16} /></button>
-            </div>
-            <div className="overflow-y-auto flex-1">
-              {loadingList ? (
-                <div className="flex items-center justify-center py-12">
-                  <ScopeSpinner size={24} />
-                </div>
-              ) : listUsers.length === 0 ? (
-                <div className="text-center py-12">
-                  <Users size={24} className="mx-auto text-text-dim opacity-40 mb-2" />
-                  <p className="text-xs text-text-dim">
-                    {showListModal === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
-                  </p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {listUsers.map((user: any) => (
-                    <Link
-                      key={user.id}
-                      href={`/profile/${user.username}`}
-                      onClick={() => setShowListModal(null)}
-                      className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2/50 transition-colors"
-                    >
-                      <Avatar
-                        url={user.avatar_url}
-                        name={user.display_name || user.username}
-                        size="md"
-                        variant="gradient"
-                        showInnerRing={user.is_founding_member}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-medium truncate">{user.display_name || user.username}</p>
-                          {user.is_founding_member && <Star size={9} className="text-purple shrink-0" fill="currentColor" />}
-                        </div>
-                        <p className="text-[10px] text-text-dim">@{user.username} · {user.level_name}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <FollowModal
+          userId={profile.id}
+          username={profile.username}
+          initialTab={showListModal}
+          followerCount={followerCount}
+          followingCount={followingCount}
+          onClose={() => setShowListModal(null)}
+        />
       )}
     </div>
   )
