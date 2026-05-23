@@ -9,11 +9,22 @@ export const profileUpdateSchema = z.object({
   preferred_language: z.enum(['nl', 'en']).optional(),
 })
 
-// Post create
+// Post create (MD10)
 export const postCreateSchema = z.object({
   content: z.string().min(1).max(2000),
-  game_id: z.string().uuid().optional(),
+  images: z.array(z.string().url()).max(4).default([]),
   image_url: z.string().url().optional(),
+  game_id: z.string().uuid().optional(),
+  post_type: z.enum(['regular', 'achievement', 'clip', 'buddy', 'repost']).default('regular'),
+  repost_id: z.string().uuid().optional(),
+  is_auto_post: z.boolean().default(false),
+})
+
+// Comment create (MD10)
+export const commentCreateSchema = z.object({
+  post_id: z.string().uuid(),
+  content: z.string().min(1).max(1000),
+  parent_id: z.string().uuid().optional(),
 })
 
 // Buddy request sturen
