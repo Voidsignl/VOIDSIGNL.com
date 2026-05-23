@@ -1,56 +1,151 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
-import {
-  LayoutDashboard, Newspaper, Trophy, BarChart3,
-  Film, MessageCircle, User, ChevronLeft, ChevronRight, Shield, Award,
-  Menu, LogOut, Gamepad2, Users, GraduationCap, MessagesSquare, Swords,
-} from 'lucide-react'
 
 interface SidebarProps {
-  /** Live unread DM count, drives badge on Messages icon (mobile + desktop). */
   unreadDms?: number
-  /** Live unread notif count, drives Inbox-style badge on More-menu. */
   unreadNotifs?: number
 }
 
-const NAV_ITEMS = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/feed', icon: Newspaper, label: 'Feed' },
-  { href: '/forums', icon: MessagesSquare, label: 'Forums' },
-  { href: '/buddies', icon: Users, label: 'Buddies' },
-  { href: '/clans', icon: Swords, label: 'Clans' },
-  { href: '/coaching', icon: GraduationCap, label: 'Coaching' },
-  { href: '/tournaments', icon: Trophy, label: 'Tournaments' },
-  { href: '/ranking', icon: BarChart3, label: 'Ranking' },
-  { divider: true },
-  { href: '/clips', icon: Film, label: 'Clips' },
-  { href: '/achievements', icon: Award, label: 'Achievements' },
-  { href: '/messages', icon: MessageCircle, label: 'Messages' },
-  { href: '/profile', icon: User, label: 'Profile' },
-  { href: '/games', icon: Gamepad2, label: 'Games' },
-  { divider: true },
-  { href: '/admin', icon: Shield, label: 'Admin' },
-] as const
+interface ProfileSummary {
+  username: string
+  avatar_url: string | null
+  accent_color: string | null
+  level_name: string | null
+}
 
-// Bottom nav: 5 most-used. Center "Home" sits raised on mobile for thumb-reach.
-const MOBILE_NAV = [
-  { href: '/feed', icon: Newspaper, label: 'Feed' },
-  { href: '/clips', icon: Film, label: 'Clips' },
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Home', center: true },
-  { href: '/messages', icon: MessageCircle, label: 'DMs' },
-  { href: '/ranking', icon: BarChart3, label: 'Ranking' },
-] as const
+const NAV_ICONS = {
+  feed: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      <polyline points="9,22 9,12 15,12 15,22" />
+    </svg>
+  ),
+  ranking: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <polyline points="23,6 13.5,15.5 8.5,10.5 1,18" />
+      <polyline points="17,6 23,6 23,12" />
+    </svg>
+  ),
+  clips: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <polygon points="23,7 16,12 23,17 23,7" />
+      <rect x="1" y="5" width="15" height="14" rx="2" />
+    </svg>
+  ),
+  clans: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 00-3-3.87" />
+      <path d="M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  ),
+  buddies: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+    </svg>
+  ),
+  coaching: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </svg>
+  ),
+  forums: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+    </svg>
+  ),
+  games: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <line x1="6" y1="12" x2="10" y2="12" />
+      <line x1="8" y1="10" x2="8" y2="14" />
+      <line x1="15" y1="13" x2="15.01" y2="13" />
+      <line x1="18" y1="11" x2="18.01" y2="11" />
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+    </svg>
+  ),
+  messages: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+    </svg>
+  ),
+  more: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+      <circle cx="5" cy="12" r="1" />
+    </svg>
+  ),
+  signOut: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  ),
+} as const
 
-export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) {
-  const [collapsed, setCollapsed] = useState(true)
-  const [mobileOpen, setMobileOpen] = useState(false)
+interface NavItem {
+  href: string
+  label: string
+  icon: React.ReactNode
+}
+
+const PRIMARY_NAV: NavItem[] = [
+  { href: '/feed',    label: 'Feed',    icon: NAV_ICONS.feed    },
+  { href: '/ranking', label: 'Ranking', icon: NAV_ICONS.ranking },
+  { href: '/clips',   label: 'Clips',   icon: NAV_ICONS.clips   },
+  { href: '/clans',   label: 'Clans',   icon: NAV_ICONS.clans   },
+]
+
+const NAV_ITEMS: NavItem[] = [
+  { href: '/feed',     label: 'Feed',      icon: NAV_ICONS.feed     },
+  { href: '/ranking',  label: 'Ranking',   icon: NAV_ICONS.ranking  },
+  { href: '/clips',    label: 'Clips',     icon: NAV_ICONS.clips    },
+  { href: '/clans',    label: 'Clans',     icon: NAV_ICONS.clans    },
+  { href: '/buddies',  label: 'Buddies',   icon: NAV_ICONS.buddies  },
+  { href: '/coaching', label: 'Coaching',  icon: NAV_ICONS.coaching },
+  { href: '/forums',   label: 'Forums',    icon: NAV_ICONS.forums   },
+  { href: '/games',    label: 'Games',     icon: NAV_ICONS.games    },
+  { href: '/messages', label: 'Berichten', icon: NAV_ICONS.messages },
+]
+
+const SECONDARY_NAV: NavItem[] = [
+  { href: '/buddies',  label: 'Buddies',   icon: NAV_ICONS.buddies  },
+  { href: '/coaching', label: 'Coaching',  icon: NAV_ICONS.coaching },
+  { href: '/forums',   label: 'Forums',    icon: NAV_ICONS.forums   },
+  { href: '/games',    label: 'Games',     icon: NAV_ICONS.games    },
+  { href: '/messages', label: 'Berichten', icon: NAV_ICONS.messages },
+]
+
+export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: SidebarProps = {}) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [profile, setProfile] = useState<ProfileSummary | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('username, avatar_url, accent_color, level_name')
+        .eq('id', data.user.id)
+        .maybeSingle()
+      if (p) setProfile(p as ProfileSummary)
+    })
+  }, [supabase])
+
+  function isActive(href: string) {
+    return pathname === href || pathname.startsWith(href + '/')
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -58,232 +153,220 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
     router.refresh()
   }
 
+  function MessagesBadge({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
+    if (unreadDms <= 0) return null
+    const cls =
+      size === 'lg'
+        ? 'min-w-[18px] h-[18px] px-1.5 text-[10px]'
+        : 'min-w-[16px] h-[16px] px-1 text-[9px]'
+    return (
+      <span
+        className={`inline-flex items-center justify-center font-mono font-bold rounded-full bg-danger text-white tabular-nums ${cls}`}
+      >
+        {unreadDms > 9 ? '9+' : unreadDms}
+      </span>
+    )
+  }
+
   return (
     <>
-      {/* Desktop sidebar — hidden on mobile */}
-      <aside className={`hidden md:flex bg-surface-2 border-r border-border flex-col shrink-0 transition-all duration-200 ${
-        collapsed ? 'w-[56px]' : 'w-[200px]'
-      }`}>
-        <div className="flex flex-col items-center py-3 gap-1 flex-1">
-          {NAV_ITEMS.map((item, i) => {
-            if ('divider' in item) {
-              return <div key={i} className="w-6 h-px bg-border my-2" />
-            }
+      {/* ── DESKTOP SIDEBAR ── */}
+      <aside className="hidden md:flex w-56 shrink-0 flex-col bg-void border-r border-border">
+        {/* Logo */}
+        <div className="px-5 py-5 border-b border-border">
+          <Link href="/feed" className="flex items-center gap-3">
+            <svg width="26" height="26" viewBox="0 0 80 80" fill="none" aria-hidden>
+              <circle cx="40" cy="40" r="36" stroke="#6B3FE0" strokeWidth="1.5" opacity="0.5" />
+              <circle cx="40" cy="40" r="27" stroke="#6B3FE0" strokeWidth="1" opacity="0.3" />
+              <circle cx="40" cy="40" r="10" stroke="#6B3FE0" strokeWidth="1.5" />
+              <line x1="40" y1="2" x2="40" y2="18" stroke="white" strokeWidth="1.5" />
+              <line x1="40" y1="62" x2="40" y2="78" stroke="white" strokeWidth="1.5" opacity="0.4" />
+              <line x1="2" y1="40" x2="18" y2="40" stroke="white" strokeWidth="1.5" opacity="0.4" />
+              <line x1="62" y1="40" x2="78" y2="40" stroke="white" strokeWidth="1.5" opacity="0.4" />
+              <circle cx="40" cy="40" r="2.5" fill="#00C8F0" />
+              <line
+                x1="40"
+                y1="40"
+                x2="40"
+                y2="5"
+                stroke="#00C8F0"
+                strokeWidth="1.5"
+                opacity="0.7"
+                className="animate-sonar"
+                style={{ transformOrigin: '40px 40px' }}
+              />
+            </svg>
+            <span className="font-mono text-sm font-bold tracking-wider text-text">
+              VOID<span className="text-purple">SIGNL</span>
+            </span>
+          </Link>
+        </div>
 
-            const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-            const showDmBadge = item.href === '/messages' && unreadDms > 0
-
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {NAV_ITEMS.map((item) => {
+            const active = isActive(item.href)
+            const isMsg = item.href === '/messages'
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group relative flex items-center rounded-lg transition-colors duration-200 ${
-                  collapsed ? 'w-10 h-10 justify-center' : 'w-full px-4 h-10 gap-3'
-                } ${
-                  isActive
-                    ? 'bg-purple/15 text-purple'
-                    : 'text-text-dim hover:bg-white/5 hover:text-text-muted'
-                }`}
+                className={`
+                  relative flex items-center gap-3 px-3 py-2.5 rounded-lg
+                  font-mono text-xs uppercase tracking-wider
+                  transition-colors duration-200
+                  ${active ? 'bg-purple/15 text-text' : 'text-text-muted hover:bg-surface hover:text-text'}
+                `}
               >
-                {/* Active indicator — left bar accent */}
-                {isActive && (
-                  <span className="absolute -left-3 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-purple rounded-r-full shadow-[0_0_8px_rgba(107,63,224,0.6)]" />
+                {active && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-purple rounded-full" />
                 )}
-                <span className="relative">
-                  <Icon size={18} />
-                  {showDmBadge && (
-                    <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-1 bg-danger rounded-full text-[8px] flex items-center justify-center text-white font-medium tabular-nums border border-surface-2">
-                      {unreadDms > 9 ? '9+' : unreadDms}
-                    </span>
-                  )}
-                </span>
-                {collapsed ? (
-                  <span className="absolute left-[52px] bg-surface-2 text-text text-[11px] px-3 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-border">
-                    {item.label}
-                    {showDmBadge && <span className="ml-1.5 text-[9px] text-danger tabular-nums">{unreadDms > 9 ? '9+' : unreadDms}</span>}
-                  </span>
-                ) : (
-                  <span className="text-sm flex-1 flex items-center justify-between">
-                    <span>{item.label}</span>
-                    {showDmBadge && (
-                      <span className="min-w-[18px] h-[18px] px-1.5 bg-danger rounded-full text-[10px] flex items-center justify-center text-white font-medium tabular-nums">
-                        {unreadDms > 9 ? '9+' : unreadDms}
-                      </span>
-                    )}
-                  </span>
-                )}
+                <span className={active ? 'text-purple' : ''}>{item.icon}</span>
+                <span>{item.label}</span>
+                {isMsg && <span className="ml-auto"><MessagesBadge /></span>}
               </Link>
             )
           })}
-        </div>
+        </nav>
 
-        {/* Sign out + collapse */}
-        <button
-          onClick={handleSignOut}
-          className={`group relative flex items-center rounded-lg transition-colors duration-200 mb-1 ${
-            collapsed ? 'w-10 h-10 justify-center mx-auto' : 'mx-3 px-4 h-10 gap-3'
-          } text-text-dim hover:bg-danger/10 hover:text-danger`}
-          title="Sign out"
-        >
-          <LogOut size={18} />
-          {collapsed ? (
-            <span className="absolute left-[52px] bg-surface-2 text-text text-[11px] px-3 py-1.5 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-border">
-              Sign out
-            </span>
-          ) : (
-            <span className="text-sm">Sign out</span>
-          )}
-        </button>
+        {/* Profile + sign-out */}
+        {profile && (
+          <div className="px-3 py-4 border-t border-border space-y-1">
+            <Link
+              href={`/profile/${profile.username}`}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-surface transition-colors duration-200"
+            >
+              <div
+                className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-surface-2 border-2"
+                style={{ borderColor: profile.accent_color ?? '#6B3FE0' }}
+              >
+                {profile.avatar_url ? (
+                  <Image
+                    src={profile.avatar_url}
+                    alt={profile.username}
+                    width={32}
+                    height={32}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="font-mono text-xs text-text-muted">
+                      {profile.username?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-mono text-xs font-bold text-text truncate">
+                  {profile.username}
+                </p>
+                <p className="font-mono text-[10px] text-text-muted truncate">
+                  {profile.level_name}
+                </p>
+              </div>
+            </Link>
 
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-3 flex items-center justify-center text-text-dim hover:text-text-muted transition-colors border-t border-border"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-mono text-[10px] uppercase tracking-wider text-text-muted hover:text-danger hover:bg-danger/8 transition-colors duration-200"
+            >
+              <span>{NAV_ICONS.signOut}</span>
+              <span>Uitloggen</span>
+            </button>
+          </div>
+        )}
       </aside>
 
-      {/* Mobile bottom nav — cyber-premium with raised center button */}
+      {/* ── MOBILE BOTTOM NAV ── */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface-2/95 backdrop-blur-md border-t border-border"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-30 h-16 flex items-center bg-void/98 backdrop-blur-xl border-t border-purple/20"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        {/* Subtle gradient top-edge for cyber feel */}
-        <div className="absolute top-0 left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-purple/40 to-transparent pointer-events-none" />
-
-        <div className="flex items-stretch justify-around h-16 px-1 relative">
-          {MOBILE_NAV.map(item => {
-            const Icon = item.icon
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
-            const isCenter = 'center' in item && item.center
-            const showDmBadge = item.href === '/messages' && unreadDms > 0
-
-            if (isCenter) {
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="relative flex flex-col items-center justify-end gap-0.5 px-2 pt-1 pb-1.5 min-w-[64px] active:scale-95 transition-transform"
-                >
-                  {/* Raised center pill */}
-                  <span
-                    className={`flex items-center justify-center w-12 h-12 rounded-2xl -translate-y-3 transition-colors duration-200 ${
-                      isActive
-                        ? 'bg-gradient-to-br from-purple to-purple-light text-white shadow-[0_0_20px_rgba(107,63,224,0.5)]'
-                        : 'bg-surface border border-border text-text-muted shadow-md'
-                    }`}
-                  >
-                    <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} />
-                  </span>
-                  <span className={`text-[9px] tracking-wide -mt-2 transition-colors ${
-                    isActive ? 'text-purple-light' : 'text-text-dim'
-                  }`}>
-                    {item.label}
-                  </span>
-                </Link>
-              )
-            }
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`relative flex flex-col items-center justify-center gap-0.5 px-2 min-w-[64px] active:scale-95 transition-colors duration-200 ${
-                  isActive ? 'text-purple-light' : 'text-text-dim'
-                }`}
-              >
-                {/* Active dot indicator above icon */}
-                {isActive && (
-                  <span className="absolute top-1 w-1 h-1 rounded-full bg-purple shadow-[0_0_4px_rgba(107,63,224,0.8)]" />
-                )}
-                <span className="relative">
-                  <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
-                  {showDmBadge && (
-                    <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-1 bg-danger rounded-full text-[8px] flex items-center justify-center text-white font-medium tabular-nums border border-surface-2">
-                      {unreadDms > 9 ? '9+' : unreadDms}
-                    </span>
-                  )}
-                </span>
-                <span className="text-[9px] tracking-wide">{item.label}</span>
-              </Link>
-            )
-          })}
-          {/* More menu trigger */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className={`relative flex flex-col items-center justify-center gap-0.5 px-2 min-w-[64px] active:scale-95 transition-colors duration-200 ${
-              mobileOpen ? 'text-purple-light' : 'text-text-dim'
-            }`}
-          >
-            {mobileOpen && (
-              <span className="absolute top-1 w-1 h-1 rounded-full bg-purple shadow-[0_0_4px_rgba(107,63,224,0.8)]" />
-            )}
-            <span className="relative">
-              <Menu size={20} strokeWidth={mobileOpen ? 2.2 : 1.8} />
-              {unreadNotifs > 0 && !mobileOpen && (
-                <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-1 bg-danger rounded-full text-[8px] flex items-center justify-center text-white font-medium tabular-nums border border-surface-2">
-                  {unreadNotifs > 9 ? '9+' : unreadNotifs}
-                </span>
-              )}
-            </span>
-            <span className="text-[9px] tracking-wide">More</span>
-          </button>
-        </div>
+        {PRIMARY_NAV.map((item) => {
+          const active = isActive(item.href)
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex-1 flex flex-col items-center gap-1 py-2 transition-colors duration-200 ${
+                active ? 'text-purple' : 'text-text-muted'
+              }`}
+            >
+              {item.icon}
+              <span className="font-mono uppercase text-[8px] tracking-wider">{item.label}</span>
+            </Link>
+          )
+        })}
+        <button
+          onClick={() => setMoreOpen((o) => !o)}
+          className={`flex-1 flex flex-col items-center gap-1 py-2 transition-colors duration-200 ${
+            moreOpen ? 'text-purple' : 'text-text-muted'
+          }`}
+        >
+          {NAV_ICONS.more}
+          <span className="font-mono uppercase text-[8px] tracking-wider">Meer</span>
+        </button>
       </nav>
 
-      {/* Mobile "More" overlay */}
-      {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
-          onClick={() => setMobileOpen(false)}
-        >
+      {/* ── MEER OVERLAY (MOBILE) ── */}
+      {moreOpen && (
+        <>
           <div
-            className="absolute bottom-0 left-0 right-0 bg-surface-2 border-t border-border rounded-t-2xl p-4 animate-slide-up vs-lit"
-            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
-            onClick={e => e.stopPropagation()}
+            className="md:hidden fixed inset-0 z-40 bg-void/70 backdrop-blur-sm"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div
+            className="md:hidden fixed bottom-16 left-0 right-0 z-50 p-4 rounded-t-2xl bg-surface border-t border-border"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
           >
-            <div className="w-10 h-1 rounded-full bg-border mx-auto mb-3" />
-            <div className="flex items-center justify-between mb-3">
-              <p className="vs-counter text-[10px] text-text-dim tabular-nums">MORE</p>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="text-text-dim p-1 active:scale-90 transition-transform"
-                aria-label="Close menu"
-              >
-                <ChevronLeft size={16} className="rotate-90" />
-              </button>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {NAV_ITEMS.filter(item => !('divider' in item) && !MOBILE_NAV.find(m => m.href === item.href)).map(item => {
-                if ('divider' in item) return null
-                const Icon = item.icon
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+            <div className="grid grid-cols-3 gap-2">
+              {SECONDARY_NAV.map((item) => {
+                const active = isActive(item.href)
+                const isMsg = item.href === '/messages'
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors duration-200 active:scale-95 ${
-                      isActive ? 'bg-purple/15 text-purple-light shadow-[0_0_12px_rgba(107,63,224,0.2)]' : 'text-text-dim hover:bg-surface'
-                    }`}
+                    onClick={() => setMoreOpen(false)}
+                    className={`
+                      relative flex flex-col items-center gap-2 py-4 rounded-xl border
+                      transition-colors duration-200
+                      ${
+                        active
+                          ? 'bg-purple/15 border-purple/30 text-text'
+                          : 'bg-surface-2 border-border text-text-muted'
+                      }
+                    `}
                   >
-                    <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
-                    <span className="text-[10px] tracking-wide">{item.label}</span>
+                    {item.icon}
+                    <span className="font-mono uppercase text-center text-[9px] tracking-wider leading-tight">
+                      {item.label}
+                    </span>
+                    {isMsg && unreadDms > 0 && (
+                      <span className="absolute top-2 right-2">
+                        <MessagesBadge />
+                      </span>
+                    )}
                   </Link>
                 )
               })}
-              {/* Sign out tile */}
+
+              {/* Sign-out tile */}
               <button
-                onClick={() => { setMobileOpen(false); handleSignOut() }}
-                className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl text-danger/80 hover:bg-danger/10 active:scale-95 transition-colors duration-200"
+                onClick={() => {
+                  setMoreOpen(false)
+                  void handleSignOut()
+                }}
+                className="flex flex-col items-center gap-2 py-4 rounded-xl border bg-surface-2 border-border text-text-muted hover:text-danger hover:border-danger/40 transition-colors duration-200"
               >
-                <LogOut size={20} strokeWidth={1.8} />
-                <span className="text-[10px] tracking-wide">Sign out</span>
+                {NAV_ICONS.signOut}
+                <span className="font-mono uppercase text-center text-[9px] tracking-wider leading-tight">
+                  Uitloggen
+                </span>
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   )

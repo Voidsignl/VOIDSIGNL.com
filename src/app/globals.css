@@ -260,3 +260,26 @@
     z-index: 1;
   }
 }
+
+/* ─── VOIDSIGNL Brand Additions (MD17b) ────────────────────────────────── */
+/* Append-only — botst niet met de @theme block bovenaan.                 */
+
+/* Pulserende dot voor live indicators */
+@keyframes void-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+.animate-void-pulse {
+  animation: void-pulse 2s ease-in-out infinite;
+}
+
+/* Sonar sweep voor het VOIDSIGNL logo */
+@keyframes sonar-sweep {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-sonar {
+  transform-origin: center;
+  animation: sonar-sweep 3s linear infinite;
+}
+/* ──────────────────────────────────────────────────────────────────────── */
