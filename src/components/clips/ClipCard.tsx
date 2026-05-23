@@ -28,7 +28,7 @@ export default function ClipCard({ clip, isLiked: initialLiked = false }: ClipCa
     <>
       <div
         onClick={() => setShowModal(true)}
-        className="group relative bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-purple transition-all"
+        className="group relative bg-surface border border-border rounded-xl overflow-hidden cursor-pointer hover:border-purple transition-colors duration-200"
       >
         <div className="aspect-video bg-void relative overflow-hidden">
           {clip.thumbnail_url ? (

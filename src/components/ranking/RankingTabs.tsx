@@ -26,7 +26,7 @@ export default function RankingTabs({ active, onChange }: RankingTabsProps) {
           key={tab.key}
           onClick={() => !tab.comingSoon && onChange(tab.key)}
           disabled={tab.comingSoon}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-colors duration-200 ${
             active === tab.key
               ? 'bg-purple text-white'
               : tab.comingSoon

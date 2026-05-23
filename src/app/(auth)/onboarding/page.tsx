@@ -163,7 +163,7 @@ export default function OnboardingPage() {
           <div className="flex items-center justify-center gap-3 mb-10">
             {steps.map((s, i) => (
               <div key={s.key} className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center vs-counter text-[11px] tabular-nums transition-all ${
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center vs-counter text-[11px] tabular-nums transition-colors duration-200 ${
                   i < currentIndex ? 'bg-purple text-white shadow-[0_0_10px_rgba(107,63,224,0.4)]' :
                   i === currentIndex ? 'bg-purple/20 text-purple-light border border-purple/40 shadow-[0_0_8px_rgba(107,63,224,0.3)]' :
                   'bg-surface text-text-dim border border-border'
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
                   <button
                     key={i}
                     onClick={() => setSelectedAvatar(url)}
-                    className={`aspect-square rounded-xl bg-surface-2 flex items-center justify-center border transition-all ${
+                    className={`aspect-square rounded-xl bg-surface-2 flex items-center justify-center border transition-colors duration-200 ${
                       selectedAvatar === url
                         ? 'border-purple ring-2 ring-purple/20'
                         : 'border-border hover:border-border-hover'
@@ -272,7 +272,7 @@ export default function OnboardingPage() {
                   <button
                     key={game.id}
                     onClick={() => toggleGame(game.id)}
-                    className={`text-left px-4 py-3 rounded-lg border transition-all text-sm ${
+                    className={`text-left px-4 py-3 rounded-lg border transition-colors duration-200 text-sm ${
                       selectedGames.includes(game.id)
                         ? 'bg-purple/15 border-purple/30 text-text'
                         : 'bg-surface border-border text-text-muted hover:border-border-hover'

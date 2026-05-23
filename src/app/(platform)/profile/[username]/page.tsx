@@ -761,7 +761,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     {['#6B3FE0', '#00C8F0', '#E8593C', '#22C55E', '#EAB308', '#EC4899', '#F97316', '#8B5CF6', '#06B6D4', '#FFFFFF'].map(color => (
                       <button key={color} onClick={() => setEditAccentColor(color)}
-                        className={`w-8 h-8 rounded-lg border-2 transition-all ${editAccentColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'}`}
+                        className={`w-8 h-8 rounded-lg border-2 transition-colors duration-200 ${editAccentColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'}`}
                         style={{ backgroundColor: color }} />
                     ))}
                     <input type="color" value={editAccentColor} onChange={e => setEditAccentColor(e.target.value)}
@@ -774,12 +774,12 @@ export default function ProfilePage() {
                   <p className="text-xs text-text-dim mb-2">Name Color</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <button onClick={() => setEditNameColor('')}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] border transition-all ${!editNameColor ? 'border-white bg-white/10 text-white' : 'border-border text-text-dim'}`}>
+                      className={`px-3 py-1.5 rounded-lg text-[10px] border transition-colors duration-200 ${!editNameColor ? 'border-white bg-white/10 text-white' : 'border-border text-text-dim'}`}>
                       Default
                     </button>
                     {['#6B3FE0', '#00C8F0', '#E8593C', '#22C55E', '#EAB308', '#EC4899', '#F97316', '#FF6B6B', '#00FFB2', '#FFD700'].map(color => (
                       <button key={color} onClick={() => setEditNameColor(color)}
-                        className={`w-7 h-7 rounded-lg border-2 transition-all ${editNameColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'}`}
+                        className={`w-7 h-7 rounded-lg border-2 transition-colors duration-200 ${editNameColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'}`}
                         style={{ backgroundColor: color }} />
                     ))}
                     <input type="color" value={editNameColor || '#ffffff'} onChange={e => setEditNameColor(e.target.value)}
@@ -798,7 +798,7 @@ export default function ProfilePage() {
                       { id: 'glass', label: 'Glass' },
                     ].map(theme => (
                       <button key={theme.id} onClick={() => setEditProfileTheme(theme.id)}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] border transition-all ${editProfileTheme === theme.id ? 'border-purple bg-purple/15 text-purple' : 'border-border text-text-dim hover:border-border-hover'}`}>
+                        className={`px-3 py-1.5 rounded-lg text-[10px] border transition-colors duration-200 ${editProfileTheme === theme.id ? 'border-purple bg-purple/15 text-purple' : 'border-border text-text-dim hover:border-border-hover'}`}>
                         {theme.label}
                       </button>
                     ))}
@@ -816,7 +816,7 @@ export default function ProfilePage() {
                       { id: 'grid', label: 'Grid' },
                     ].map(fx => (
                       <button key={fx.id} onClick={() => setEditProfileEffect(fx.id)}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] border transition-all ${editProfileEffect === fx.id ? 'border-cyan bg-cyan/15 text-cyan' : 'border-border text-text-dim hover:border-border-hover'}`}>
+                        className={`px-3 py-1.5 rounded-lg text-[10px] border transition-colors duration-200 ${editProfileEffect === fx.id ? 'border-cyan bg-cyan/15 text-cyan' : 'border-border text-text-dim hover:border-border-hover'}`}>
                         {fx.label}
                       </button>
                     ))}
@@ -834,7 +834,7 @@ export default function ProfilePage() {
                       { id: 'handwritten', label: 'Handwritten', cls: 'italic' },
                     ].map(f => (
                       <button key={f.id} onClick={() => setEditBioFont(f.id)}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] border transition-all ${f.cls} ${editBioFont === f.id ? 'border-purple bg-purple/15 text-purple' : 'border-border text-text-dim hover:border-border-hover'}`}>
+                        className={`px-3 py-1.5 rounded-lg text-[10px] border transition-colors duration-200 ${f.cls} ${editBioFont === f.id ? 'border-purple bg-purple/15 text-purple' : 'border-border text-text-dim hover:border-border-hover'}`}>
                         {f.label}
                       </button>
                     ))}
@@ -846,7 +846,7 @@ export default function ProfilePage() {
                   <p className="text-xs text-text-dim">Show XP bar on profile</p>
                   <button onClick={() => setEditShowXpBar(!editShowXpBar)}
                     className={`w-10 h-5 rounded-full transition-colors relative ${editShowXpBar ? 'bg-purple' : 'bg-surface-2'}`}>
-                    <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${editShowXpBar ? 'left-[22px]' : 'left-0.5'}`} />
+                    <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-colors duration-200 ${editShowXpBar ? 'left-[22px]' : 'left-0.5'}`} />
                   </button>
                 </div>
               </div>
@@ -888,7 +888,7 @@ export default function ProfilePage() {
             {showXpBar && (
               <div className="flex-1 min-w-[100px]">
                 <div className="h-1.5 bg-void rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }} />
+                  <div className="h-full rounded-full transition-colors duration-200" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }} />
                 </div>
                 <p className="vs-counter text-[9px] text-text-dim mt-1 text-right tabular-nums">{profile.xp}/{xpProgress.next} XP</p>
               </div>
@@ -1028,7 +1028,7 @@ export default function ProfilePage() {
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {clips.map(clip => (
-                  <Link key={clip.id} href="/clips" className="vs-card group hover:border-border-hover transition-all">
+                  <Link key={clip.id} href="/clips" className="vs-card group hover:border-border-hover transition-colors duration-200">
                     <div className="relative aspect-video rounded-lg overflow-hidden bg-surface-2 mb-2">
                       {clip.thumbnail_url || getVideoThumbnail(clip.video_url) ? (
                         <img
@@ -1175,7 +1175,7 @@ export default function ProfilePage() {
               <p className="text-2xl font-bold tracking-tight" style={{ color: accentColor }}>{level.name}</p>
               <p className="vs-counter text-[10px] text-text-dim mt-1.5 tabular-nums">{profile.xp.toLocaleString()} XP</p>
               <div className="h-1.5 bg-void rounded-full overflow-hidden mt-3">
-                <div className="h-full rounded-full transition-all" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }} />
+                <div className="h-full rounded-full transition-colors duration-200" style={{ width: `${xpProgress.percentage}%`, backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}80` }} />
               </div>
               <p className="vs-counter text-[9px] text-text-dim mt-1.5 tabular-nums">{(xpProgress.next - profile.xp).toLocaleString()} XP TO NEXT</p>
             </div>

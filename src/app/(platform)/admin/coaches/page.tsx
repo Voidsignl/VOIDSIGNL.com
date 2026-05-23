@@ -119,7 +119,7 @@ export default function AdminCoachesPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key as 'pending' | 'approved')}
-            className={`flex-1 py-2 rounded-lg font-mono text-xs transition-all ${
+            className={`flex-1 py-2 rounded-lg font-mono text-xs transition-colors duration-200 ${
               tab === t.key ? 'bg-purple text-white' : 'text-text-dim hover:text-text'
             }`}
           >

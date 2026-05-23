@@ -27,7 +27,7 @@ function timeAgo(date: string) {
 export default function CategoryCard({ category }: { category: CategoryCardData }) {
   return (
     <Link href={`/forums/${category.slug}`}>
-      <div className="bg-surface border border-border rounded-xl p-5 hover:border-purple transition-all group">
+      <div className="bg-surface border border-border rounded-xl p-5 hover:border-purple transition-colors duration-200 group">
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-xl bg-purple/12 border border-purple/25 flex items-center justify-center flex-shrink-0 group-hover:bg-purple/20 transition-colors">
             <span className="text-purple text-lg">{category.icon}</span>

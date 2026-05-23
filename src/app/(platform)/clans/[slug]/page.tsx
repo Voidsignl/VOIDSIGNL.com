@@ -216,7 +216,7 @@ export default function ClanDetailPage() {
               {isMember && !isOwner && (
                 <button
                   onClick={handleLeave}
-                  className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-all flex-shrink-0"
+                  className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-colors duration-200 flex-shrink-0"
                 >
                   Verlaten
                 </button>
@@ -258,7 +258,7 @@ export default function ClanDetailPage() {
             {isOwner && (
               <Link
                 href={`/clans/${slug}/settings`}
-                className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-all"
+                className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
               >
                 Instellingen
               </Link>
@@ -275,7 +275,7 @@ export default function ClanDetailPage() {
                 if (res.ok) fetchClan()
                 else alert((await res.json()).error)
               }}
-              className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-all"
+              className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
             >
               ⚔ War uitdagen
             </button>
@@ -303,7 +303,7 @@ export default function ClanDetailPage() {
           <button
             key={t.key}
             onClick={() => setActiveTab(t.key)}
-            className={`flex-1 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-colors duration-200 ${
               activeTab === t.key
                 ? 'bg-purple text-white'
                 : 'text-text-dim hover:text-text'
@@ -319,7 +319,7 @@ export default function ClanDetailPage() {
           {members.map((member) =>
             member.user ? (
               <Link key={member.id} href={`/profile/${member.user.username}`}>
-                <div className="flex items-center gap-4 bg-surface border border-border rounded-xl px-4 py-3 hover:border-purple transition-all">
+                <div className="flex items-center gap-4 bg-surface border border-border rounded-xl px-4 py-3 hover:border-purple transition-colors duration-200">
                   <div
                     className="w-9 h-9 rounded-full overflow-hidden bg-surface-2 border-2 flex-shrink-0"
                     style={{ borderColor: member.user.accent_color ?? '#6B3FE0' }}

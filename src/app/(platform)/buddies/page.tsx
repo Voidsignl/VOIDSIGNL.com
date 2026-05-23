@@ -117,7 +117,7 @@ export default function BuddiesPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-colors duration-200 ${
               tab === t.key ? 'bg-purple text-white' : 'text-text-dim hover:text-text'
             }`}
           >

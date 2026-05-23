@@ -64,7 +64,7 @@ export default function BuddyCard({ user, onRequest }: BuddyCardProps) {
   }
 
   return (
-    <div className="bg-surface border border-border rounded-xl p-5 hover:border-purple transition-all">
+    <div className="bg-surface border border-border rounded-xl p-5 hover:border-purple transition-colors duration-200">
       {/* Top */}
       <div className="flex items-start gap-3 mb-4">
         <Link href={`/profile/${user.username}`} className="relative flex-shrink-0">
@@ -146,7 +146,7 @@ export default function BuddyCard({ user, onRequest }: BuddyCardProps) {
           </div>
           <Link
             href={`/messages?to=${user.username}`}
-            className="px-3 py-2 rounded-lg border border-border font-mono text-xs text-text-dim hover:border-purple hover:text-text transition-all"
+            className="px-3 py-2 rounded-lg border border-border font-mono text-xs text-text-dim hover:border-purple hover:text-text transition-colors duration-200"
           >
             DM
           </Link>
@@ -179,7 +179,7 @@ export default function BuddyCard({ user, onRequest }: BuddyCardProps) {
             </button>
             <button
               onClick={() => setShowMessageInput(false)}
-              className="px-3 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple transition-all"
+              className="px-3 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple transition-colors duration-200"
             >
               Annuleer
             </button>
@@ -188,7 +188,7 @@ export default function BuddyCard({ user, onRequest }: BuddyCardProps) {
       ) : (
         <button
           onClick={() => setShowMessageInput(true)}
-          className="w-full py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-all"
+          className="w-full py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
         >
           + Buddy request
         </button>

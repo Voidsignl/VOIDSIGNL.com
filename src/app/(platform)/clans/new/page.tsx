@@ -122,12 +122,12 @@ export default function NewClanPage() {
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, is_open: !f.is_open }))}
-              className={`w-11 h-6 rounded-full transition-all relative ${
+              className={`w-11 h-6 rounded-full transition-colors duration-200 relative ${
                 form.is_open ? 'bg-purple' : 'bg-border'
               }`}
             >
               <div
-                className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
+                className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-colors duration-200 ${
                   form.is_open ? 'right-1' : 'left-1'
                 }`}
               />

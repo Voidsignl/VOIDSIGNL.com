@@ -17,7 +17,7 @@ export default function ClanQuestCard({ quest }: ClanQuestCardProps) {
 
   return (
     <div
-      className={`rounded-xl border p-4 transition-all ${
+      className={`rounded-xl border p-4 transition-colors duration-200 ${
         quest.is_completed
           ? 'bg-success/5 border-success/20'
           : 'bg-surface border-border'
@@ -44,7 +44,7 @@ export default function ClanQuestCard({ quest }: ClanQuestCardProps) {
         <>
           <div className="w-full h-1.5 bg-void rounded-full overflow-hidden mb-1">
             <div
-              className="h-full rounded-full transition-all"
+              className="h-full rounded-full transition-colors duration-200"
               style={{
                 width: `${pct}%`,
                 background: pct === 100 ? '#22c55e' : '#6B3FE0',

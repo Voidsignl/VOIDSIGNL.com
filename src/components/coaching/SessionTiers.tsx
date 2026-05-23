@@ -41,7 +41,7 @@ export default function SessionTiers({ onBook, comingSoon = true }: SessionTiers
         {TIERS.map(tier => (
           <div
             key={tier.key}
-            className={`relative rounded-xl border p-5 transition-all ${
+            className={`relative rounded-xl border p-5 transition-colors duration-200 ${
               tier.featured ? 'border-purple bg-purple/8' : 'border-border bg-surface'
             }`}
           >
@@ -77,7 +77,7 @@ export default function SessionTiers({ onBook, comingSoon = true }: SessionTiers
             ) : (
               <button
                 onClick={() => onBook?.(tier.key)}
-                className={`w-full py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-all ${
+                className={`w-full py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-colors duration-200 ${
                   tier.featured
                     ? 'bg-purple text-white hover:bg-purple/85'
                     : 'border border-border text-text-dim hover:border-purple hover:text-text'

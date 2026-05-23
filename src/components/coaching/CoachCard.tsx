@@ -36,7 +36,7 @@ export default function CoachCard({ coach }: { coach: CoachCardData }) {
 
   return (
     <Link href={`/coaching/${coach.user.username}`}>
-      <div className="bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-all group">
+      <div className="bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-colors duration-200 group">
         <div className="h-1.5 w-full" style={{ background: accentColor }} />
 
         <div className="p-5">

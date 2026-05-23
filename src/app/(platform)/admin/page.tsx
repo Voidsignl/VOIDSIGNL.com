@@ -507,7 +507,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-4 gap-2 mb-2">
                   {[5, 10, 25, 50].map(n => (
                     <button key={n} onClick={() => setXpAmount(n)}
-                      className={`py-2 rounded-lg text-sm font-medium border transition-all ${
+                      className={`py-2 rounded-lg text-sm font-medium border transition-colors duration-200 ${
                         xpAmount === n ? 'border-cyan bg-cyan/10 text-cyan' : 'border-border bg-surface text-text-dim hover:border-border-hover'
                       }`}>
                       +{n}
@@ -517,7 +517,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-4 gap-2 mb-3">
                   {[100, 250, 500, 1000].map(n => (
                     <button key={n} onClick={() => setXpAmount(n)}
-                      className={`py-2 rounded-lg text-sm font-medium border transition-all ${
+                      className={`py-2 rounded-lg text-sm font-medium border transition-colors duration-200 ${
                         xpAmount === n ? 'border-cyan bg-cyan/10 text-cyan' : 'border-border bg-surface text-text-dim hover:border-border-hover'
                       }`}>
                       +{n}

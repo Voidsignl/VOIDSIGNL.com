@@ -93,7 +93,7 @@ export default function FollowModal({
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex-1 py-3 font-mono text-xs uppercase tracking-wider transition-all border-b-2 ${
+                className={`flex-1 py-3 font-mono text-xs uppercase tracking-wider transition-colors duration-200 border-b-2 ${
                   tab === t.key
                     ? 'text-text border-purple'
                     : 'text-text-dim border-transparent hover:text-text'

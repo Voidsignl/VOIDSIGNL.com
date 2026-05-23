@@ -21,7 +21,7 @@ interface GameCardProps {
 export default function GameCard({ game, userRank, isInLibrary }: GameCardProps) {
   return (
     <Link href={`/games/${game.slug}`}>
-      <div className="relative bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-all group">
+      <div className="relative bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-colors duration-200 group">
         <div className="aspect-[3/4] bg-void relative overflow-hidden">
           {game.cover_url ? (
             <Image

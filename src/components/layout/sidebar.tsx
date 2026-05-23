@@ -78,7 +78,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group relative flex items-center rounded-lg transition-all ${
+                className={`group relative flex items-center rounded-lg transition-colors duration-200 ${
                   collapsed ? 'w-10 h-10 justify-center' : 'w-full px-4 h-10 gap-3'
                 } ${
                   isActive
@@ -121,7 +121,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
         {/* Sign out + collapse */}
         <button
           onClick={handleSignOut}
-          className={`group relative flex items-center rounded-lg transition-all mb-1 ${
+          className={`group relative flex items-center rounded-lg transition-colors duration-200 mb-1 ${
             collapsed ? 'w-10 h-10 justify-center mx-auto' : 'mx-3 px-4 h-10 gap-3'
           } text-text-dim hover:bg-danger/10 hover:text-danger`}
           title="Sign out"
@@ -168,7 +168,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
                 >
                   {/* Raised center pill */}
                   <span
-                    className={`flex items-center justify-center w-12 h-12 rounded-2xl -translate-y-3 transition-all ${
+                    className={`flex items-center justify-center w-12 h-12 rounded-2xl -translate-y-3 transition-colors duration-200 ${
                       isActive
                         ? 'bg-gradient-to-br from-purple to-purple-light text-white shadow-[0_0_20px_rgba(107,63,224,0.5)]'
                         : 'bg-surface border border-border text-text-muted shadow-md'
@@ -189,7 +189,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative flex flex-col items-center justify-center gap-0.5 px-2 min-w-[64px] active:scale-95 transition-all ${
+                className={`relative flex flex-col items-center justify-center gap-0.5 px-2 min-w-[64px] active:scale-95 transition-colors duration-200 ${
                   isActive ? 'text-purple-light' : 'text-text-dim'
                 }`}
               >
@@ -212,7 +212,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
           {/* More menu trigger */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className={`relative flex flex-col items-center justify-center gap-0.5 px-2 min-w-[64px] active:scale-95 transition-all ${
+            className={`relative flex flex-col items-center justify-center gap-0.5 px-2 min-w-[64px] active:scale-95 transition-colors duration-200 ${
               mobileOpen ? 'text-purple-light' : 'text-text-dim'
             }`}
           >
@@ -264,7 +264,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-all active:scale-95 ${
+                    className={`flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-colors duration-200 active:scale-95 ${
                       isActive ? 'bg-purple/15 text-purple-light shadow-[0_0_12px_rgba(107,63,224,0.2)]' : 'text-text-dim hover:bg-surface'
                     }`}
                   >
@@ -276,7 +276,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs = 0 }: SidebarProps = {}) 
               {/* Sign out tile */}
               <button
                 onClick={() => { setMobileOpen(false); handleSignOut() }}
-                className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl text-danger/80 hover:bg-danger/10 active:scale-95 transition-all"
+                className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl text-danger/80 hover:bg-danger/10 active:scale-95 transition-colors duration-200"
               >
                 <LogOut size={20} strokeWidth={1.8} />
                 <span className="text-[10px] tracking-wide">Sign out</span>

@@ -139,11 +139,11 @@ export default function HomePage() {
           <div className={`mt-12 transition-all duration-700 ease-out ${phase >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
             <Link
               href="/register"
-              className="relative inline-flex items-center gap-3 bg-gradient-to-br from-purple to-purple-light hover:from-purple-light hover:to-purple text-white px-6 md:px-10 py-3.5 rounded-lg text-sm tracking-[3px] uppercase font-medium transition-all group shadow-[0_0_40px_rgba(107,63,224,0.35)] hover:shadow-[0_0_60px_rgba(107,63,224,0.6)]"
+              className="relative inline-flex items-center gap-3 bg-gradient-to-br from-purple to-purple-light hover:from-purple-light hover:to-purple text-white px-6 md:px-10 py-3.5 rounded-lg text-sm tracking-[3px] uppercase font-medium transition-colors duration-200 group shadow-[0_0_40px_rgba(107,63,224,0.35)] hover:shadow-[0_0_60px_rgba(107,63,224,0.6)]"
             >
               <span className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
               <span className="relative">Enter the void</span>
-              <ArrowRight size={15} className="relative group-hover:translate-x-1 transition-all" />
+              <ArrowRight size={15} className="relative group-hover:translate-x-1 transition-colors duration-200" />
             </Link>
             <p className="text-[11px] text-text-dim mt-4 tracking-wide">Inner circle · Now open</p>
           </div>
@@ -264,7 +264,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             {FOUNDERS.map((f, i) => (
-              <div key={f.name} className="relative bg-gradient-to-b from-surface to-surface/30 border border-white/[0.04] rounded-xl p-5 text-center hover:border-purple/30 transition-all group overflow-hidden">
+              <div key={f.name} className="relative bg-gradient-to-b from-surface to-surface/30 border border-white/[0.04] rounded-xl p-5 text-center hover:border-purple/30 transition-colors duration-200 group overflow-hidden">
                 {/* Hover glow */}
                 <div className="absolute inset-0 bg-purple/0 group-hover:bg-purple/[0.04] transition-colors duration-300 pointer-events-none" />
                 <div className="relative">
@@ -337,7 +337,7 @@ export default function HomePage() {
           <p className="text-text-muted text-sm mb-8">Inner circle · Priority access · Permanent status</p>
           <Link
             href="/register"
-            className="relative inline-flex items-center gap-3 bg-gradient-to-br from-purple to-purple-light hover:from-purple-light hover:to-purple text-white px-6 md:px-10 py-3.5 rounded-lg text-sm tracking-[3px] uppercase font-medium transition-all group shadow-[0_0_40px_rgba(107,63,224,0.35)] hover:shadow-[0_0_60px_rgba(107,63,224,0.6)]"
+            className="relative inline-flex items-center gap-3 bg-gradient-to-br from-purple to-purple-light hover:from-purple-light hover:to-purple text-white px-6 md:px-10 py-3.5 rounded-lg text-sm tracking-[3px] uppercase font-medium transition-colors duration-200 group shadow-[0_0_40px_rgba(107,63,224,0.35)] hover:shadow-[0_0_60px_rgba(107,63,224,0.6)]"
           >
             <span className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
             <span className="relative">Request access</span>

@@ -123,7 +123,7 @@ export default function DashboardPage() {
           <p className="text-xl font-medium text-purple">{level.name}</p>
           <div className="mt-2 h-1.5 bg-void rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple to-cyan rounded-full transition-all shadow-[0_0_8px_rgba(107,63,224,0.5)]"
+              className="h-full bg-gradient-to-r from-purple to-cyan rounded-full transition-colors duration-200 shadow-[0_0_8px_rgba(107,63,224,0.5)]"
               style={{ width: `${xpProgress.percentage}%` }}
             />
           </div>

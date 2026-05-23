@@ -58,7 +58,7 @@ export default function GamesPage() {
           <button
             key={s.key}
             onClick={() => setSort(s.key)}
-            className={`flex-1 py-2 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-colors duration-200 ${
               sort === s.key ? 'bg-purple text-white' : 'text-text-dim hover:text-text'
             }`}
           >

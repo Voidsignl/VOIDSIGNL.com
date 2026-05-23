@@ -180,7 +180,7 @@ export default function NotificationsPage() {
             const Icon = config.icon
 
             const content = (
-              <div className={`relative flex items-start gap-3.5 px-4 py-3.5 rounded-xl transition-all ${
+              <div className={`relative flex items-start gap-3.5 px-4 py-3.5 rounded-xl transition-colors duration-200 ${
                 notif.is_read
                   ? 'hover:bg-surface/50'
                   : 'bg-surface border border-border hover:border-border-hover'

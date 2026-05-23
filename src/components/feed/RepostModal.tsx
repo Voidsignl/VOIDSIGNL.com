@@ -51,7 +51,7 @@ export default function RepostModal({ postId, onClose, onSuccess }: RepostModalP
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple transition-all"
+            className="flex-1 py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple transition-colors duration-200"
           >
             Annuleer
           </button>

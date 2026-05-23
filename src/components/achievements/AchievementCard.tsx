@@ -29,7 +29,7 @@ export default function AchievementCard({ achievement }: { achievement: Achievem
 
   return (
     <div
-      className="relative rounded-xl border p-4 transition-all"
+      className="relative rounded-xl border p-4 transition-colors duration-200"
       style={{
         background: achievement.is_unlocked ? colors.glow : '#1a1a22',
         borderColor: achievement.is_unlocked ? colors.border : '#3a3a48',
@@ -65,7 +65,7 @@ export default function AchievementCard({ achievement }: { achievement: Achievem
         <div>
           <div className="w-full h-1 bg-void rounded-full overflow-hidden mb-1">
             <div
-              className="h-full rounded-full transition-all"
+              className="h-full rounded-full transition-colors duration-200"
               style={{ width: `${pct}%`, background: colors.border }}
             />
           </div>

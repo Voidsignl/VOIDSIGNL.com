@@ -140,7 +140,7 @@ export default function CoachApplyPage() {
                 key={g.id}
                 type="button"
                 onClick={() => toggleItem(selectedGames, setSelectedGames, g.id)}
-                className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-colors duration-200 ${
                   selectedGames.includes(g.id)
                     ? 'bg-purple text-white border border-purple'
                     : 'bg-void text-text-dim border border-border hover:border-purple'
@@ -162,7 +162,7 @@ export default function CoachApplyPage() {
                 key={s}
                 type="button"
                 onClick={() => toggleItem(selectedSpecs, setSelectedSpecs, s)}
-                className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-all ${
+                className={`px-3 py-1.5 rounded-lg font-mono text-xs transition-colors duration-200 ${
                   selectedSpecs.includes(s)
                     ? 'bg-purple text-white border border-purple'
                     : 'bg-void text-text-dim border border-border hover:border-purple'
@@ -184,7 +184,7 @@ export default function CoachApplyPage() {
                 key={lang}
                 type="button"
                 onClick={() => toggleItem(languages, setLanguages, lang)}
-                className={`px-4 py-2 rounded-lg font-mono text-xs uppercase transition-all ${
+                className={`px-4 py-2 rounded-lg font-mono text-xs uppercase transition-colors duration-200 ${
                   languages.includes(lang)
                     ? 'bg-purple text-white border border-purple'
                     : 'bg-void text-text-dim border border-border hover:border-purple'
@@ -210,7 +210,7 @@ export default function CoachApplyPage() {
                 key={t.key}
                 type="button"
                 onClick={() => setTier(t.key)}
-                className={`flex-1 py-2 rounded-lg font-mono text-xs transition-all ${
+                className={`flex-1 py-2 rounded-lg font-mono text-xs transition-colors duration-200 ${
                   tier === t.key
                     ? 'bg-purple text-white border border-purple'
                     : 'bg-void text-text-dim border border-border hover:border-purple'

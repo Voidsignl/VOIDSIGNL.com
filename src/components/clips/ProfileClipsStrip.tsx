@@ -54,7 +54,7 @@ export function ProfileClipsStrip({ userId }: { userId: string }) {
           <button
             key={c.id}
             onClick={() => setActiveClip(c)}
-            className="group relative aspect-video rounded-lg overflow-hidden bg-surface-2 border border-border hover:border-purple transition-all"
+            className="group relative aspect-video rounded-lg overflow-hidden bg-surface-2 border border-border hover:border-purple transition-colors duration-200"
           >
             {c.thumbnail_url ? (
               <Image src={c.thumbnail_url} alt={c.title} fill sizes="120px" className="object-cover" />

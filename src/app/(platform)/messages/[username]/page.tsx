@@ -222,7 +222,7 @@ export default function ChatPage() {
             </button>
             <button
               onClick={() => handleRequestAction('block')}
-              className="flex-1 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-all"
+              className="flex-1 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-colors duration-200"
             >
               Weigeren
             </button>

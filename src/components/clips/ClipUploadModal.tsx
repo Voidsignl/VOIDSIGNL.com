@@ -107,7 +107,7 @@ export default function ClipUploadModal({ games, onClose, onSuccess }: ClipUploa
                 key={m}
                 type="button"
                 onClick={() => setMode(m)}
-                className={`flex-1 py-2 rounded-md font-mono text-xs uppercase tracking-wider transition-all ${
+                className={`flex-1 py-2 rounded-md font-mono text-xs uppercase tracking-wider transition-colors duration-200 ${
                   mode === m ? 'bg-purple text-white' : 'text-text-dim hover:text-text'
                 }`}
               >
@@ -155,7 +155,7 @@ export default function ClipUploadModal({ games, onClose, onSuccess }: ClipUploa
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="w-full py-4 border-2 border-dashed border-border rounded-lg font-mono text-xs text-text-dim hover:border-purple hover:text-text transition-all"
+                className="w-full py-4 border-2 border-dashed border-border rounded-lg font-mono text-xs text-text-dim hover:border-purple hover:text-text transition-colors duration-200"
               >
                 {file ? file.name : '↑ Klik om video te selecteren (max 100MB)'}
               </button>

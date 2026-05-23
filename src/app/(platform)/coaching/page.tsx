@@ -49,7 +49,7 @@ export default function CoachingPage() {
         </div>
         <Link
           href="/coaching/apply"
-          className="px-5 py-2.5 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-purple hover:text-text transition-all"
+          className="px-5 py-2.5 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
         >
           Word coach
         </Link>
@@ -84,7 +84,7 @@ export default function CoachingPage() {
             <button
               key={s.key}
               onClick={() => setSort(s.key)}
-              className={`px-3 py-1.5 rounded-md font-mono text-[10px] uppercase tracking-wider transition-all ${
+              className={`px-3 py-1.5 rounded-md font-mono text-[10px] uppercase tracking-wider transition-colors duration-200 ${
                 sort === s.key ? 'bg-purple text-white' : 'text-text-dim hover:text-text'
               }`}
             >

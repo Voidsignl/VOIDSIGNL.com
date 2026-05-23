@@ -87,7 +87,7 @@ export default function CreatePostBox({ user, onPost }: CreatePostBoxProps) {
             placeholder="Wat speelde je vandaag?"
             rows={expanded ? 3 : 1}
             maxLength={2000}
-            className="w-full bg-void border border-border rounded-lg px-4 py-3 text-text text-sm font-mono placeholder-text-dim/60 focus:outline-none focus:border-purple transition-all resize-none"
+            className="w-full bg-void border border-border rounded-lg px-4 py-3 text-text text-sm font-mono placeholder-text-dim/60 focus:outline-none focus:border-purple transition-colors duration-200 resize-none"
           />
 
           {images.length > 0 && (

@@ -44,7 +44,7 @@ export default function FollowButton({
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         disabled={loading}
-        className={`font-mono uppercase tracking-wider transition-all disabled:opacity-40 border rounded-lg ${
+        className={`font-mono uppercase tracking-wider transition-colors duration-200 disabled:opacity-40 border rounded-lg ${
           isSmall ? 'px-3 py-1 text-[10px]' : 'px-5 py-2.5 text-xs'
         } ${
           hovered

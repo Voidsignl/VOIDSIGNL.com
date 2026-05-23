@@ -54,7 +54,7 @@ export default function CoachAvailabilityCalendar({
                   key={dayIdx}
                   onClick={() => !readonly && onSelectSlot?.(dayIdx, time)}
                   disabled={readonly && !available}
-                  className={`h-7 rounded transition-all ${
+                  className={`h-7 rounded transition-colors duration-200 ${
                     available
                       ? 'bg-purple/30 border border-purple/50 hover:bg-purple/50'
                       : 'bg-void border border-transparent'

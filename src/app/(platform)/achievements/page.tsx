@@ -251,7 +251,7 @@ export default function AchievementsPage() {
               return (
                 <div
                   key={a.id}
-                  className={`vs-card vs-brackets ${isHighRarity ? 'vs-lit' : ''} flex items-center gap-3.5 border ${style.border} ${style.glow} hover:border-opacity-40 transition-all`}
+                  className={`vs-card vs-brackets ${isHighRarity ? 'vs-lit' : ''} flex items-center gap-3.5 border ${style.border} ${style.glow} hover:border-opacity-40 transition-colors duration-200`}
                 >
                   <div className={`w-11 h-11 rounded-xl ${style.bg} border ${style.border} flex items-center justify-center shrink-0`}>
                     <Icon size={20} className={style.text} />
@@ -296,7 +296,7 @@ export default function AchievementsPage() {
               return (
                 <div
                   key={a.id}
-                  className="vs-card vs-brackets flex items-center gap-3.5 opacity-55 hover:opacity-80 transition-all border-dashed"
+                  className="vs-card vs-brackets flex items-center gap-3.5 opacity-55 hover:opacity-80 transition-colors duration-200 border-dashed"
                   style={{ borderStyle: 'dashed' }}
                 >
                   <div className="relative w-11 h-11 rounded-xl bg-surface-2 border border-border flex items-center justify-center shrink-0">

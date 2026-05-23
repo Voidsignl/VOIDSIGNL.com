@@ -39,7 +39,7 @@ export default function RankingRow({ rank, user, tab, isOwn }: RankingRowProps) 
 
   return (
     <Link href={`/profile/${user.username}`}>
-      <div className={`flex items-center gap-4 px-5 py-4 rounded-xl border transition-all cursor-pointer ${
+      <div className={`flex items-center gap-4 px-5 py-4 rounded-xl border transition-colors duration-200 cursor-pointer ${
         isOwn
           ? 'bg-purple/8 border-purple/40'
           : 'bg-surface border-border hover:border-purple'
@@ -99,7 +99,7 @@ export default function RankingRow({ rank, user, tab, isOwn }: RankingRowProps) 
             <div className="flex items-center gap-3">
               <div className="flex-1 max-w-[120px] h-1.5 bg-void rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all"
+                  className="h-full rounded-full transition-colors duration-200"
                   style={{ width: `${xpPct}%`, background: accentColor }}
                 />
               </div>

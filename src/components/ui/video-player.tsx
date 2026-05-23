@@ -190,7 +190,7 @@ export function VideoPlayer({ src, poster, autoPlay = false, loop = false, muted
               step={0.05}
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="w-0 group-hover/vol:w-16 transition-all accent-purple"
+              className="w-0 group-hover/vol:w-16 transition-colors duration-200 accent-purple"
             />
           </div>
 

@@ -179,7 +179,7 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
           <div className="space-y-2">
             {topPlayers.map((player, i) => (
               <Link key={player.id} href={`/profile/${player.username}`}>
-                <div className="flex items-center gap-4 bg-surface border border-border rounded-xl px-4 py-3 hover:border-purple transition-all">
+                <div className="flex items-center gap-4 bg-surface border border-border rounded-xl px-4 py-3 hover:border-purple transition-colors duration-200">
                   <span className="font-mono text-sm font-bold w-6 text-right"
                     style={{ color: i === 0 ? '#00C8F0' : i === 1 ? '#9998aa' : i === 2 ? '#6B3FE0' : 'rgba(255,255,255,0.3)' }}>
                     #{i + 1}
@@ -221,7 +221,7 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {coaches.map(c => c.user && (
               <Link key={c.user.id} href={`/coaching/${c.user.username}`}>
-                <div className="bg-surface border border-border rounded-xl p-3 hover:border-purple transition-all">
+                <div className="bg-surface border border-border rounded-xl p-3 hover:border-purple transition-colors duration-200">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="relative w-8 h-8 rounded-full overflow-hidden bg-surface-2">
                       {c.user.avatar_url ? (
@@ -263,7 +263,7 @@ export default async function GamePage({ params }: { params: Promise<{ slug: str
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {clips.map(clip => (
-              <Link key={clip.id} href="/clips" className="bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-all">
+              <Link key={clip.id} href="/clips" className="bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-colors duration-200">
                 <div className="relative aspect-video bg-void">
                   {clip.thumbnail_url ? (
                     <Image src={clip.thumbnail_url} alt={clip.title} fill sizes="(max-width: 640px) 50vw, 300px" className="object-cover" />

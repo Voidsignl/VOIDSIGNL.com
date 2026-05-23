@@ -85,7 +85,7 @@ export default function ForumsPage() {
                 <button
                   key={thread.id}
                   onClick={() => router.push(`/forums/${thread.category?.slug}/${thread.id}`)}
-                  className="w-full text-left bg-surface border border-border rounded-xl px-4 py-3 hover:border-purple transition-all"
+                  className="w-full text-left bg-surface border border-border rounded-xl px-4 py-3 hover:border-purple transition-colors duration-200"
                 >
                   <p className="font-mono text-sm font-bold text-text mb-0.5 truncate">
                     {thread.title}

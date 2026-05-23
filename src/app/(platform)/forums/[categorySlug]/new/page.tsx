@@ -98,7 +98,7 @@ export default function NewThreadPage() {
         <div className="flex gap-3">
           <Link
             href={`/forums/${slug}`}
-            className="flex-1 py-3 border border-border text-text-dim font-mono text-sm rounded-xl hover:border-purple hover:text-text transition-all text-center"
+            className="flex-1 py-3 border border-border text-text-dim font-mono text-sm rounded-xl hover:border-purple hover:text-text transition-colors duration-200 text-center"
           >
             Annuleer
           </Link>

@@ -93,7 +93,7 @@ export default function PostCard({ post, currentUserId, onRepost, onDelete }: Po
   }
 
   return (
-    <div className="bg-surface border border-border rounded-xl overflow-hidden hover:border-purple/30 transition-all">
+    <div className="bg-surface border border-border rounded-xl overflow-hidden hover:border-purple/30 transition-colors duration-200">
       <div className="flex items-start justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
           <Link href={`/profile/${post.user.username}`} className="relative flex-shrink-0">
@@ -212,7 +212,7 @@ export default function PostCard({ post, currentUserId, onRepost, onDelete }: Po
       <div className="flex items-center gap-1 px-4 pb-3 border-t border-border pt-3">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs transition-colors duration-200 ${
             liked ? 'bg-purple/15 text-purple' : 'text-text-dim hover:bg-surface-2 hover:text-text'
           }`}
         >
@@ -222,7 +222,7 @@ export default function PostCard({ post, currentUserId, onRepost, onDelete }: Po
 
         <button
           onClick={() => setShowComments(!showComments)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs transition-colors duration-200 ${
             showComments ? 'bg-surface-2 text-text' : 'text-text-dim hover:bg-surface-2 hover:text-text'
           }`}
         >
@@ -231,7 +231,7 @@ export default function PostCard({ post, currentUserId, onRepost, onDelete }: Po
 
         <button
           onClick={() => onRepost?.(post.id)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs text-text-dim hover:bg-surface-2 hover:text-text transition-all"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-mono text-xs text-text-dim hover:bg-surface-2 hover:text-text transition-colors duration-200"
         >
           <Repeat2 size={12} /> {post.repost_count > 0 ? post.repost_count : ''}
         </button>

@@ -53,7 +53,7 @@ export default function UserGameCard({ userGame, onRemove, onUpdateRank, isOwnPr
   }
 
   return (
-    <div className={`relative bg-surface border rounded-xl overflow-hidden transition-all ${
+    <div className={`relative bg-surface border rounded-xl overflow-hidden transition-colors duration-200 ${
       userGame.is_main ? 'border-purple' : 'border-border hover:border-purple/40'
     }`}>
       {userGame.is_main && (
@@ -98,7 +98,7 @@ export default function UserGameCard({ userGame, onRemove, onUpdateRank, isOwnPr
                 ✓
               </button>
               <button onClick={() => setEditing(false)}
-                className="flex-1 py-1 border border-border text-text-dim font-mono text-[10px] rounded hover:border-purple transition-all">
+                className="flex-1 py-1 border border-border text-text-dim font-mono text-[10px] rounded hover:border-purple transition-colors duration-200">
                 ✕
               </button>
             </div>

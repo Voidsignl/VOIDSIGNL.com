@@ -90,7 +90,7 @@ export default function BuddyRequestItem({ request, onAccept, onDecline }: Buddy
         <button
           onClick={() => handle('decline')}
           disabled={loading !== null}
-          className="px-3 py-1.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-all disabled:opacity-40"
+          className="px-3 py-1.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-colors duration-200 disabled:opacity-40"
         >
           {loading === 'decline' ? '...' : '✕'}
         </button>

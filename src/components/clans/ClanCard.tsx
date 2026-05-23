@@ -22,7 +22,7 @@ interface ClanCardProps {
 export default function ClanCard({ clan, rank, isMember }: ClanCardProps) {
   return (
     <Link href={`/clans/${clan.slug}`}>
-      <div className="relative bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-all group">
+      <div className="relative bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-colors duration-200 group">
         {/* Banner */}
         <div className="h-20 bg-void relative overflow-hidden">
           {clan.banner_url ? (

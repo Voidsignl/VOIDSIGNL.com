@@ -88,7 +88,7 @@ export default function ClansPage() {
               setSort(key)
               setPage(1)
             }}
-            className={`flex-1 py-2 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all ${
+            className={`flex-1 py-2 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-colors duration-200 ${
               sort === key
                 ? 'bg-purple text-white'
                 : 'text-text-dim hover:text-text'
@@ -136,7 +136,7 @@ export default function ClansPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-all disabled:opacity-30"
+            className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200 disabled:opacity-30"
           >
             ← Vorige
           </button>
@@ -146,7 +146,7 @@ export default function ClansPage() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-all disabled:opacity-30"
+            className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200 disabled:opacity-30"
           >
             Volgende →
           </button>

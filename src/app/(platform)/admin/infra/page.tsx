@@ -196,7 +196,7 @@ export default function InfraPage() {
         </div>
         <button
           onClick={runAutoChecks}
-          className="px-4 py-2 bg-surface border border-border rounded-lg font-mono text-xs text-text-dim hover:border-purple hover:text-text transition-all flex items-center gap-2"
+          className="px-4 py-2 bg-surface border border-border rounded-lg font-mono text-xs text-text-dim hover:border-purple hover:text-text transition-colors duration-200 flex items-center gap-2"
         >
           <RefreshCw size={12} /> Hercheck
         </button>
@@ -254,7 +254,7 @@ export default function InfraPage() {
               {items.map(check => (
                 <div
                   key={check.key}
-                  className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${
+                  className={`flex items-start gap-4 p-4 rounded-xl border transition-colors duration-200 ${
                     check.is_done
                       ? 'bg-[rgba(34,197,94,0.04)] border-[rgba(34,197,94,0.2)]'
                       : 'bg-surface border-border hover:border-purple/60'
@@ -275,9 +275,9 @@ export default function InfraPage() {
                       <button
                         onClick={() => toggleCheck(check)}
                         disabled={updating === check.id}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors duration-200 ${
                           check.is_done
-                            ? 'bg-[#22c55e] border-[#22c55e] text-black'
+                            ? 'bg-success border-success text-void'
                             : 'border-border hover:border-purple'
                         } ${updating === check.id ? 'opacity-50' : ''}`}
                       >

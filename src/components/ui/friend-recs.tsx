@@ -98,7 +98,7 @@ export function FriendRecs({ userId }: FriendRecsProps) {
               <button
                 onClick={() => follow(r.user_id)}
                 disabled={isFollowed || isPending}
-                className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-all ${
+                className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors duration-200 ${
                   isFollowed ? 'bg-success/15 text-success cursor-default' :
                   'bg-purple/15 text-purple-light hover:bg-purple/25 active:scale-90'
                 }`}

@@ -307,7 +307,7 @@ export default function BuddyCoachPage() {
             </div>
             <button onClick={toggleBuddyLooking}
               className={`w-12 h-6 rounded-full transition-colors relative ${isLookingForBuddy ? 'bg-cyan' : 'bg-surface-2'}`}>
-              <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-all ${isLookingForBuddy ? 'left-[26px]' : 'left-0.5'}`} />
+              <div className={`w-5 h-5 rounded-full bg-white absolute top-0.5 transition-colors duration-200 ${isLookingForBuddy ? 'left-[26px]' : 'left-0.5'}`} />
             </button>
           </div>
 
@@ -321,7 +321,7 @@ export default function BuddyCoachPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {buddyMatches.map(match => (
-                <div key={match.id} className="vs-card hover:border-cyan/20 transition-all">
+                <div key={match.id} className="vs-card hover:border-cyan/20 transition-colors duration-200">
                   <div className="flex items-center gap-3 mb-3">
                     <Avatar
                       url={(match as any).avatar_url}
@@ -399,7 +399,7 @@ export default function BuddyCoachPage() {
                 const p = coach.profile as any
                 const tier = TIERS[coach.hourly_tier as keyof typeof TIERS] || TIERS.standard
                 return (
-                  <div key={coach.id} className="vs-card vs-lit hover:border-purple/30 transition-all">
+                  <div key={coach.id} className="vs-card vs-lit hover:border-purple/30 transition-colors duration-200">
                     <div className="flex items-start gap-4">
                       <Avatar
                         url={p?.avatar_url}
@@ -544,7 +544,7 @@ export default function BuddyCoachPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {Object.entries(TIERS).map(([key, val]) => (
                     <button key={key} onClick={() => setBookingTier(key)}
-                      className={`py-3 rounded-lg text-center border transition-all ${bookingTier === key ? 'border-purple bg-purple/10 text-purple' : 'border-border bg-surface text-text-dim hover:border-border-hover'}`}>
+                      className={`py-3 rounded-lg text-center border transition-colors duration-200 ${bookingTier === key ? 'border-purple bg-purple/10 text-purple' : 'border-border bg-surface text-text-dim hover:border-border-hover'}`}>
                       <p className="text-lg font-bold">{val.price}</p>
                       <p className="text-[10px]">{val.label}</p>
                     </button>

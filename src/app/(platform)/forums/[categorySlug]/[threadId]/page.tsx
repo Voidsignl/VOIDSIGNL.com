@@ -160,19 +160,19 @@ export default function ThreadPage() {
               <div className="flex gap-2 flex-shrink-0 flex-wrap">
                 <button
                   onClick={() => handleMod(thread.is_pinned ? 'unpin' : 'pin', thread.id)}
-                  className="px-3 py-1.5 border border-border text-text-dim font-mono text-[10px] rounded-lg hover:border-purple transition-all"
+                  className="px-3 py-1.5 border border-border text-text-dim font-mono text-[10px] rounded-lg hover:border-purple transition-colors duration-200"
                 >
                   {thread.is_pinned ? 'Losgemaakt' : 'Pinnen'}
                 </button>
                 <button
                   onClick={() => handleMod(thread.is_locked ? 'unlock' : 'lock', thread.id)}
-                  className="px-3 py-1.5 border border-border text-text-dim font-mono text-[10px] rounded-lg hover:border-purple transition-all"
+                  className="px-3 py-1.5 border border-border text-text-dim font-mono text-[10px] rounded-lg hover:border-purple transition-colors duration-200"
                 >
                   {thread.is_locked ? 'Openen' : 'Sluiten'}
                 </button>
                 <button
                   onClick={() => handleMod('delete', thread.id)}
-                  className="px-3 py-1.5 border border-danger text-danger font-mono text-[10px] rounded-lg hover:bg-danger/10 transition-all"
+                  className="px-3 py-1.5 border border-danger text-danger font-mono text-[10px] rounded-lg hover:bg-danger/10 transition-colors duration-200"
                 >
                   Verwijderen
                 </button>
@@ -222,7 +222,7 @@ export default function ThreadPage() {
         <div className="text-center mb-6">
           <button
             onClick={() => setPage(p => p + 1)}
-            className="px-5 py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-all"
+            className="px-5 py-2.5 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
           >
             Meer laden ({total - replies.length} resterend)
           </button>
