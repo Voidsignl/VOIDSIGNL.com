@@ -137,6 +137,32 @@ export const clanCreateSchema = z.object({
 // Generic UUID param check
 export const uuidSchema = z.string().uuid()
 
+// Game aanvragen (MD13)
+export const gameRequestSchema = z.object({
+  igdb_id: z.number().int().positive(),
+  name: z.string().min(1).max(100),
+  cover_url: z.string().url().nullable().optional(),
+  description: z.string().max(2000).nullable().optional(),
+  genre: z.array(z.string()).default([]),
+  platforms: z.array(z.string()).default([]),
+  release_year: z.number().int().min(1970).max(2030).nullable().optional(),
+})
+
+// Game toevoegen aan library (MD13)
+export const userGameSchema = z.object({
+  game_id: z.string().uuid(),
+  rank: z.string().max(50).optional(),
+  is_main: z.boolean().default(false),
+  hours_played: z.number().min(0).max(100000).optional(),
+})
+
+// Game goedkeuren (MD13 admin)
+export const gameApproveSchema = z.object({
+  request_id: z.string().uuid(),
+  rank_set: z.string(),
+  custom_ranks: z.array(z.string()).optional(),
+})
+
 // Bericht sturen (MD11)
 export const messageSchema = z.object({
   conversation_id: z.string().uuid(),

@@ -262,6 +262,11 @@ export default function AdminPage() {
           </Link>
         )}
         {isAdmin && (
+          <Link href="/admin/games" className="vs-tab whitespace-nowrap">
+            <Gamepad2 size={13} /> Game Aanvragen
+          </Link>
+        )}
+        {isAdmin && (
           <Link href="/admin/infra" className="vs-tab whitespace-nowrap">
             <ShieldCheck size={13} /> Infra
           </Link>
