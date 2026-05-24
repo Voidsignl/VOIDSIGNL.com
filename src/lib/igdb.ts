@@ -2,7 +2,7 @@
 
 let cachedToken: { token: string; expiresAt: number } | null = null
 
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(): Promise<string> {
   if (cachedToken && Date.now() < cachedToken.expiresAt) {
     return cachedToken.token
   }
@@ -76,4 +76,67 @@ export function formatIGDBGame(game: IGDBGame) {
       ? new Date(game.first_release_date * 1000).getFullYear()
       : null,
   }
+}
+
+/**
+ * Fallback wanneer igdb_id ontbreekt: zoek IGDB op naam en geef de
+ * grootste cover URL terug. Returnt null bij geen match of error
+ * (silent fail — geen API key, geen netwerk, etc.).
+ */
+export async function fetchCoverByName(gameName: string): Promise<string | null> {
+  try {
+    const token = await getAccessToken()
+    const clientId = process.env.IGDB_CLIENT_ID
+    if (!clientId) return null
+
+    const res = await fetch('https://api.igdb.com/v4/games', {
+      method: 'POST',
+      headers: {
+        'Client-ID': clientId,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'text/plain',
+      },
+      body: `
+        search "${gameName.replace(/"/g, '')}";
+        fields id, name, cover.url;
+        where category = 0;
+        limit 1;
+      `,
+    })
+    if (!res.ok) return null
+
+    const data = await res.json()
+    const game = Array.isArray(data) ? data[0] : null
+    if (!game?.cover?.url) return null
+
+    return 'https:' + (game.cover.url as string).replace('t_thumb', 't_cover_big')
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Bulk wrapper rond fetchCoverByName met batch-throttling. Respecteert
+ * IGDB rate limits (4 req/s) door 5 parallel + 300ms tussen batches.
+ */
+export async function fetchCoversForGames(
+  games: { id: string; name: string; slug: string }[],
+): Promise<Record<string, string>> {
+  const results: Record<string, string> = {}
+  const BATCH = 5
+
+  for (let i = 0; i < games.length; i += BATCH) {
+    const batch = games.slice(i, i + BATCH)
+    await Promise.all(
+      batch.map(async (game) => {
+        const url = await fetchCoverByName(game.name)
+        if (url) results[game.id] = url
+      }),
+    )
+    if (i + BATCH < games.length) {
+      await new Promise((r) => setTimeout(r, 300))
+    }
+  }
+
+  return results
 }

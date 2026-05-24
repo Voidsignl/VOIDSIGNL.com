@@ -62,13 +62,69 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await req.json()
+    const { game_id, rank, is_main, hours_played } = body as {
+      game_id?: string
+      rank?: string | null
+      is_main?: boolean
+      hours_played?: number
+    }
+    if (!game_id) return NextResponse.json({ error: 'game_id required' }, { status: 400 })
+
+    const updates: Record<string, unknown> = {}
+    if (rank !== undefined) updates.rank = rank
+    if (is_main !== undefined) updates.is_main = is_main
+    if (hours_played !== undefined) updates.hours_played = hours_played
+
+    if (is_main === true) {
+      await supabase
+        .from('user_games')
+        .update({ is_main: false })
+        .eq('user_id', user.id)
+    }
+
+    const { data, error } = await supabase
+      .from('user_games')
+      .update(updates)
+      .eq('user_id', user.id)
+      .eq('game_id', game_id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return NextResponse.json({ data })
+
+  } catch (error) {
+    console.error('Library PATCH error:', error)
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { game_id } = await req.json()
+    const { searchParams } = new URL(req.url)
+    let game_id = searchParams.get('game_id')
+
+    // Fallback: accept body for backwards compat
+    if (!game_id) {
+      try {
+        const body = await req.json()
+        game_id = body?.game_id ?? null
+      } catch {
+        // No body, that's fine
+      }
+    }
+
     if (!game_id) return NextResponse.json({ error: 'game_id required' }, { status: 400 })
 
     await supabase

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import BuddyCard, { type BuddyCardUser } from '@/components/buddy/BuddyCard'
 import BuddyRequestItem, { type BuddyRequestItemData } from '@/components/buddy/BuddyRequestItem'
@@ -20,8 +21,10 @@ interface BuddyConv {
 const PLAYTIMES = ['ochtend', 'middag', 'avond', 'nacht']
 const PLATFORMS = ['PC', 'PlayStation', 'Xbox', 'Mobile']
 
-export default function BuddiesPage() {
+function BuddiesPageContent() {
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const initialGameId = searchParams.get('game') ?? ''
   const [tab, setTab] = useState<Tab>('zoeken')
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
@@ -31,7 +34,7 @@ export default function BuddiesPage() {
   const [games, setGames] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
 
-  const [gameId, setGameId] = useState('')
+  const [gameId, setGameId] = useState(initialGameId)
   const [language, setLanguage] = useState('')
   const [platform, setPlatform] = useState('')
   const [playtime, setPlaytime] = useState('')
@@ -268,5 +271,13 @@ export default function BuddiesPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function BuddiesPage() {
+  return (
+    <Suspense fallback={<div className="max-w-3xl mx-auto px-4 py-8"><div className="animate-pulse h-12 bg-surface rounded-xl" /></div>}>
+      <BuddiesPageContent />
+    </Suspense>
   )
 }
