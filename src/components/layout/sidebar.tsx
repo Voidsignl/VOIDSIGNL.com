@@ -180,7 +180,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
       <aside className="hidden md:flex w-56 shrink-0 flex-col bg-void border-r border-border">
         {/* Logo */}
         <div className="px-5 py-5 border-b border-border">
-          <Link href="/feed" className="flex items-center gap-3">
+          <Link href="/dashboard" className="flex items-center gap-3">
             <svg width="26" height="26" viewBox="0 0 80 80" fill="none" aria-hidden>
               <circle cx="40" cy="40" r="36" stroke="#6B3FE0" strokeWidth="1.5" opacity="0.5" />
               <circle cx="40" cy="40" r="27" stroke="#6B3FE0" strokeWidth="1" opacity="0.3" />
