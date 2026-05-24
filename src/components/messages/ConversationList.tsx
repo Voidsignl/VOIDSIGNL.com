@@ -9,6 +9,7 @@ export interface ConversationItem {
   last_message_preview?: string | null
   last_message_at?: string | null
   unread_count: number
+  is_pending_outgoing?: boolean
   other_user: {
     id: string
     username: string
@@ -100,13 +101,17 @@ export default function ConversationList({ conversations, activeId }: Conversati
                   }`}>
                     {conv.last_message_preview ?? 'Nog geen berichten'}
                   </p>
-                  {conv.unread_count > 0 && (
+                  {conv.is_pending_outgoing ? (
+                    <span className="font-mono text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-warning/10 border border-warning/20 text-warning flex-shrink-0 ml-2 whitespace-nowrap">
+                      Wachtend
+                    </span>
+                  ) : conv.unread_count > 0 ? (
                     <div className="w-5 h-5 rounded-full bg-purple flex items-center justify-center flex-shrink-0 ml-2">
                       <span className="font-mono text-[9px] text-white font-bold">
                         {conv.unread_count > 9 ? '9+' : conv.unread_count}
                       </span>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>

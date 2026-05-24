@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const type = searchParams.get('type') ?? 'accepted' // accepted | pending
 
-    const { data, error } = await supabase
+    const baseQuery = supabase
       .from('conversations')
       .select(`
         id, status, last_message_at, last_message_preview,
@@ -31,9 +31,19 @@ export async function GET(req: NextRequest) {
         )
       `)
       .or(`user_a.eq.${user.id},user_b.eq.${user.id}`)
-      .eq('status', type)
       .eq('is_group', false)
       .order('last_message_at', { ascending: false })
+
+    let query
+    if (type === 'pending') {
+      // Inkomende verzoeken: pending + iemand anders is sender
+      query = baseQuery.eq('status', 'pending').neq('request_from', user.id)
+    } else {
+      // Inbox: accepted convos + eigen outgoing pending verzoeken
+      query = baseQuery.or(`status.eq.accepted,and(status.eq.pending,request_from.eq.${user.id})`)
+    }
+
+    const { data, error } = await query
 
     if (error) throw error
 
@@ -41,6 +51,7 @@ export async function GET(req: NextRequest) {
       ...conv,
       unread_count: conv.user_a === user.id ? conv.unread_count_a : conv.unread_count_b,
       other_user: conv.user_a === user.id ? conv.user_b_profile : conv.user_a_profile,
+      is_pending_outgoing: conv.status === 'pending' && conv.request_from === user.id,
     }))
 
     const { data: unreadTotal } = await supabase

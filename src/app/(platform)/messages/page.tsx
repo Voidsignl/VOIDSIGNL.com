@@ -1,16 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import ConversationList, { type ConversationItem } from '@/components/messages/ConversationList'
 import NewConversationModal from '@/components/messages/NewConversationModal'
 
 type Tab = 'inbox' | 'requests'
 
-export default function MessagesPage() {
+function MessagesPageInner() {
+  const searchParams = useSearchParams()
+  const initialTab: Tab = searchParams?.get('tab') === 'requests' ? 'requests' : 'inbox'
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [requests, setRequests] = useState<ConversationItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<Tab>('inbox')
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [newOpen, setNewOpen] = useState(false)
 
   useEffect(() => {
@@ -104,11 +107,11 @@ export default function MessagesPage() {
               </p>
               <div className="flex gap-2">
                 <button onClick={() => handleRequest(req.id, 'accept')}
-                  className="flex-1 py-2 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors">
+                  className="flex-1 py-2 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200">
                   Accepteren
                 </button>
                 <button onClick={() => handleRequest(req.id, 'block')}
-                  className="flex-1 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-colors duration-200">
+                  className="flex-1 py-2 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-danger hover:text-danger transition-colors duration-200">
                   Weigeren
                 </button>
               </div>
@@ -117,5 +120,17 @@ export default function MessagesPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="h-8 w-32 bg-surface rounded animate-pulse mb-6" />
+      </div>
+    }>
+      <MessagesPageInner />
+    </Suspense>
   )
 }

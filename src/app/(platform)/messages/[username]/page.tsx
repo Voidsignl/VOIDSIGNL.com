@@ -30,6 +30,7 @@ export default function ChatPage() {
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [convStatus, setConvStatus] = useState<string>('accepted')
+  const [requestFrom, setRequestFrom] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [startError, setStartError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -70,10 +71,11 @@ export default function ChatPage() {
 
       const { data: conv } = await supabase
         .from('conversations')
-        .select('status')
+        .select('status, request_from')
         .eq('id', json.conversation_id)
         .maybeSingle()
       setConvStatus(conv?.status ?? 'accepted')
+      setRequestFrom((conv?.request_from as string | null) ?? null)
 
     } finally {
       setLoading(false)
@@ -221,21 +223,32 @@ export default function ChatPage() {
         )}
       </div>
 
-      {convStatus === 'pending' && otherUser && (
+      {convStatus === 'pending' && otherUser && requestFrom === currentUserId && (
+        <div className="px-4 py-3 bg-warning/8 border-t border-warning/25">
+          <p className="text-warning text-xs text-center font-mono">
+            ⏳ Wachtend op acceptatie van {otherUser.display_name ?? otherUser.username}
+          </p>
+          <p className="text-text-dim text-[10px] text-center font-mono mt-1">
+            Je kunt blijven typen — zodra ze accepteren komt het gesprek bij hen aan.
+          </p>
+        </div>
+      )}
+
+      {convStatus === 'pending' && otherUser && requestFrom !== currentUserId && (
         <div className="px-4 py-3 bg-purple/10 border-t border-purple/30">
           <p className="text-text-dim text-xs text-center font-mono mb-2">
-            Berichtverzoek van {otherUser.username}
+            Berichtverzoek van {otherUser.display_name ?? otherUser.username}
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => handleRequestAction('accept')}
-              className="flex-1 py-2 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors"
+              className="flex-1 py-2 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200"
             >
               Accepteren
             </button>
             <button
               onClick={() => handleRequestAction('block')}
-              className="flex-1 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-danger hover:text-danger transition-colors duration-200"
+              className="flex-1 py-2 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-danger hover:text-danger transition-colors duration-200"
             >
               Weigeren
             </button>
