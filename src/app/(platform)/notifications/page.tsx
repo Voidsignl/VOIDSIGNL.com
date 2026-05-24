@@ -104,6 +104,12 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter(n => !n.is_read).length
 
+  const ptr = usePullToRefresh({
+    onRefresh: async () => {
+      if (userId) await loadNotifications(userId)
+    },
+  })
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -111,12 +117,6 @@ export default function NotificationsPage() {
       </div>
     )
   }
-
-  const ptr = usePullToRefresh({
-    onRefresh: async () => {
-      if (userId) await loadNotifications(userId)
-    },
-  })
 
   return (
     <div className="max-w-3xl mx-auto animate-fade-in">

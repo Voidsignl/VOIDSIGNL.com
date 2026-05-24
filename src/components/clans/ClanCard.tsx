@@ -71,7 +71,7 @@ export default function ClanCard({ clan, rank, isMember }: ClanCardProps) {
 
         {/* Avatar + info */}
         <div className="px-4 pb-4">
-          <div className="w-12 h-12 rounded-xl overflow-hidden bg-surface-2 border-2 border-surface -mt-6 mb-3">
+          <div className="relative z-10 w-12 h-12 rounded-xl overflow-hidden bg-surface-2 border-2 border-surface -mt-6 mb-3">
             {clan.avatar_url ? (
               <Image
                 src={clan.avatar_url}

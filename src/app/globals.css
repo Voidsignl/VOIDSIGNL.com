@@ -288,4 +288,26 @@
   transform-origin: center;
   animation: sonar-sweep 3s linear infinite;
 }
+
+/* Native select dropdowns: forceer dark color-scheme zodat het OS de
+   dropdown-popup donker rendert ipv default wit-op-zwart. */
+html { color-scheme: dark; }
+
+select {
+  color-scheme: dark;
+  background-color: var(--color-void);
+  color: var(--color-text);
+}
+
+select option {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-display);
+}
+
+select option:checked,
+select option:hover {
+  background-color: var(--color-purple);
+  color: #ffffff;
+}
 /* ──────────────────────────────────────────────────────────────────────── */

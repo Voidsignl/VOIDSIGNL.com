@@ -143,11 +143,12 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
 
   async function openNotifs() {
     setNotifOpen(prev => !prev)
-    if (!notifOpen && notifs.length === 0) {
+    if (!notifOpen && notifs.length === 0 && profile?.id) {
       setLoadingNotifs(true)
       const { data } = await supabase
         .from('notifications')
         .select('id, type, title, body, is_read, link, created_at')
+        .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
         .limit(8)
       if (data) setNotifs(data as NotifPreview[])

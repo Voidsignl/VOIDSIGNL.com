@@ -174,7 +174,13 @@ export default function BuddiesPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {results.map(user => (
-                <BuddyCard key={user.id} user={user} onRequest={handleRequest} />
+                <BuddyCard
+                  key={user.id}
+                  user={user}
+                  onRequest={handleRequest}
+                  onAccept={(requestId) => handleRespond(requestId, 'accept')}
+                  onDecline={(requestId) => handleRespond(requestId, 'decline')}
+                />
               ))}
             </div>
           )}

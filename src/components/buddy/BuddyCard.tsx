@@ -21,11 +21,15 @@ export interface BuddyCardUser {
   compatibility?: number
   is_buddy?: boolean
   request_status?: string | null
+  request_direction?: 'sent' | 'received' | null
+  request_id?: string | null
 }
 
 interface BuddyCardProps {
   user: BuddyCardUser
   onRequest?: (userId: string, message: string) => Promise<void>
+  onAccept?: (requestId: string) => Promise<void>
+  onDecline?: (requestId: string) => Promise<void>
 }
 
 const COMPATIBILITY_LABEL = (score: number) =>
@@ -39,11 +43,12 @@ const isOnline = (lastSeen?: string | null) => {
   return Date.now() - new Date(lastSeen).getTime() < 90000
 }
 
-export default function BuddyCard({ user, onRequest }: BuddyCardProps) {
+export default function BuddyCard({ user, onRequest, onAccept, onDecline }: BuddyCardProps) {
   const [showMessageInput, setShowMessageInput] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [respondLoading, setRespondLoading] = useState<'accept' | 'decline' | null>(null)
 
   const accentColor = user.accent_color ?? '#6B3FE0'
   const online = isOnline(user.last_seen_at)
@@ -62,6 +67,21 @@ export default function BuddyCard({ user, onRequest }: BuddyCardProps) {
       setLoading(false)
     }
   }
+
+  async function handleAccept() {
+    if (!onAccept || !user.request_id) return
+    setRespondLoading('accept')
+    try { await onAccept(user.request_id) } finally { setRespondLoading(null) }
+  }
+
+  async function handleDecline() {
+    if (!onDecline || !user.request_id) return
+    setRespondLoading('decline')
+    try { await onDecline(user.request_id) } finally { setRespondLoading(null) }
+  }
+
+  const pendingFromMe = user.request_status === 'pending' && user.request_direction === 'sent'
+  const pendingForMe = user.request_status === 'pending' && user.request_direction === 'received'
 
   return (
     <div className="bg-surface border border-border rounded-xl p-5 hover:border-purple transition-colors duration-200">
@@ -151,7 +171,29 @@ export default function BuddyCard({ user, onRequest }: BuddyCardProps) {
             DM
           </Link>
         </div>
-      ) : user.request_status === 'pending' ? (
+      ) : pendingForMe ? (
+        <div className="space-y-2">
+          <p className="font-mono text-[10px] text-text-dim text-center">
+            Buddy request van {user.display_name ?? user.username}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleAccept}
+              disabled={respondLoading !== null}
+              className="flex-1 py-2 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40"
+            >
+              {respondLoading === 'accept' ? '...' : 'Accepteren'}
+            </button>
+            <button
+              onClick={handleDecline}
+              disabled={respondLoading !== null}
+              className="px-3 py-2 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-danger hover:text-danger transition-colors duration-200 disabled:opacity-40"
+            >
+              {respondLoading === 'decline' ? '...' : 'Weigeren'}
+            </button>
+          </div>
+        </div>
+      ) : pendingFromMe ? (
         <div className="py-2 rounded-lg border border-border text-center">
           <span className="font-mono text-xs text-text-dim">Request verstuurd</span>
         </div>
