@@ -23,6 +23,7 @@ export interface ConversationItem {
 interface ConversationListProps {
   conversations: ConversationItem[]
   activeId?: string
+  activeUsername?: string
 }
 
 function isOnline(lastSeen?: string | null) {
@@ -40,7 +41,7 @@ function timeAgo(date?: string | null) {
   return `${Math.floor(mins / 1440)}d`
 }
 
-export default function ConversationList({ conversations, activeId }: ConversationListProps) {
+export default function ConversationList({ conversations, activeId, activeUsername }: ConversationListProps) {
   if (conversations.length === 0) {
     return (
       <div className="p-6 text-center">
@@ -58,7 +59,8 @@ export default function ConversationList({ conversations, activeId }: Conversati
         if (!conv.other_user) return null
         const online = isOnline(conv.other_user.last_seen_at)
         const accentColor = conv.other_user.accent_color ?? '#6B3FE0'
-        const isActive = conv.id === activeId
+        const isActive =
+          conv.id === activeId || conv.other_user.username === activeUsername
 
         return (
           <Link key={conv.id} href={`/messages/${conv.other_user.username}`}>

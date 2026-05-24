@@ -179,9 +179,13 @@ export default function ChatPage() {
     : false
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto">
+    <div className="flex flex-col h-full w-full">
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border bg-surface flex-shrink-0">
-        <Link href="/messages" className="text-text-dim hover:text-text transition-colors">
+        <Link
+          href="/messages"
+          className="text-text-dim hover:text-text transition-colors duration-200 md:hidden"
+          aria-label="Terug"
+        >
           <ArrowLeft size={18} />
         </Link>
 
