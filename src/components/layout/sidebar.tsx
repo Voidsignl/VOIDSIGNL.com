@@ -104,14 +104,14 @@ interface NavItem {
 }
 
 const PRIMARY_NAV: NavItem[] = [
-  { href: '/feed',    label: 'Feed',    icon: NAV_ICONS.feed    },
-  { href: '/ranking', label: 'Ranking', icon: NAV_ICONS.ranking },
-  { href: '/clips',   label: 'Clips',   icon: NAV_ICONS.clips   },
-  { href: '/clans',   label: 'Clans',   icon: NAV_ICONS.clans   },
+  { href: '/dashboard', label: 'Feed',    icon: NAV_ICONS.feed    },
+  { href: '/ranking',   label: 'Ranking', icon: NAV_ICONS.ranking },
+  { href: '/clips',     label: 'Clips',   icon: NAV_ICONS.clips   },
+  { href: '/clans',     label: 'Clans',   icon: NAV_ICONS.clans   },
 ]
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/feed',     label: 'Feed',      icon: NAV_ICONS.feed     },
+  { href: '/dashboard', label: 'Feed',      icon: NAV_ICONS.feed     },
   { href: '/ranking',  label: 'Ranking',   icon: NAV_ICONS.ranking  },
   { href: '/clips',    label: 'Clips',     icon: NAV_ICONS.clips    },
   { href: '/clans',    label: 'Clans',     icon: NAV_ICONS.clans    },
