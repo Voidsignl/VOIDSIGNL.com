@@ -121,7 +121,7 @@ export default function MessageBubble({
                 className="object-cover"
               />
             </div>
-            <span className="absolute bottom-1.5 right-2 font-mono text-[10px] text-white/90 drop-shadow">
+            <span className="absolute bottom-1.5 right-1.5 font-mono text-[10px] text-white bg-black/55 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none">
               {formatTime(message.created_at)}
             </span>
           </div>
@@ -134,20 +134,22 @@ export default function MessageBubble({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={message.gif_url} alt="GIF" className="w-full" />
             </div>
-            <span className="absolute bottom-1.5 right-2 font-mono text-[10px] text-white/90 drop-shadow">
+            <span className="absolute bottom-1.5 right-1.5 font-mono text-[10px] text-white bg-black/55 backdrop-blur-sm rounded-full px-1.5 py-0.5 leading-none">
               {formatTime(message.created_at)}
             </span>
           </div>
         ) : message.message_type === 'sticker' && message.sticker_id ? (
-          <div className="relative w-24 h-24">
-            <Image
-              src={`/stickers/${message.sticker_id.replace('void_', 'void-')}.svg`}
-              alt="Sticker"
-              fill
-              sizes="96px"
-              className="object-contain"
-            />
-            <span className="absolute bottom-0 right-0 font-mono text-[10px] text-text-dim">
+          <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+            <div className="w-28 h-28 relative">
+              <Image
+                src={`/stickers/${message.sticker_id.replace('void_', 'void-')}.svg`}
+                alt="Sticker"
+                fill
+                sizes="112px"
+                className="object-contain drop-shadow-md"
+              />
+            </div>
+            <span className="font-mono text-[10px] text-text-dim mt-0.5 px-1">
               {formatTime(message.created_at)}
             </span>
           </div>
