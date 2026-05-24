@@ -11,6 +11,8 @@ import ClanOverviewTab from '@/components/clans/ClanOverviewTab'
 import ClanMembersTab from '@/components/clans/ClanMembersTab'
 import ClanXpRules from '@/components/clans/ClanXpRules'
 import ClanQuestCard from '@/components/clans/ClanQuestCard'
+import InviteLinkModal from '@/components/invites/InviteLinkModal'
+import { Link2 } from 'lucide-react'
 
 type Tab = 'overview' | 'members' | 'quests' | 'war' | 'chat' | 'settings'
 
@@ -149,6 +151,7 @@ export default function ClanDetailPage({
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [joining, setJoining] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   const fetchClan = useCallback(async () => {
     setLoading(true)
@@ -540,12 +543,44 @@ export default function ClanDetailPage({
       )}
 
       {tab === 'settings' && isMember && (
-        <ClanXpRules
+        <div className="space-y-6">
+          {isOfficer && (
+            <div className="bg-surface border border-border rounded-xl p-5">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div>
+                  <p className="font-mono text-[10px] tracking-[0.2em] text-purple uppercase mb-1">
+                    Invite links
+                  </p>
+                  <h3 className="font-mono text-lg font-bold text-text">Mensen uitnodigen</h3>
+                  <p className="text-text-dim text-sm mt-1">
+                    Genereer een shareable link en deel hem in de global feed.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors flex-shrink-0"
+                >
+                  <Link2 size={13} /> Beheren
+                </button>
+              </div>
+            </div>
+          )}
+
+          <ClanXpRules
+            clanSlug={slug}
+            rules={xpRules ?? []}
+            canEdit={isOfficer}
+            actionLabels={ACTION_LABELS}
+            onSaved={fetchClan}
+          />
+        </div>
+      )}
+
+      {showInviteModal && clan && (
+        <InviteLinkModal
           clanSlug={slug}
-          rules={xpRules ?? []}
-          canEdit={isOfficer}
-          actionLabels={ACTION_LABELS}
-          onSaved={fetchClan}
+          clanName={clan.name}
+          onClose={() => setShowInviteModal(false)}
         />
       )}
     </div>

@@ -7,7 +7,7 @@ interface ClipPlayerProps {
 }
 
 function getYouTubeId(url: string) {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([^&?/]+)/)
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/|v\/))([A-Za-z0-9_-]{11})/)
   return match?.[1] ?? null
 }
 

@@ -24,8 +24,8 @@ export default function CoachApplyPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    fetch('/api/buddy/search').then(r => r.json()).then(j => {
-      if (j.games) setGames(j.games)
+    fetch('/api/games?sort=name').then(r => r.json()).then(j => {
+      if (j.data) setGames(j.data)
     }).catch(() => {})
   }, [])
 
