@@ -106,6 +106,19 @@ export default function ChatPage() {
 
         setMessages(prev => [...prev, { ...(payload.new as unknown as ChatMessage), sender }])
       })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`,
+      }, (payload: { new: { id: string; is_read?: boolean; [k: string]: unknown } }) => {
+        // Wanneer de andere kant onze messages markeert als gelezen,
+        // updaten we lokaal de is_read flag voor de checkmark UI.
+        const updated = payload.new
+        setMessages(prev =>
+          prev.map(m => (m.id === updated.id ? { ...m, is_read: updated.is_read } : m)),
+        )
+      })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }

@@ -7,6 +7,7 @@ export interface ChatMessage {
   media_url?: string | null
   gif_url?: string | null
   sticker_id?: string | null
+  is_read?: boolean
   created_at: string
   sender_id?: string
   sender: {
@@ -30,6 +31,32 @@ function formatTime(date: string) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+/**
+ * WhatsApp-stijl read receipts. ✓ = verzonden, ✓✓ = gelezen door ontvanger
+ * (kleurt cyan zodra read=true). Alleen tonen op eigen messages.
+ */
+function ReadReceiptIcon({ read }: { read: boolean }) {
+  const color = read ? '#00C8F0' : 'currentColor'
+  return (
+    <svg
+      width="14"
+      height="10"
+      viewBox="0 0 16 11"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-label={read ? 'Gelezen' : 'Verzonden'}
+    >
+      {/* Eerste vinkje */}
+      <polyline points="1,6 4.5,9 11,2.5" />
+      {/* Tweede vinkje — alleen tonen bij read */}
+      {read && <polyline points="5,6 8.5,9 15,2.5" />}
+    </svg>
+  )
 }
 
 export default function MessageBubble({
@@ -96,15 +123,18 @@ export default function MessageBubble({
             }}
           >
             <span className="whitespace-pre-wrap break-words">{message.content}</span>
-            {/* WhatsApp-stijl timestamp inline rechtsonder, subtiel */}
+            {/* WhatsApp-stijl meta inline rechtsonder: tijd + read receipts */}
             <span
-              className="ml-2 inline-block align-bottom font-mono text-[10px]"
+              className="ml-2 inline-flex items-center gap-0.5 align-bottom font-mono text-[10px]"
               style={{
-                color: isOwn ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.45)',
+                color: isOwn ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.45)',
                 lineHeight: 1,
               }}
             >
               {formatTime(message.created_at)}
+              {isOwn && (
+                <ReadReceiptIcon read={!!message.is_read} />
+              )}
             </span>
           </div>
         ) : message.message_type === 'image' && message.media_url ? (
