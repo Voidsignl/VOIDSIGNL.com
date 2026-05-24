@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { Heart, Send, X } from 'lucide-react'
 
@@ -25,6 +25,20 @@ export default function PostComments({ postId }: { postId: string }) {
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState<{ id: string; username: string } | null>(null)
   const [loading, setLoading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Focus de input wanneer comments-panel opent zodat user direct kan typen
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true })
+  }, [])
+
+  function startReply(commentId: string, username: string) {
+    setReplyTo({ id: commentId, username })
+    setTimeout(() => {
+      inputRef.current?.focus()
+      inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+  }
 
   const fetchComments = useCallback(async () => {
     const res = await fetch(`/api/feed/${postId}/comments`)
@@ -114,8 +128,8 @@ export default function PostComments({ postId }: { postId: string }) {
             </button>
             {!isReply && (
               <button
-                onClick={() => setReplyTo({ id: comment.id, username: comment.user?.username ?? '' })}
-                className="font-mono text-[10px] text-text-dim hover:text-text transition-colors"
+                onClick={() => startReply(comment.id, comment.user?.username ?? '')}
+                className="font-mono text-[10px] text-text-dim hover:text-purple transition-colors duration-200"
               >
                 Reageer
               </button>
@@ -142,38 +156,40 @@ export default function PostComments({ postId }: { postId: string }) {
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <div className="flex-1">
-          {replyTo && (
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono text-[10px] text-purple">
-                Reageer op @{replyTo.username}
-              </span>
-              <button
-                type="button"
-                onClick={() => setReplyTo(null)}
-                className="text-text-dim/60 hover:text-text-dim"
-              >
-                <X size={10} />
-              </button>
-            </div>
-          )}
+      <form onSubmit={handleSubmit} className="sticky bottom-0 -mx-4 -mb-4 px-4 py-3 bg-surface border-t border-border">
+        {replyTo && (
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="font-mono text-[10px] text-purple">
+              ↳ Reageer op @{replyTo.username}
+            </span>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="text-text-dim/60 hover:text-text-dim transition-colors duration-200"
+            >
+              <X size={10} />
+            </button>
+          </div>
+        )}
+        <div className="flex gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={newComment}
             onChange={e => setNewComment(e.target.value)}
-            placeholder={replyTo ? `@${replyTo.username} ...` : 'Reageer...'}
+            placeholder={replyTo ? `Antwoord aan @${replyTo.username}…` : 'Schrijf een reactie…'}
             maxLength={1000}
-            className="w-full bg-void border border-border rounded-lg px-3 py-2 text-text text-sm font-mono placeholder-text-dim/60 focus:outline-none focus:border-purple transition-colors"
+            className="flex-1 bg-void border border-border rounded-full px-4 py-2 text-text text-sm placeholder-text-dim/60 focus:outline-none focus:border-purple transition-[border-color] duration-200"
           />
+          <button
+            type="submit"
+            disabled={loading || !newComment.trim()}
+            className="w-9 h-9 bg-purple text-white rounded-full flex items-center justify-center hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+            aria-label="Verstuur"
+          >
+            {loading ? '...' : <Send size={14} />}
+          </button>
         </div>
-        <button
-          type="submit"
-          disabled={loading || !newComment.trim()}
-          className="px-3 py-2 bg-purple text-white font-mono text-xs rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40"
-        >
-          {loading ? '...' : <Send size={12} />}
-        </button>
       </form>
     </div>
   )

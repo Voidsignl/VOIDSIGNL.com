@@ -448,7 +448,7 @@ export function Topnav({ profile, notificationCount = 0 }: TopnavProps) {
               </button>
 
               {notifOpen && (
-                <div className="absolute top-full right-0 mt-2 w-[340px] max-w-[calc(100vw-1.5rem)] bg-surface border border-border rounded-xl shadow-xl shadow-black/40 overflow-hidden z-50 animate-slide-up vs-lit">
+                <div className="fixed top-[58px] right-3 md:right-5 w-[340px] max-w-[calc(100vw-1.5rem)] bg-surface border border-border rounded-xl shadow-xl shadow-black/40 overflow-hidden z-[60] animate-slide-up vs-lit">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                     <p className="vs-counter text-[10px] tabular-nums">
                       NOTIFICATIONS{notificationCount > 0 ? ` · ${String(notificationCount).padStart(2, '0')}` : ''}
