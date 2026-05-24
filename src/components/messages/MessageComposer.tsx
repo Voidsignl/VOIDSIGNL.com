@@ -179,54 +179,72 @@ export default function MessageComposer({ conversationId, onSend, disabled }: Me
         </div>
       )}
 
-      <form onSubmit={handleSendText} className="flex items-center gap-2 px-3 py-3">
-        <div className="flex gap-1">
-          <button type="button" onClick={() => setPanel(p => p === 'emoji' ? 'none' : 'emoji')}
-            className={`p-2 rounded-lg transition-colors ${
-              panel === 'emoji' ? 'bg-purple text-white' : 'text-text-dim hover:text-text hover:bg-surface-2'
-            }`}>
-            <Smile size={14} />
+      <form onSubmit={handleSendText} className="flex items-end gap-2 px-3 py-2.5">
+        <div className="flex-1 flex items-center gap-1 bg-void border border-border rounded-full pl-2 pr-1 py-1 focus-within:border-purple transition-[border-color] duration-200">
+          <button
+            type="button"
+            onClick={() => setPanel(p => p === 'emoji' ? 'none' : 'emoji')}
+            className={`p-1.5 rounded-full transition-colors duration-200 ${
+              panel === 'emoji' ? 'text-purple' : 'text-text-dim hover:text-text'
+            }`}
+            aria-label="Emoji"
+          >
+            <Smile size={16} />
           </button>
-          <button type="button" onClick={() => setPanel(p => p === 'gif' ? 'none' : 'gif')}
-            className={`px-2 py-2 rounded-lg font-mono text-[10px] font-bold transition-colors ${
-              panel === 'gif' ? 'bg-purple text-white' : 'text-text-dim hover:text-text hover:bg-surface-2'
-            }`}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder={disabled ? 'Conversatie geblokkeerd' : 'Bericht'}
+            disabled={disabled}
+            className="flex-1 bg-transparent text-text text-sm placeholder-text-dim/60 focus:outline-none disabled:opacity-40 py-1.5"
+          />
+          <button
+            type="button"
+            onClick={() => setPanel(p => p === 'gif' ? 'none' : 'gif')}
+            className={`px-2 py-1 rounded-full font-mono text-[10px] font-bold tracking-wider transition-colors duration-200 ${
+              panel === 'gif' ? 'text-purple' : 'text-text-dim hover:text-text'
+            }`}
+            aria-label="GIF"
+          >
             GIF
           </button>
-          <button type="button" onClick={() => setPanel(p => p === 'sticker' ? 'none' : 'sticker')}
-            className={`p-2 rounded-lg transition-colors ${
-              panel === 'sticker' ? 'bg-purple text-white' : 'text-text-dim hover:text-text hover:bg-surface-2'
-            }`}>
-            🎭
+          <button
+            type="button"
+            onClick={() => setPanel(p => p === 'sticker' ? 'none' : 'sticker')}
+            className={`p-1.5 rounded-full transition-colors duration-200 ${
+              panel === 'sticker' ? 'text-purple' : 'text-text-dim hover:text-text'
+            }`}
+            aria-label="Sticker"
+          >
+            <span className="text-[14px] leading-none">★</span>
           </button>
-          <button type="button"
+          <button
+            type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="p-2 rounded-lg text-text-dim hover:text-text hover:bg-surface-2 transition-colors disabled:opacity-40">
-            {uploading ? '...' : <ImageIcon size={14} />}
+            className="p-1.5 rounded-full text-text-dim hover:text-text transition-colors duration-200 disabled:opacity-40"
+            aria-label="Afbeelding"
+          >
+            {uploading ? '...' : <ImageIcon size={16} />}
           </button>
-          <input ref={fileRef} type="file"
+          <input
+            ref={fileRef}
+            type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
-            className="hidden" />
+            className="hidden"
+          />
         </div>
-
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder={disabled ? 'Conversatie geblokkeerd...' : 'Bericht...'}
-          disabled={disabled}
-          className="flex-1 bg-void border border-border rounded-full px-4 py-2.5 text-text text-sm font-mono placeholder-text-dim/60 focus:outline-none focus:border-purple transition-colors disabled:opacity-40"
-        />
 
         <button
           type="submit"
           disabled={!text.trim() || loading || disabled}
-          className="w-9 h-9 bg-purple text-white rounded-full flex items-center justify-center hover:bg-purple/85 transition-colors disabled:opacity-40 flex-shrink-0"
+          className="w-10 h-10 bg-purple text-white rounded-full flex items-center justify-center hover:bg-purple/85 transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-[0_2px_8px_rgba(107,63,224,0.35)]"
+          aria-label="Verstuur"
         >
-          <Send size={14} />
+          <Send size={16} />
         </button>
       </form>
     </div>

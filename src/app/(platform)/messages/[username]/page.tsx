@@ -119,11 +119,45 @@ export default function ChatPage() {
     setMessages(prev => [...prev, message])
   }
 
-  function showAvatar(index: number) {
+  function senderId(msg: ChatMessage): string | undefined {
+    return msg.sender?.id ?? msg.sender_id
+  }
+
+  function isFirstInGroup(index: number) {
     if (index === 0) return true
-    const prev = messages[index - 1]
-    const curr = messages[index]
-    return (prev.sender?.id ?? prev.sender_id) !== (curr.sender?.id ?? curr.sender_id)
+    return senderId(messages[index - 1]) !== senderId(messages[index])
+  }
+
+  function isLastInGroup(index: number) {
+    if (index === messages.length - 1) return true
+    return senderId(messages[index + 1]) !== senderId(messages[index])
+  }
+
+  function showDaySeparator(index: number) {
+    if (index === 0) return true
+    const prev = new Date(messages[index - 1].created_at)
+    const curr = new Date(messages[index].created_at)
+    return (
+      prev.getFullYear() !== curr.getFullYear() ||
+      prev.getMonth() !== curr.getMonth() ||
+      prev.getDate() !== curr.getDate()
+    )
+  }
+
+  function formatDayLabel(date: string) {
+    const d = new Date(date)
+    const now = new Date()
+    const diffDays = Math.floor(
+      (new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() -
+        new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) /
+        86_400_000,
+    )
+    if (diffDays === 0) return 'Vandaag'
+    if (diffDays === 1) return 'Gisteren'
+    if (diffDays < 7) {
+      return d.toLocaleDateString('nl-NL', { weekday: 'long' })
+    }
+    return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
   }
 
   async function handleRequestAction(action: 'accept' | 'block') {
@@ -186,7 +220,14 @@ export default function ChatPage() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+      <div
+        className="flex-1 overflow-y-auto px-4 py-3"
+        style={{
+          backgroundImage:
+            'radial-gradient(rgba(107,63,224,0.06) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      >
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="w-6 h-6 border-2 border-purple border-t-transparent rounded-full animate-spin" />
@@ -211,12 +252,21 @@ export default function ChatPage() {
         ) : (
           <>
             {messages.map((msg, i) => (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                isOwn={(msg.sender?.id ?? msg.sender_id) === currentUserId}
-                showAvatar={showAvatar(i)}
-              />
+              <div key={msg.id}>
+                {showDaySeparator(i) && (
+                  <div className="flex items-center justify-center my-4">
+                    <span className="font-mono text-[10px] tracking-widest uppercase text-text-dim bg-surface border border-border rounded-full px-3 py-1">
+                      {formatDayLabel(msg.created_at)}
+                    </span>
+                  </div>
+                )}
+                <MessageBubble
+                  message={msg}
+                  isOwn={senderId(msg) === currentUserId}
+                  isFirstInGroup={isFirstInGroup(i)}
+                  isLastInGroup={isLastInGroup(i)}
+                />
+              </div>
             ))}
             <div ref={bottomRef} />
           </>

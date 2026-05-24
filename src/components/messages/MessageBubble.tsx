@@ -21,26 +21,58 @@ export interface ChatMessage {
 interface MessageBubbleProps {
   message: ChatMessage
   isOwn: boolean
-  showAvatar: boolean
+  isFirstInGroup?: boolean
+  isLastInGroup?: boolean
 }
 
 function formatTime(date: string) {
-  return new Date(date).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+  return new Date(date).toLocaleTimeString('nl-NL', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
-export default function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
+export default function MessageBubble({
+  message,
+  isOwn,
+  isFirstInGroup = true,
+  isLastInGroup = true,
+}: MessageBubbleProps) {
   const accentColor = message.sender?.accent_color ?? '#6B3FE0'
+  const isText = message.message_type === 'text'
+
+  // WhatsApp-stijl tail: alleen op de laatste bubble van een sequence,
+  // aan de zijkant van de afzender (rechtsonder voor jezelf, linksonder
+  // voor de ander). Anders gewoon symmetrisch rond.
+  const radius = isLastInGroup
+    ? isOwn
+      ? '18px 18px 4px 18px'
+      : '18px 18px 18px 4px'
+    : '18px'
 
   return (
-    <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div
+      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${
+        isFirstInGroup ? 'mt-3' : 'mt-0.5'
+      }`}
+    >
+      {/* Avatar slot links: alleen tonen op de LAATSTE bubble van een
+          sequence van de ander. Zo voelt het zoals WhatsApp/Telegram. */}
       {!isOwn && (
-        <div className="flex-shrink-0 w-7 h-7">
-          {showAvatar && message.sender && (
-            <div className="relative w-7 h-7 rounded-full overflow-hidden bg-surface-2 border"
-              style={{ borderColor: accentColor }}>
+        <div className="w-8 flex-shrink-0 flex items-end mr-1.5">
+          {isLastInGroup && message.sender ? (
+            <div
+              className="w-7 h-7 rounded-full overflow-hidden bg-surface-2 border"
+              style={{ borderColor: accentColor }}
+            >
               {message.sender.avatar_url ? (
-                <Image src={message.sender.avatar_url} alt={message.sender.username}
-                  fill sizes="28px" className="object-cover" />
+                <Image
+                  src={message.sender.avatar_url}
+                  alt={message.sender.username}
+                  width={28}
+                  height={28}
+                  className="object-cover w-full h-full"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <span className="text-[9px] font-mono text-text-dim">
@@ -49,59 +81,77 @@ export default function MessageBubble({ message, isOwn, showAvatar }: MessageBub
                 </div>
               )}
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
-      <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
-        {!isOwn && showAvatar && message.sender && (
-          <span className="font-mono text-[10px] text-text-dim mb-1 ml-1">
-            {message.sender.display_name ?? message.sender.username}
-          </span>
-        )}
-
-        {message.message_type === 'text' && (
+      <div className={`max-w-[75%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
+        {isText ? (
           <div
-            className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+            className="relative px-3 py-1.5 text-sm leading-relaxed shadow-sm"
             style={{
-              background: isOwn ? accentColor : '#24242e',
+              background: isOwn ? accentColor : '#1f1f28',
               color: '#ffffff',
-              borderBottomRightRadius: isOwn ? '4px' : '16px',
-              borderBottomLeftRadius: isOwn ? '16px' : '4px',
+              borderRadius: radius,
             }}
           >
-            {message.content}
+            <span className="whitespace-pre-wrap break-words">{message.content}</span>
+            {/* WhatsApp-stijl timestamp inline rechtsonder, subtiel */}
+            <span
+              className="ml-2 inline-block align-bottom font-mono text-[10px]"
+              style={{
+                color: isOwn ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.45)',
+                lineHeight: 1,
+              }}
+            >
+              {formatTime(message.created_at)}
+            </span>
           </div>
-        )}
-
-        {message.message_type === 'image' && message.media_url && (
-          <div className="relative rounded-xl overflow-hidden max-w-[240px] aspect-[4/3] bg-void">
-            <Image src={message.media_url} alt="Afbeelding" fill sizes="240px" className="object-cover" />
+        ) : message.message_type === 'image' && message.media_url ? (
+          <div className="relative">
+            <div
+              className="relative overflow-hidden bg-void shadow-sm"
+              style={{ borderRadius: radius }}
+            >
+              <Image
+                src={message.media_url}
+                alt="Afbeelding"
+                width={240}
+                height={180}
+                className="object-cover"
+              />
+            </div>
+            <span className="absolute bottom-1.5 right-2 font-mono text-[10px] text-white/90 drop-shadow">
+              {formatTime(message.created_at)}
+            </span>
           </div>
-        )}
-
-        {message.message_type === 'gif' && message.gif_url && (
-          <div className="rounded-xl overflow-hidden max-w-[200px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={message.gif_url} alt="GIF" className="w-full" />
+        ) : message.message_type === 'gif' && message.gif_url ? (
+          <div className="relative">
+            <div
+              className="overflow-hidden max-w-[200px] shadow-sm"
+              style={{ borderRadius: radius }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={message.gif_url} alt="GIF" className="w-full" />
+            </div>
+            <span className="absolute bottom-1.5 right-2 font-mono text-[10px] text-white/90 drop-shadow">
+              {formatTime(message.created_at)}
+            </span>
           </div>
-        )}
-
-        {message.message_type === 'sticker' && message.sticker_id && (
-          <div className="w-20 h-20 relative">
+        ) : message.message_type === 'sticker' && message.sticker_id ? (
+          <div className="relative w-24 h-24">
             <Image
               src={`/stickers/${message.sticker_id.replace('void_', 'void-')}.svg`}
               alt="Sticker"
               fill
-              sizes="80px"
+              sizes="96px"
               className="object-contain"
             />
+            <span className="absolute bottom-0 right-0 font-mono text-[10px] text-text-dim">
+              {formatTime(message.created_at)}
+            </span>
           </div>
-        )}
-
-        <span className="font-mono text-[9px] text-text-dim/60 mt-1 px-1">
-          {formatTime(message.created_at)}
-        </span>
+        ) : null}
       </div>
     </div>
   )
