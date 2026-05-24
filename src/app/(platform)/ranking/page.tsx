@@ -101,20 +101,22 @@ export default function RankingPage() {
     myRank && myRank > 1 ? (rows[myRowIdx - 1]?.xp ?? null) : null
 
   return (
-    <div className="flex gap-5 max-w-6xl mx-auto px-4 py-8">
-      {/* LEFT — Ranking */}
-      <div className="flex-1 min-w-0">
-        <div className="mb-6">
-          <p className="font-mono text-[10px] tracking-[0.2em] text-purple uppercase mb-1">
-            Leaderboard
-          </p>
-          <h1 className="font-mono text-3xl font-bold text-text mb-1">Ranking</h1>
-          <p className="text-text-dim text-sm">
-            {total > 0 ? `${total.toLocaleString()} members` : ''}
-          </p>
-        </div>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* Header — full width zodat tabs + sidebar exact aligned starten */}
+      <div className="mb-6">
+        <p className="font-mono text-[10px] tracking-[0.2em] text-purple uppercase mb-1">
+          Leaderboard
+        </p>
+        <h1 className="font-mono text-3xl font-bold text-text mb-1">Ranking</h1>
+        <p className="text-text-dim text-sm">
+          {total > 0 ? `${total.toLocaleString()} members` : ''}
+        </p>
+      </div>
 
-        <div className="mb-4">
+      <div className="flex gap-5">
+        {/* LEFT — Ranking */}
+        <div className="flex-1 min-w-0">
+          <div className="mb-4">
           <RankingTabs
             active={tab}
             onChange={(t) => {
@@ -223,34 +225,35 @@ export default function RankingPage() {
           </>
         )}
 
-        {/* Mijn positie balk */}
-        {currentUser && myRank && myRow && (
-          <MyPositionBar
-            rank={myRank}
-            totalRanks={total}
-            user={{
-              username: currentUser.username,
-              level_name: myRow.level_name ?? currentUser.level_name,
-              xp: myRow.xp ?? currentUser.xp,
-              achievement_count: myRow.achievement_count,
-            }}
-            nextRankXp={nextRankXp}
-          />
+          {/* Mijn positie balk */}
+          {currentUser && myRank && myRow && (
+            <MyPositionBar
+              rank={myRank}
+              totalRanks={total}
+              user={{
+                username: currentUser.username,
+                level_name: myRow.level_name ?? currentUser.level_name,
+                xp: myRow.xp ?? currentUser.xp,
+                achievement_count: myRow.achievement_count,
+              }}
+              nextRankXp={nextRankXp}
+            />
+          )}
+        </div>
+
+        {/* RIGHT — Sidebar (alleen desktop) */}
+        {!isGuest && sidebar && (
+          <aside className="hidden lg:block w-64 shrink-0">
+            <RankingSidebar
+              stats={sidebar.stats}
+              topClip={sidebar.topClip}
+              topClan={sidebar.topClan}
+              currentUserLevelName={currentUser?.level_name}
+              currentUserXp={currentUser?.xp}
+            />
+          </aside>
         )}
       </div>
-
-      {/* RIGHT — Sidebar (alleen desktop) */}
-      {!isGuest && sidebar && (
-        <aside className="hidden lg:block w-64 shrink-0">
-          <RankingSidebar
-            stats={sidebar.stats}
-            topClip={sidebar.topClip}
-            topClan={sidebar.topClan}
-            currentUserLevelName={currentUser?.level_name}
-            currentUserXp={currentUser?.xp}
-          />
-        </aside>
-      )}
     </div>
   )
 }
