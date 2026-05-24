@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextRequest, NextResponse } from 'next/server'
 import { startDmSchema } from '@/lib/validations'
+import { logApiError } from '@/lib/logError'
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ conversation_id: convId })
 
   } catch (error) {
+    await logApiError('/api/messages/start', 'POST', 500, error)
     console.error('Start DM error:', error)
     return NextResponse.json({ error: 'Something went wrong' }, { status: 500 })
   }

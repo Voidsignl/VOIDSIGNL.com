@@ -31,10 +31,12 @@ export default function ChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [convStatus, setConvStatus] = useState<string>('accepted')
   const [loading, setLoading] = useState(true)
+  const [startError, setStartError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const initChat = useCallback(async () => {
     setLoading(true)
+    setStartError(null)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
@@ -54,8 +56,11 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username }),
       })
-      const json = await res.json()
-      if (!json.conversation_id) return
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || !json.conversation_id) {
+        setStartError(json.error ?? `Gesprek niet beschikbaar (status ${res.status})`)
+        return
+      }
 
       setConversationId(json.conversation_id)
 
@@ -187,11 +192,19 @@ export default function ChatPage() {
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <p className="font-mono text-[10px] tracking-[0.2em] text-text-dim/60 uppercase mb-2">
-              Begin
+              {startError ? 'Fout' : 'Begin'}
             </p>
             <p className="text-text-dim text-sm">
-              Stuur een bericht naar {otherUser?.display_name ?? otherUser?.username}.
+              {startError ?? `Stuur een bericht naar ${otherUser?.display_name ?? otherUser?.username}.`}
             </p>
+            {startError && (
+              <button
+                onClick={initChat}
+                className="mt-4 px-4 py-2 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200"
+              >
+                Opnieuw proberen
+              </button>
+            )}
           </div>
         ) : (
           <>
