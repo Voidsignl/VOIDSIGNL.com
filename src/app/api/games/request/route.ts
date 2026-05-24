@@ -17,14 +17,18 @@ export async function POST(req: NextRequest) {
     const parsed = gameRequestSchema.safeParse(body)
     if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 })
 
-    const { data: existing } = await supabase
-      .from('games')
-      .select('id, name')
-      .eq('igdb_id', parsed.data.igdb_id)
-      .maybeSingle()
+    // Alleen IGDB-aanvragen kunnen dubbel zijn — manual entries (igdb_id null)
+    // worden altijd als nieuw verzoek vastgelegd zodat admin ze kan beoordelen.
+    if (parsed.data.igdb_id) {
+      const { data: existing } = await supabase
+        .from('games')
+        .select('id, name')
+        .eq('igdb_id', parsed.data.igdb_id)
+        .maybeSingle()
 
-    if (existing) {
-      return NextResponse.json({ error: 'Game bestaat al', game_id: existing.id }, { status: 409 })
+      if (existing) {
+        return NextResponse.json({ error: 'Game bestaat al', game_id: existing.id }, { status: 409 })
+      }
     }
 
     const { data, error } = await supabase

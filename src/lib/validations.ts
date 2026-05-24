@@ -154,9 +154,9 @@ export const clanMessageSchema = z.object({
 // Generic UUID param check
 export const uuidSchema = z.string().uuid()
 
-// Game aanvragen (MD13)
+// Game aanvragen (MD13 + manual)
 export const gameRequestSchema = z.object({
-  igdb_id: z.number().int().positive(),
+  igdb_id: z.number().int().positive().nullable().optional(),
   name: z.string().min(1).max(100),
   cover_url: z.string().url().nullable().optional(),
   description: z.string().max(2000).nullable().optional(),
