@@ -52,21 +52,40 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: existing } = await supabase
-      .from('clan_members')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (existing) {
-      return NextResponse.json({ error: 'Je bent al lid van een clan' }, { status: 400 })
-    }
-
     const { data: profile } = await supabase
       .from('profiles')
-      .select('xp')
+      .select('xp, is_inner_circle')
       .eq('id', user.id)
       .maybeSingle()
+
+    // IC-leden mogen meerdere clans aanmaken / lid zijn van meerdere
+    if (!profile?.is_inner_circle) {
+      const { data: existing } = await supabase
+        .from('clan_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (existing) {
+        return NextResponse.json(
+          { error: 'Je bent al lid van een clan' },
+          { status: 400 },
+        )
+      }
+
+      const { data: ownedClan } = await supabase
+        .from('clans')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle()
+
+      if (ownedClan) {
+        return NextResponse.json(
+          { error: 'Je kunt maar 1 clan aanmaken' },
+          { status: 400 },
+        )
+      }
+    }
 
     if (!profile || (profile.xp ?? 0) < 500) {
       return NextResponse.json({

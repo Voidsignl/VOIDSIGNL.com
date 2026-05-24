@@ -17,6 +17,7 @@ interface ProfileSummary {
   accent_color: string | null
   level_name: string | null
   role: string | null
+  is_inner_circle: boolean | null
 }
 
 const NAV_ICONS = {
@@ -102,6 +103,13 @@ const NAV_ICONS = {
       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
     </svg>
   ),
+  innerCircle: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3" fill="currentColor" />
+      <line x1="12" y1="3" x2="12" y2="6" />
+    </svg>
+  ),
 } as const
 
 interface NavItem {
@@ -149,7 +157,7 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
       if (!data.user) return
       const { data: p } = await supabase
         .from('profiles')
-        .select('username, avatar_url, accent_color, level_name, role')
+        .select('username, avatar_url, accent_color, level_name, role, is_inner_circle')
         .eq('id', data.user.id)
         .maybeSingle()
       if (p) setProfile(p as ProfileSummary)
@@ -240,6 +248,30 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
               </Link>
             )
           })}
+
+          {/* Inner Circle link — alleen zichtbaar voor IC-leden */}
+          {profile?.is_inner_circle && (() => {
+            const active = isActive('/inner-circle')
+            return (
+              <Link
+                href="/inner-circle"
+                className={`
+                  relative flex items-center gap-3 px-3 py-2.5 rounded-lg mt-2
+                  font-mono text-xs uppercase tracking-wider
+                  transition-colors duration-200
+                  ${active ? 'bg-cyan/15 text-text' : 'text-text-muted hover:bg-surface hover:text-text'}
+                `}
+              >
+                {active && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-cyan rounded-full" />
+                )}
+                <span className={active ? 'text-cyan' : 'text-cyan/70'}>
+                  {NAV_ICONS.innerCircle}
+                </span>
+                <span>Inner Circle</span>
+              </Link>
+            )
+          })()}
 
           {/* Admin link — alleen zichtbaar voor admins */}
           {profile?.role === 'admin' && (() => {
@@ -405,6 +437,24 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
                   Publieke pagina
                 </span>
               </Link>
+
+              {/* Inner Circle tile — alleen voor IC-leden */}
+              {profile?.is_inner_circle && (
+                <Link
+                  href="/inner-circle"
+                  onClick={() => setMoreOpen(false)}
+                  className={`flex flex-col items-center gap-2 py-4 rounded-xl border transition-colors duration-200 ${
+                    isActive('/inner-circle')
+                      ? 'bg-cyan/15 border-cyan/30 text-text'
+                      : 'bg-surface-2 border-border text-cyan'
+                  }`}
+                >
+                  {NAV_ICONS.innerCircle}
+                  <span className="font-mono uppercase text-center text-[9px] tracking-wider leading-tight">
+                    Inner Circle
+                  </span>
+                </Link>
+              )}
 
               {/* Admin tile — alleen voor admins */}
               {profile?.role === 'admin' && (

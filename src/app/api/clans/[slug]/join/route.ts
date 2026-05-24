@@ -11,14 +11,26 @@ export async function POST(
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: existingMember } = await supabase
-      .from('clan_members')
-      .select('id')
-      .eq('user_id', user.id)
+    // IC-leden mogen lid worden van meerdere clans
+    const { data: joinerProfile } = await supabase
+      .from('profiles')
+      .select('is_inner_circle')
+      .eq('id', user.id)
       .maybeSingle()
 
-    if (existingMember) {
-      return NextResponse.json({ error: 'Je bent al lid van een clan' }, { status: 400 })
+    if (!joinerProfile?.is_inner_circle) {
+      const { data: existingMember } = await supabase
+        .from('clan_members')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (existingMember) {
+        return NextResponse.json(
+          { error: 'Je bent al lid van een clan. Verlaat die clan eerst.' },
+          { status: 400 },
+        )
+      }
     }
 
     const { data: clan } = await supabase
