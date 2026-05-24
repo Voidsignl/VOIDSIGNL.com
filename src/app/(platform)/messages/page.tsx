@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import ConversationList, { type ConversationItem } from '@/components/messages/ConversationList'
+import NewConversationModal from '@/components/messages/NewConversationModal'
 
 type Tab = 'inbox' | 'requests'
 
@@ -10,6 +11,7 @@ export default function MessagesPage() {
   const [requests, setRequests] = useState<ConversationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('inbox')
+  const [newOpen, setNewOpen] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -43,12 +45,22 @@ export default function MessagesPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <p className="font-mono text-[10px] tracking-[0.2em] text-purple uppercase mb-1">
-          Community
-        </p>
-        <h1 className="font-mono text-2xl font-bold text-text">Berichten</h1>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <p className="font-mono text-[10px] tracking-[0.2em] text-purple uppercase mb-1">
+            Community
+          </p>
+          <h1 className="font-mono text-2xl font-bold text-text">Berichten</h1>
+        </div>
+        <button
+          onClick={() => setNewOpen(true)}
+          className="px-4 py-2 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors duration-200"
+        >
+          + Nieuw gesprek
+        </button>
       </div>
+
+      <NewConversationModal open={newOpen} onClose={() => setNewOpen(false)} />
 
       <div className="flex gap-1 bg-surface border border-border rounded-xl p-1 mb-4">
         {TABS.map(t => (
