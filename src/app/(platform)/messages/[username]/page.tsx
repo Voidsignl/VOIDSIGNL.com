@@ -145,7 +145,7 @@ export default function ChatPage() {
     : false
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] md:h-screen max-w-2xl mx-auto">
+    <div className="flex flex-col h-full max-w-2xl mx-auto">
       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border bg-surface flex-shrink-0">
         <Link href="/messages" className="text-text-dim hover:text-text transition-colors">
           <ArrowLeft size={18} />
