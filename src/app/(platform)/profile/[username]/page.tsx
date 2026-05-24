@@ -16,6 +16,7 @@ import {
 import { ImageUpload } from '@/components/ui/image-upload'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 import { ScopeSpinner } from '@/components/ui/loader'
 import { ProfileQR } from '@/components/ui/profile-qr'
 import AchievementGrid from '@/components/achievements/AchievementGrid'
@@ -699,19 +700,20 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label className="vs-label block mb-1">AVAILABILITY</label>
-                  <select
+                  <BrandSelect
                     value={editAvailability}
-                    onChange={e => setEditAvailability(e.target.value)}
-                    className="vs-input text-sm appearance-none"
-                  >
-                    <option value="">Not set</option>
-                    <option value="Online">Online</option>
-                    <option value="Away">Away</option>
-                    <option value="In Game">In Game</option>
-                    <option value="LFG">LFG</option>
-                    <option value="Do Not Disturb">Do Not Disturb</option>
-                    <option value="Offline">Offline</option>
-                  </select>
+                    onChange={setEditAvailability}
+                    placeholder="Not set"
+                    options={[
+                      { value: '', label: 'Not set' },
+                      { value: 'Online', label: 'Online' },
+                      { value: 'Away', label: 'Away' },
+                      { value: 'In Game', label: 'In Game' },
+                      { value: 'LFG', label: 'LFG' },
+                      { value: 'Do Not Disturb', label: 'Do Not Disturb' },
+                      { value: 'Offline', label: 'Offline' },
+                    ]}
+                  />
                 </div>
               </div>
 

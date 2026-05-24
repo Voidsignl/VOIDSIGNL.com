@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase-browser'
 import BuddyCard, { type BuddyCardUser } from '@/components/buddy/BuddyCard'
 import BuddyRequestItem, { type BuddyRequestItemData } from '@/components/buddy/BuddyRequestItem'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 type Tab = 'zoeken' | 'requests' | 'mijn-buddies'
 
@@ -129,31 +130,67 @@ export default function BuddiesPage() {
       {tab === 'zoeken' && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-            <select value={gameId} onChange={e => setGameId(e.target.value)} className="bg-void border border-border rounded-lg px-3 py-2.5 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors">
-              <option value="">Alle games</option>
-              {games.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
-            </select>
-            <select value={language} onChange={e => setLanguage(e.target.value)} className="bg-void border border-border rounded-lg px-3 py-2.5 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors">
-              <option value="">Alle talen</option>
-              <option value="nl">Nederlands</option>
-              <option value="en">English</option>
-            </select>
-            <select value={platform} onChange={e => setPlatform(e.target.value)} className="bg-void border border-border rounded-lg px-3 py-2.5 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors">
-              <option value="">Alle platforms</option>
-              {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
-            <select value={playtime} onChange={e => setPlaytime(e.target.value)} className="bg-void border border-border rounded-lg px-3 py-2.5 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors">
-              <option value="">Alle tijden</option>
-              {PLAYTIMES.map(t => <option key={t} value={t}>{t[0].toUpperCase() + t.slice(1)}</option>)}
-            </select>
-            <select value={minLevel} onChange={e => setMinLevel(e.target.value)} className="bg-void border border-border rounded-lg px-3 py-2.5 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors">
-              <option value="">Min level</option>
-              {[1,2,3,4,5,6,7,8,9,10].map(l => (<option key={l} value={l}>Level {l}</option>))}
-            </select>
-            <select value={maxLevel} onChange={e => setMaxLevel(e.target.value)} className="bg-void border border-border rounded-lg px-3 py-2.5 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors">
-              <option value="">Max level</option>
-              {[1,2,3,4,5,6,7,8,9,10].map(l => (<option key={l} value={l}>Level {l}</option>))}
-            </select>
+            <BrandSelect
+              value={gameId}
+              onChange={setGameId}
+              placeholder="Alle games"
+              options={[
+                { value: '', label: 'Alle games' },
+                ...games.map(g => ({ value: g.id, label: g.name })),
+              ]}
+            />
+            <BrandSelect
+              value={language}
+              onChange={setLanguage}
+              placeholder="Alle talen"
+              options={[
+                { value: '', label: 'Alle talen' },
+                { value: 'nl', label: 'Nederlands' },
+                { value: 'en', label: 'English' },
+              ]}
+            />
+            <BrandSelect
+              value={platform}
+              onChange={setPlatform}
+              placeholder="Alle platforms"
+              options={[
+                { value: '', label: 'Alle platforms' },
+                ...PLATFORMS.map(p => ({ value: p, label: p })),
+              ]}
+            />
+            <BrandSelect
+              value={playtime}
+              onChange={setPlaytime}
+              placeholder="Alle tijden"
+              options={[
+                { value: '', label: 'Alle tijden' },
+                ...PLAYTIMES.map(t => ({ value: t, label: t[0].toUpperCase() + t.slice(1) })),
+              ]}
+            />
+            <BrandSelect
+              value={minLevel}
+              onChange={setMinLevel}
+              placeholder="Min level"
+              options={[
+                { value: '', label: 'Min level' },
+                ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(l => ({
+                  value: String(l),
+                  label: `Level ${l}`,
+                })),
+              ]}
+            />
+            <BrandSelect
+              value={maxLevel}
+              onChange={setMaxLevel}
+              placeholder="Max level"
+              options={[
+                { value: '', label: 'Max level' },
+                ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(l => ({
+                  value: String(l),
+                  label: `Level ${l}`,
+                })),
+              ]}
+            />
           </div>
 
           {loading ? (

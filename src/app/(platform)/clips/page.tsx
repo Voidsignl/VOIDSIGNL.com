@@ -5,6 +5,7 @@ import ClipCard from '@/components/clips/ClipCard'
 import ClipUploadModal from '@/components/clips/ClipUploadModal'
 import ClipPlayer from '@/components/clips/ClipPlayer'
 import type { ClipData } from '@/components/clips/ClipModal'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 type SortOption = 'newest' | 'likes' | 'views'
 
@@ -90,14 +91,17 @@ export default function ClipsPage() {
       )}
 
       <div className="flex flex-wrap gap-3 mb-6">
-        <select
-          value={gameFilter}
-          onChange={e => { setGameFilter(e.target.value); setPage(1) }}
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors"
-        >
-          <option value="">Alle games</option>
-          {games.map(g => (<option key={g.id} value={g.id}>{g.name}</option>))}
-        </select>
+        <div className="min-w-[180px]">
+          <BrandSelect
+            value={gameFilter}
+            onChange={(v) => { setGameFilter(v); setPage(1) }}
+            placeholder="Alle games"
+            options={[
+              { value: '', label: 'Alle games' },
+              ...games.map(g => ({ value: g.id, label: g.name })),
+            ]}
+          />
+        </div>
 
         <div className="flex gap-1 bg-surface border border-border rounded-lg p-1">
           {(['newest', 'likes', 'views'] as SortOption[]).map(s => (

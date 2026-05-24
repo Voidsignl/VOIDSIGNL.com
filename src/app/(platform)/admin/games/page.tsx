@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase-browser'
 import { ArrowLeft, Shield, Check, X } from 'lucide-react'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 const RANK_SET_OPTIONS = [
   { value: 'none', label: 'Geen ranks' },
@@ -182,15 +183,11 @@ export default function AdminGamesPage() {
                     <label className="font-mono text-[10px] text-text-dim uppercase tracking-wider">
                       Rank systeem
                     </label>
-                    <select
+                    <BrandSelect
                       value={rankSets[req.id] ?? 'none'}
-                      onChange={e => setRankSets(prev => ({ ...prev, [req.id]: e.target.value }))}
-                      className="w-full bg-void border border-border rounded-lg px-3 py-2 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors"
-                    >
-                      {RANK_SET_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => setRankSets(prev => ({ ...prev, [req.id]: v }))}
+                      options={RANK_SET_OPTIONS.map(opt => ({ value: opt.value, label: opt.label }))}
+                    />
 
                     {rankSets[req.id] === 'custom' && (
                       <textarea

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { X } from 'lucide-react'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 interface Game {
   id: string
@@ -162,16 +163,15 @@ export default function ClipUploadModal({ games, onClose, onSuccess }: ClipUploa
             </div>
           )}
 
-          <select
+          <BrandSelect
             value={gameId}
-            onChange={e => setGameId(e.target.value)}
-            className="w-full bg-void border border-border rounded-lg px-4 py-3 text-text text-sm font-mono focus:outline-none focus:border-purple transition-colors"
-          >
-            <option value="">Game selecteren (optioneel)</option>
-            {games.map(g => (
-              <option key={g.id} value={g.id}>{g.name}</option>
-            ))}
-          </select>
+            onChange={setGameId}
+            placeholder="Game selecteren (optioneel)"
+            options={[
+              { value: '', label: 'Game selecteren (optioneel)' },
+              ...games.map(g => ({ value: g.id, label: g.name })),
+            ]}
+          />
 
           {uploading && progress > 0 && (
             <div className="w-full h-1.5 bg-void rounded-full overflow-hidden">

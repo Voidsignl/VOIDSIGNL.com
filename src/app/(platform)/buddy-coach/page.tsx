@@ -12,6 +12,7 @@ import {
 import { ScopeSpinner } from '@/components/ui/loader'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Avatar } from '@/components/ui/avatar'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 type PageTab = 'buddy' | 'coaches' | 'my-sessions'
 
@@ -554,10 +555,15 @@ export default function BuddyCoachPage() {
 
               <div>
                 <label className="vs-label block mb-1">GAME</label>
-                <select value={bookingGame} onChange={e => setBookingGame(e.target.value)} className="vs-input text-sm appearance-none">
-                  <option value="">Select game...</option>
-                  {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                </select>
+                <BrandSelect
+                  value={bookingGame}
+                  onChange={setBookingGame}
+                  placeholder="Select game..."
+                  options={[
+                    { value: '', label: 'Select game...' },
+                    ...games.map(g => ({ value: g.id, label: g.name })),
+                  ]}
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

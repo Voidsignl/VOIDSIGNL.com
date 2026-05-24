@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 const RANK_SETS: Record<string, string[]> = {
   valorant: ['Iron 1','Iron 2','Iron 3','Bronze 1','Bronze 2','Bronze 3','Silver 1','Silver 2','Silver 3','Gold 1','Gold 2','Gold 3','Platinum 1','Platinum 2','Platinum 3','Diamond 1','Diamond 2','Diamond 3','Ascendant 1','Ascendant 2','Ascendant 3','Immortal 1','Immortal 2','Immortal 3','Radiant'],
@@ -84,14 +85,16 @@ export default function UserGameCard({ userGame, onRemove, onUpdateRank, isOwnPr
       <div className="p-3">
         {editing && rankOptions.length > 0 ? (
           <div className="space-y-2">
-            <select
+            <BrandSelect
               value={rank}
-              onChange={e => setRank(e.target.value)}
-              className="w-full bg-void border border-border rounded-lg px-2 py-1.5 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors"
-            >
-              <option value="">Rank selecteren</option>
-              {rankOptions.map(r => (<option key={r} value={r}>{r}</option>))}
-            </select>
+              onChange={setRank}
+              size="sm"
+              placeholder="Rank selecteren"
+              options={[
+                { value: '', label: 'Rank selecteren' },
+                ...rankOptions.map(r => ({ value: r, label: r })),
+              ]}
+            />
             <div className="flex gap-1">
               <button onClick={handleRankSave}
                 className="flex-1 py-1 bg-purple text-white font-mono text-[10px] rounded hover:bg-purple/85 transition-colors">

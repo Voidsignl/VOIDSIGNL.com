@@ -10,6 +10,7 @@ import {
   BarChart3, Search, Check, X, Star, Trash2,
   TrendingUp, Zap, ShieldCheck, Sparkles, GraduationCap, Activity,
 } from 'lucide-react'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 type AdminTab = 'overview' | 'users' | 'content' | 'games' | 'tournaments'
 
@@ -323,13 +324,19 @@ export default function AdminPage() {
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
               <input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Search users..." className="vs-input text-xs pl-8 py-1.5" />
             </div>
-            <select value={userRoleFilter} onChange={e => { setUserRoleFilter(e.target.value); setTimeout(loadTabData, 0) }}
-              className="bg-surface border border-border rounded-lg text-xs text-text-dim px-3 py-1.5 outline-none appearance-none">
-              <option value="all">All roles</option>
-              <option value="member">Members</option>
-              <option value="moderator">Moderators</option>
-              <option value="admin">Admins</option>
-            </select>
+            <div className="w-44">
+              <BrandSelect
+                value={userRoleFilter}
+                onChange={(v) => { setUserRoleFilter(v); setTimeout(loadTabData, 0) }}
+                size="sm"
+                options={[
+                  { value: 'all', label: 'All roles' },
+                  { value: 'member', label: 'Members' },
+                  { value: 'moderator', label: 'Moderators' },
+                  { value: 'admin', label: 'Admins' },
+                ]}
+              />
+            </div>
             <span className="text-xs text-text-dim">{filteredUsers.length} users</span>
           </div>
 
@@ -353,16 +360,18 @@ export default function AdminPage() {
                 </div>
                 <div>
                   {isAdmin ? (
-                    <select value={(user as any).role || 'member'} onChange={e => updateUserRole(user.id, e.target.value)}
-                      className={`bg-transparent text-[10px] outline-none cursor-pointer ${
-                        (user as any).role === 'admin' ? 'text-danger' : (user as any).role === 'moderator' ? 'text-warning' : 'text-text-dim'
-                      }`}>
-                      <option value="member">member</option>
-                      <option value="moderator">moderator</option>
-                      <option value="admin">admin</option>
-                    </select>
+                    <BrandSelect
+                      value={(user as { role?: string }).role || 'member'}
+                      onChange={(v) => updateUserRole(user.id, v)}
+                      size="sm"
+                      options={[
+                        { value: 'member', label: 'member' },
+                        { value: 'moderator', label: 'moderator' },
+                        { value: 'admin', label: 'admin' },
+                      ]}
+                    />
                   ) : (
-                    <span className="text-[10px] text-text-dim">{(user as any).role || 'member'}</span>
+                    <span className="text-[10px] text-text-dim">{(user as { role?: string }).role || 'member'}</span>
                   )}
                 </div>
                 <span className="text-[10px] text-text-dim hidden md:block">{user.level_name}</span>
@@ -478,14 +487,20 @@ export default function AdminPage() {
                 </div>
                 <p className="text-[10px] text-text-dim">by @{t.organizer?.username} · {new Date(t.starts_at).toLocaleDateString()}</p>
               </div>
-              <select value={t.status} onChange={e => updateTournamentStatus(t.id, e.target.value)}
-                className="bg-surface border border-border rounded text-[10px] text-text-dim px-2 py-1 outline-none appearance-none">
-                <option value="upcoming">upcoming</option>
-                <option value="registration">registration</option>
-                <option value="in_progress">in_progress</option>
-                <option value="completed">completed</option>
-                <option value="cancelled">cancelled</option>
-              </select>
+              <div className="w-36">
+                <BrandSelect
+                  value={t.status}
+                  onChange={(v) => updateTournamentStatus(t.id, v)}
+                  size="sm"
+                  options={[
+                    { value: 'upcoming', label: 'upcoming' },
+                    { value: 'registration', label: 'registration' },
+                    { value: 'in_progress', label: 'in_progress' },
+                    { value: 'completed', label: 'completed' },
+                    { value: 'cancelled', label: 'cancelled' },
+                  ]}
+                />
+              </div>
             </div>
           ))}
           {tournaments.length === 0 && <div className="vs-card text-center py-8"><p className="text-sm text-text-dim">No tournaments</p></div>}

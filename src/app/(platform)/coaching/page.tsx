@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import CoachCard, { type CoachCardData } from '@/components/coaching/CoachCard'
+import { BrandSelect } from '@/components/ui/BrandSelect'
 
 interface Game { id: string; name: string }
 
@@ -56,24 +57,30 @@ export default function CoachingPage() {
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
-        <select
-          value={gameFilter}
-          onChange={e => setGameFilter(e.target.value)}
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors"
-        >
-          <option value="">Alle games</option>
-          {games.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-        </select>
+        <div className="min-w-[180px]">
+          <BrandSelect
+            value={gameFilter}
+            onChange={setGameFilter}
+            placeholder="Alle games"
+            options={[
+              { value: '', label: 'Alle games' },
+              ...games.map(g => ({ value: g.id, label: g.name })),
+            ]}
+          />
+        </div>
 
-        <select
-          value={language}
-          onChange={e => setLanguage(e.target.value)}
-          className="bg-surface border border-border rounded-lg px-3 py-2 text-text text-xs font-mono focus:outline-none focus:border-purple transition-colors"
-        >
-          <option value="">Alle talen</option>
-          <option value="nl">Nederlands</option>
-          <option value="en">English</option>
-        </select>
+        <div className="min-w-[180px]">
+          <BrandSelect
+            value={language}
+            onChange={setLanguage}
+            placeholder="Alle talen"
+            options={[
+              { value: '', label: 'Alle talen' },
+              { value: 'nl', label: 'Nederlands' },
+              { value: 'en', label: 'English' },
+            ]}
+          />
+        </div>
 
         <div className="flex gap-1 bg-surface border border-border rounded-lg p-1">
           {[
