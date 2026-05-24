@@ -16,13 +16,12 @@ export default function MessagesLayout({
     : undefined
 
   return (
-    <div className="flex h-full border border-border rounded-2xl overflow-hidden bg-surface/30">
-
+    <div className="flex h-full -mt-4 md:-mt-6 -mx-4 md:-mx-6 md:-mb-6 bg-void">
       {/* Sidebar: conversation list */}
       <aside
         className={`${
           isChatRoute ? 'hidden md:flex' : 'flex'
-        } w-full md:w-80 flex-col border-r border-border bg-surface/40 flex-shrink-0`}
+        } w-full md:w-[340px] flex-col border-r border-border bg-surface/20 flex-shrink-0`}
       >
         <MessagesSidebar activeUsername={activeUsername} />
       </aside>

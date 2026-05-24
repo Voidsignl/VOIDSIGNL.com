@@ -105,10 +105,7 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar unreadDms={dmCount} unreadNotifs={notifCount} />
-        <main
-          className="flex-1 overflow-y-auto p-4 md:p-6 md:pb-6"
-          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
-        >
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-6">
           {children}
         </main>
       </div>
