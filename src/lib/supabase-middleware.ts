@@ -30,8 +30,9 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
                      request.nextUrl.pathname.startsWith('/register')
   const isOnboarding = request.nextUrl.pathname.startsWith('/onboarding')
-  const isPublic = request.nextUrl.pathname === '/' || 
-                   request.nextUrl.pathname.startsWith('/auth/')
+  const isPublic = request.nextUrl.pathname === '/' ||
+                   request.nextUrl.pathname.startsWith('/auth/') ||
+                   request.nextUrl.pathname === '/api/home'
   const isProtected = !isAuthPage && !isOnboarding && !isPublic && 
                       !request.nextUrl.pathname.startsWith('/_next') &&
                       !request.nextUrl.pathname.startsWith('/favicon')
@@ -46,6 +47,22 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // Geonboard-check: gebruiker met sessie maar nog niet voltooide onboarding
+  // moet eerst naar /onboarding (behalve als ze daar al zijn of /api/onboarding hitten).
+  if (user && isProtected && !request.nextUrl.pathname.startsWith('/api/onboarding')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_onboarded')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profile && !profile.is_onboarded) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/onboarding'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

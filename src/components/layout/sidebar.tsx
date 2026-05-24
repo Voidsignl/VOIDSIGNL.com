@@ -95,6 +95,13 @@ const NAV_ICONS = {
       <path d="M12 2l9 4v6c0 5-3.5 9.5-9 10-5.5-.5-9-5-9-10V6l9-4z" />
     </svg>
   ),
+  home: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  ),
 } as const
 
 interface NavItem {
@@ -294,6 +301,14 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
               </div>
             </Link>
 
+            <Link
+              href="/"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-mono text-[10px] uppercase tracking-wider text-text-muted hover:text-text hover:bg-surface transition-colors duration-200"
+            >
+              <span>{NAV_ICONS.home}</span>
+              <span>Publieke pagina</span>
+            </Link>
+
             <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-3 px-3 py-2 rounded-lg font-mono text-[10px] uppercase tracking-wider text-text-muted hover:text-danger hover:bg-danger/8 transition-colors duration-200"
@@ -378,6 +393,18 @@ export function Sidebar({ unreadDms = 0, unreadNotifs: _unreadNotifs = 0 }: Side
                   </Link>
                 )
               })}
+
+              {/* Publieke pagina tile */}
+              <Link
+                href="/"
+                onClick={() => setMoreOpen(false)}
+                className="flex flex-col items-center gap-2 py-4 rounded-xl border bg-surface-2 border-border text-text-muted transition-colors duration-200"
+              >
+                {NAV_ICONS.home}
+                <span className="font-mono uppercase text-center text-[9px] tracking-wider leading-tight">
+                  Publieke pagina
+                </span>
+              </Link>
 
               {/* Admin tile — alleen voor admins */}
               {profile?.role === 'admin' && (

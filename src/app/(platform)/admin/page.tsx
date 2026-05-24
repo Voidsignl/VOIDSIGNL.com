@@ -8,7 +8,7 @@ import Link from 'next/link'
 import {
   Shield, Users, Newspaper, Film, Trophy, Gamepad2,
   BarChart3, Search, Check, X, Star, Trash2,
-  TrendingUp, Zap, ShieldCheck, Sparkles, GraduationCap, Activity,
+  TrendingUp, Zap, ShieldCheck, Sparkles, GraduationCap, Activity, Layers,
 } from 'lucide-react'
 import { BrandSelect } from '@/components/ui/BrandSelect'
 
@@ -275,6 +275,11 @@ export default function AdminPage() {
         {isAdmin && (
           <Link href="/admin/system" className="vs-tab whitespace-nowrap">
             <Activity size={13} /> System
+          </Link>
+        )}
+        {isAdmin && (
+          <Link href="/admin/phases" className="vs-tab whitespace-nowrap">
+            <Layers size={13} /> Phases
           </Link>
         )}
       </div>
