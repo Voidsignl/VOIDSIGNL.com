@@ -1,5 +1,10 @@
+'use client'
+
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Plus, Check, Loader2 } from 'lucide-react'
 
 export interface GameCardData {
   id: string
@@ -19,6 +24,30 @@ interface GameCardProps {
 }
 
 export default function GameCard({ game, userRank, isInLibrary }: GameCardProps) {
+  const router = useRouter()
+  const [inLibrary, setInLibrary] = useState(!!isInLibrary)
+  const [loading, setLoading] = useState(false)
+
+  async function handleAdd(e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (loading || inLibrary) return
+    setLoading(true)
+    try {
+      const res = await fetch('/api/games/library', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_id: game.id }),
+      })
+      if (res.ok) {
+        setInLibrary(true)
+        router.refresh()
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Link href={`/games/${game.slug}`}>
       <div className="relative bg-surface border border-border rounded-xl overflow-hidden hover:border-purple transition-colors duration-200 group">
@@ -37,13 +66,25 @@ export default function GameCard({ game, userRank, isInLibrary }: GameCardProps)
             </div>
           )}
 
-          {isInLibrary && (
-            <div className="absolute top-2 right-2">
-              <div className="w-6 h-6 rounded-full bg-purple flex items-center justify-center">
-                <span className="text-white text-[10px]">✓</span>
-              </div>
-            </div>
-          )}
+          {/* Quick-add knop rechtsboven */}
+          <button
+            onClick={handleAdd}
+            disabled={loading || inLibrary}
+            aria-label={inLibrary ? 'In bibliotheek' : 'Voeg toe aan bibliotheek'}
+            className={`absolute top-2 right-2 z-10 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
+              inLibrary
+                ? 'bg-success/90 cursor-default'
+                : 'bg-purple/90 hover:bg-purple hover:scale-110 disabled:opacity-50'
+            }`}
+          >
+            {loading ? (
+              <Loader2 size={12} className="text-white animate-spin" />
+            ) : inLibrary ? (
+              <Check size={12} className="text-white" />
+            ) : (
+              <Plus size={12} className="text-white" />
+            )}
+          </button>
 
           <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-transparent opacity-80" />
 
@@ -56,9 +97,7 @@ export default function GameCard({ game, userRank, isInLibrary }: GameCardProps)
                 {game.player_count.toLocaleString()} spelers
               </span>
               {userRank && (
-                <span className="font-mono text-[9px] text-purple">
-                  {userRank}
-                </span>
+                <span className="font-mono text-[9px] text-purple">{userRank}</span>
               )}
             </div>
           </div>
@@ -67,8 +106,10 @@ export default function GameCard({ game, userRank, isInLibrary }: GameCardProps)
         {game.genre && game.genre.length > 0 && (
           <div className="px-3 py-2 flex flex-wrap gap-1">
             {game.genre.slice(0, 2).map(g => (
-              <span key={g}
-                className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-surface-2 text-text-dim/60">
+              <span
+                key={g}
+                className="font-mono text-[8px] px-1.5 py-0.5 rounded-full bg-surface-2 text-text-dim/60"
+              >
                 {g}
               </span>
             ))}
