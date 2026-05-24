@@ -1,167 +1,174 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import Image from 'next/image'
+
+export interface RankingRowUser {
+  id: string
+  username: string
+  display_name?: string | null
+  avatar_url?: string | null
+  accent_color?: string | null
+  xp: number
+  level_name: string
+  rank?: number
+  is_verified?: boolean
+  is_founding_member?: boolean
+  follower_count?: number
+  clip_count?: number
+  post_count?: number
+  last_seen_at?: string | null
+  clan_name?: string | null
+  clan_slug?: string | null
+  achievement_count?: number
+  cotw_count?: number
+}
 
 interface RankingRowProps {
   rank: number
-  user: {
-    id: string
-    username: string
-    display_name?: string | null
-    avatar_url?: string | null
-    xp?: number
-    level?: number
-    level_name?: string
-    is_verified?: boolean
-    is_founding_member?: boolean
-    accent_color?: string | null
-    clip_count?: number
-    cotw_wins?: number
-    clip_score?: number
-    total_likes?: number
-    coaching_score?: number
-    avg_rating?: number
-    total_sessions?: number
-  }
-  tab: 'global' | 'clips' | 'coaching' | 'clans'
+  user: RankingRowUser
   isOwn?: boolean
+  /** XP van #1 — voor relatieve progressie-bar breedte. */
+  maxXp?: number
 }
 
-const MAX_XP_FOR_BAR = 12000
+function rankColor(rank: number) {
+  if (rank === 1) return '#00C8F0'
+  if (rank === 2) return '#9998aa'
+  if (rank === 3) return '#6B3FE0'
+  return 'rgba(255,255,255,0.25)'
+}
 
-export default function RankingRow({ rank, user, tab, isOwn }: RankingRowProps) {
-  const accentColor = user.accent_color ?? '#6B3FE0'
-  const xpPct = Math.min(100, Math.round(((user.xp ?? 0) / MAX_XP_FOR_BAR) * 100))
-
-  const rankColor =
-    rank === 1 ? '#00C8F0' :
-    rank === 2 ? '#9998aa' :
-    rank === 3 ? '#6B3FE0' : 'rgba(255,255,255,0.25)'
+export default function RankingRow({ rank, user, isOwn, maxXp = 1 }: RankingRowProps) {
+  const accent = user.accent_color ?? '#6B3FE0'
+  const barPct = Math.max(2, Math.round((user.xp / maxXp) * 100))
+  const isOnline = user.last_seen_at
+    ? Date.now() - new Date(user.last_seen_at).getTime() < 90_000
+    : false
 
   return (
-    <Link href={`/profile/${user.username}`}>
-      <div className={`flex items-center gap-4 px-5 py-4 rounded-xl border transition-colors duration-200 cursor-pointer ${
-        isOwn
-          ? 'bg-purple/8 border-purple/40'
-          : 'bg-surface border-border hover:border-purple'
-      }`}>
-
+    <Link href={`/profile/${user.username}`} className="block">
+      <div
+        className={`flex items-center gap-3 px-4 py-3 border-b border-border transition-colors duration-200 hover:bg-surface-2 cursor-pointer ${
+          isOwn ? 'bg-purple/8' : ''
+        }`}
+        style={isOwn ? { borderLeft: '3px solid #6B3FE0' } : undefined}
+      >
         {/* Rank */}
-        <div className="w-8 text-right flex-shrink-0">
-          <span className="font-mono text-sm font-bold" style={{ color: rankColor }}>
-            #{rank}
-          </span>
+        <div
+          className="font-mono text-sm font-bold w-7 text-right shrink-0"
+          style={{ color: rankColor(rank) }}
+        >
+          #{rank}
         </div>
 
         {/* Avatar */}
-        <div className="relative flex-shrink-0">
+        <div className="relative shrink-0">
           <div
-            className="relative w-10 h-10 rounded-full overflow-hidden bg-surface-2 border-2"
-            style={{ borderColor: isOwn ? accentColor : '#3a3a48' }}
+            className="w-9 h-9 rounded-full overflow-hidden bg-surface-2 border-2 flex items-center justify-center"
+            style={{ borderColor: accent }}
           >
             {user.avatar_url ? (
               <Image
                 src={user.avatar_url}
                 alt={user.username}
-                fill
-                sizes="40px"
-                className="object-cover"
+                width={36}
+                height={36}
+                className="object-cover w-full h-full"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="font-mono text-xs text-text-dim">
-                  {user.username?.[0]?.toUpperCase()}
-                </span>
-              </div>
+              <span
+                className="font-mono text-sm font-bold"
+                style={{ color: accent }}
+              >
+                {user.username?.[0]?.toUpperCase()}
+              </span>
             )}
           </div>
+          {isOnline && (
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-success border-2 border-surface" />
+          )}
         </div>
 
-        {/* Naam + meta */}
+        {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
+          {/* Naam + badges */}
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
             <span
-              className="font-mono text-sm font-bold uppercase tracking-wide truncate"
-              style={{ color: isOwn ? accentColor : '#ffffff' }}
+              className="font-mono text-xs font-bold tracking-wide"
+              style={{ color: isOwn ? accent : '#fff' }}
             >
-              {user.display_name ?? user.username}
+              {(user.display_name ?? user.username).toUpperCase()}
             </span>
+
+            {isOwn && (
+              <span className="font-mono text-[9px] opacity-50" style={{ color: accent }}>
+                ← jij
+              </span>
+            )}
+
+            {user.is_verified && <span className="text-cyan text-xs">✓</span>}
+
             {user.is_founding_member && (
-              <span className="font-mono text-[9px] tracking-widest uppercase px-2 py-0.5 rounded-full bg-cyan/10 border border-cyan/25 text-cyan flex-shrink-0">
+              <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border bg-cyan/10 border-cyan/25 text-cyan">
                 Founding
               </span>
             )}
-            {user.is_verified && (
-              <span className="text-cyan text-xs flex-shrink-0">✓</span>
+
+            {(user.cotw_count ?? 0) > 0 && (
+              <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border bg-cyan/10 border-cyan/25 text-cyan">
+                ★ CotW
+              </span>
+            )}
+
+            {user.clan_name && (
+              <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border bg-purple/10 border-purple/25 text-purple">
+                ⬡ {user.clan_name}
+              </span>
             )}
           </div>
 
-          {tab === 'global' && (
-            <div className="flex items-center gap-3">
-              <div className="flex-1 max-w-[120px] h-1.5 bg-void rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-colors duration-200"
-                  style={{ width: `${xpPct}%`, background: accentColor }}
-                />
-              </div>
-              <span className="font-mono text-[10px] text-text-dim">
-                {user.level_name}
-              </span>
-              {(user.clip_count ?? 0) > 0 && (
-                <span className="font-mono text-[10px] text-text-dim/60">
-                  {user.clip_count} clips
-                </span>
-              )}
-              {(user.cotw_wins ?? 0) > 0 && (
-                <span className="font-mono text-[10px] text-purple">
-                  {user.cotw_wins}× CotW
-                </span>
-              )}
-            </div>
-          )}
+          {/* Meta row */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span className="font-mono text-[10px] text-text-muted">
+              {user.level_name}
+            </span>
 
-          {tab === 'clips' && (
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] text-text-dim">
-                {user.total_likes?.toLocaleString()} likes
+            {(user.clip_count ?? 0) > 0 && (
+              <span className="text-[10px] text-text-dim">
+                {user.clip_count} {user.clip_count === 1 ? 'clip' : 'clips'}
               </span>
-              {(user.cotw_wins ?? 0) > 0 && (
-                <span className="font-mono text-[10px] text-purple">
-                  {user.cotw_wins}× CotW
-                </span>
-              )}
-            </div>
-          )}
+            )}
 
-          {tab === 'coaching' && (
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] text-text-dim">
-                ★ {user.avg_rating?.toFixed(1)}
+            {(user.follower_count ?? 0) > 0 && (
+              <span className="text-[10px] text-text-dim">
+                {user.follower_count} volgers
               </span>
-              <span className="font-mono text-[10px] text-text-dim/60">
-                {user.total_sessions} sessies
+            )}
+
+            {(user.achievement_count ?? 0) > 0 && (
+              <span className="text-[10px] text-purple">
+                {user.achievement_count} badges
               </span>
+            )}
+
+            {/* XP progress bar */}
+            <div className="w-20 h-0.5 bg-void rounded-full overflow-hidden shrink-0 ml-auto">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${barPct}%`, background: accent }}
+              />
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Score */}
-        <div className="text-right flex-shrink-0">
-          {tab === 'global' && (
-            <span className="font-mono text-sm font-bold text-text">
-              {(user.xp ?? 0).toLocaleString()}
-              <span className="text-text-dim/60 text-[10px] ml-1">XP</span>
-            </span>
-          )}
-          {tab === 'clips' && (
-            <span className="font-mono text-sm font-bold text-text">
-              {(user.clip_score ?? 0).toLocaleString()}
-            </span>
-          )}
-          {tab === 'coaching' && (
-            <span className="font-mono text-sm font-bold text-text">
-              {user.coaching_score?.toFixed(0)}
-            </span>
-          )}
+        {/* XP */}
+        <div className="text-right shrink-0 min-w-[56px]">
+          <div
+            className="font-mono text-sm font-bold"
+            style={{ color: isOwn ? accent : '#fff' }}
+          >
+            {user.xp.toLocaleString()}
+          </div>
+          <div className="font-mono text-[9px] text-text-dim uppercase">XP</div>
         </div>
       </div>
     </Link>
