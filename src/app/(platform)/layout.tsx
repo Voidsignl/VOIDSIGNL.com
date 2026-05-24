@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase-browser'
 import { Topnav } from '@/components/layout/topnav'
 import { Sidebar } from '@/components/layout/sidebar'
@@ -10,6 +11,10 @@ import { useHeartbeat } from '@/hooks/use-heartbeat'
 import type { Profile } from '@/types'
 
 export default function PlatformLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? ''
+  // Routes die hun eigen full-bleed layout regelen (zoals /messages met
+  // de WhatsApp-stijl split pane) krijgen geen page-padding/margins.
+  const isFullBleed = pathname.startsWith('/messages')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [notifCount, setNotifCount] = useState(0)
   const [dmCount, setDmCount] = useState(0)
@@ -105,7 +110,13 @@ export default function PlatformLayout({ children }: { children: React.ReactNode
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar unreadDms={dmCount} unreadNotifs={notifCount} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-6">
+        <main
+          className={
+            isFullBleed
+              ? 'flex-1 overflow-y-auto pb-[calc(env(safe-area-inset-bottom)+4rem)] md:pb-0'
+              : 'flex-1 overflow-y-auto p-4 md:p-6 pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-6'
+          }
+        >
           {children}
         </main>
       </div>

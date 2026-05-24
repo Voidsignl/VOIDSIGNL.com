@@ -16,7 +16,7 @@ export default function MessagesLayout({
     : undefined
 
   return (
-    <div className="flex h-full -mt-4 md:-mt-6 -mx-4 md:-mx-6 md:-mb-6 bg-void">
+    <div className="flex h-full bg-void">
       {/* Sidebar: conversation list */}
       <aside
         className={`${
