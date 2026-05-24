@@ -11,7 +11,7 @@ export interface Profile {
   socials: Record<string, string>
   gamertags: Record<string, string>
   is_verified: boolean
-  is_founding_member: boolean
+  is_inner_circle: boolean
   is_coach: boolean
   is_onboarded: boolean
   xp: number

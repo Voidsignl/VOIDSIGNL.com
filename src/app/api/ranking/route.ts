@@ -21,7 +21,7 @@ interface RankingRow {
   level?: number
   level_name?: string
   is_verified?: boolean
-  is_founding_member?: boolean
+  is_inner_circle?: boolean
   accent_color?: string | null
   follower_count?: number
   clip_count?: number

@@ -18,7 +18,7 @@ export async function generateMetadata(
 
   const { data } = await supabase
     .from('profiles')
-    .select('display_name, username, bio, avatar_url, level_name, is_founding_member')
+    .select('display_name, username, bio, avatar_url, level_name, is_inner_circle')
     .eq('username', username)
     .maybeSingle()
 
@@ -33,7 +33,7 @@ export async function generateMetadata(
   const title = `${name} (@${data.username}) · VOIDSIGNL`
   const description =
     data.bio?.slice(0, 160) ||
-    `${data.is_founding_member ? 'Inner Circle · ' : ''}${data.level_name} on VOIDSIGNL — gaming community platform.`
+    `${data.is_inner_circle ? 'Inner Circle · ' : ''}${data.level_name} on VOIDSIGNL — gaming community platform.`
 
   return {
     title,

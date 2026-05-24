@@ -12,7 +12,7 @@ const POST_SELECT = `
   game_id, repost_id, created_at, updated_at,
   user:profiles!posts_user_id_fkey(
     id, username, display_name, avatar_url, accent_color,
-    is_verified, is_founding_member, level_name
+    is_verified, is_inner_circle, level_name
   ),
   game:games(id, name),
   repost:posts!repost_id(

@@ -10,7 +10,7 @@ interface PlayerRow {
   avatar_url?: string | null
   accent_color?: string | null
   is_verified?: boolean
-  is_founding_member?: boolean
+  is_inner_circle?: boolean
   level_name?: string
   xp?: number
   rank?: string | null
@@ -109,10 +109,9 @@ export default function GamePlayersTab({ players, pagination, onPageChange }: Pr
                       Main
                     </span>
                   )}
-                  {p.is_founding_member && (
+                  {p.is_inner_circle && (
                     <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border bg-cyan/10 border-cyan/25 text-cyan">
-                      Founding
-                    </span>
+                      Inner Circle                    </span>
                   )}
                   {p.clan_name && (
                     <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border bg-purple/10 border-purple/25 text-purple">

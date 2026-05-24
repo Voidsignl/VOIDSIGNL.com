@@ -7,7 +7,7 @@ const REPLY_SELECT = `
   id, body, is_solution, like_count, created_at, updated_at,
   author:profiles!forum_replies_author_id_fkey(
     id, username, display_name, avatar_url,
-    accent_color, is_verified, is_founding_member,
+    accent_color, is_verified, is_inner_circle,
     level_name, post_count, created_at
   )
 `
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ cate
         reply_count, last_reply_at, created_at,
         author:profiles!forum_threads_author_id_fkey(
           id, username, display_name, avatar_url,
-          accent_color, is_verified, is_founding_member, level_name
+          accent_color, is_verified, is_inner_circle, level_name
         ),
         category:forum_categories!forum_threads_category_id_fkey(
           id, name, slug

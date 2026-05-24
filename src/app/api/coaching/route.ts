@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         avg_rating, review_count, total_sessions, response_rate,
         user:profiles!coach_profiles_user_id_fkey(
           id, username, display_name, avatar_url, banner_url,
-          accent_color, is_verified, is_founding_member, level_name
+          accent_color, is_verified, is_inner_circle, level_name
         ),
         games:coach_games(
           game:games(id, name)

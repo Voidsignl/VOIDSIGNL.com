@@ -15,7 +15,7 @@ interface UserRow {
   avatar_url?: string | null
   accent_color?: string | null
   is_verified?: boolean
-  is_founding_member?: boolean
+  is_inner_circle?: boolean
   level_name?: string
   follower_count?: number
   is_following: boolean
@@ -154,10 +154,9 @@ export default function FollowModal({
                           </span>
                         </Link>
                         {u.is_verified && <span className="text-cyan text-xs flex-shrink-0">✓</span>}
-                        {u.is_founding_member && (
+                        {u.is_inner_circle && (
                           <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-cyan/10 border border-cyan/20 text-cyan flex-shrink-0">
-                            Founding
-                          </span>
+                            Inner Circle                          </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">

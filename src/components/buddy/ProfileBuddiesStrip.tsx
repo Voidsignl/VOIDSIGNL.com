@@ -10,7 +10,7 @@ interface Buddy {
   username: string
   display_name: string | null
   avatar_url: string | null
-  is_founding_member: boolean
+  is_inner_circle: boolean
 }
 
 /**
@@ -32,8 +32,8 @@ export function ProfileBuddiesStrip({ userId }: { userId: string }) {
         .from('buddy_requests')
         .select(`
           sender_id, receiver_id,
-          sender:profiles!buddy_requests_sender_id_fkey(id, username, display_name, avatar_url, is_founding_member),
-          receiver:profiles!buddy_requests_receiver_id_fkey(id, username, display_name, avatar_url, is_founding_member)
+          sender:profiles!buddy_requests_sender_id_fkey(id, username, display_name, avatar_url, is_inner_circle),
+          receiver:profiles!buddy_requests_receiver_id_fkey(id, username, display_name, avatar_url, is_inner_circle)
         `, { count: 'exact' })
         .eq('status', 'accepted')
         .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
@@ -76,7 +76,7 @@ export function ProfileBuddiesStrip({ userId }: { userId: string }) {
             size="sm"
             variant="gradient"
             href={`/profile/${b.username}`}
-            showInnerRing={b.is_founding_member}
+            showInnerRing={b.is_inner_circle}
           />
         ))}
       </div>

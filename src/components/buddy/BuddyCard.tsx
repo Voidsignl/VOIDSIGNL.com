@@ -12,7 +12,7 @@ export interface BuddyCardUser {
   level_name?: string
   level?: number
   is_verified?: boolean
-  is_founding_member?: boolean
+  is_inner_circle?: boolean
   accent_color?: string | null
   platforms?: string[] | null
   buddy_playtimes?: string[] | null
@@ -119,10 +119,9 @@ export default function BuddyCard({ user, onRequest, onAccept, onDecline }: Budd
             <span className="font-mono text-[10px] text-text-dim">
               {user.level_name}
             </span>
-            {user.is_founding_member && (
+            {user.is_inner_circle && (
               <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-cyan/10 border border-cyan/20 text-cyan">
-                Founding
-              </span>
+                Inner Circle              </span>
             )}
           </div>
         </div>

@@ -98,7 +98,7 @@ export async function GET(
             rank,
             user:profiles!user_games_user_id_fkey(
               id, username, display_name, avatar_url,
-              accent_color, is_verified, is_founding_member,
+              accent_color, is_verified, is_inner_circle,
               level_name, xp, last_seen_at
             )
           `)
@@ -185,7 +185,7 @@ export async function GET(
           rank, is_main, hours_played, updated_at,
           user:profiles!user_games_user_id_fkey(
             id, username, display_name, avatar_url,
-            accent_color, is_verified, is_founding_member,
+            accent_color, is_verified, is_inner_circle,
             level_name, xp, last_seen_at,
             clan:clans!profiles_clan_id_fkey(name, slug)
           )

@@ -25,7 +25,7 @@ export interface FeedPost {
     avatar_url?: string | null
     accent_color?: string | null
     is_verified?: boolean
-    is_founding_member?: boolean
+    is_inner_circle?: boolean
     level_name?: string
   } | null
   game?: { id: string; name: string } | null
@@ -120,10 +120,9 @@ export default function PostCard({ post, currentUserId, onRepost, onDelete }: Po
                 </span>
               </Link>
               {post.user.is_verified && <span className="text-cyan text-xs">✓</span>}
-              {post.user.is_founding_member && (
+              {post.user.is_inner_circle && (
                 <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-cyan/10 border border-cyan/20 text-cyan">
-                  Founding
-                </span>
+                  Inner Circle                </span>
               )}
             </div>
             <div className="flex items-center gap-2">

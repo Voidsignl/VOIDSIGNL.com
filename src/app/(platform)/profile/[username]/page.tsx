@@ -340,14 +340,14 @@ export default function ProfilePage() {
     if (type === 'followers') {
       const { data } = await supabase
         .from('follows')
-        .select('follower:profiles!follower_id(id, username, display_name, avatar_url, level_name, is_founding_member)')
+        .select('follower:profiles!follower_id(id, username, display_name, avatar_url, level_name, is_inner_circle)')
         .eq('following_id', profile.id)
         .limit(50)
       setListUsers(data?.map((d: any) => d.follower).filter(Boolean) || [])
     } else {
       const { data } = await supabase
         .from('follows')
-        .select('following:profiles!following_id(id, username, display_name, avatar_url, level_name, is_founding_member)')
+        .select('following:profiles!following_id(id, username, display_name, avatar_url, level_name, is_inner_circle)')
         .eq('follower_id', profile.id)
         .limit(50)
       setListUsers(data?.map((d: any) => d.following).filter(Boolean) || [])
@@ -523,7 +523,7 @@ export default function ProfilePage() {
                   onUpload={(url) => setProfile(prev => prev ? { ...prev, avatar_url: url } : null)}
                   type="avatar"
                 />
-                {profile.is_founding_member && (
+                {profile.is_inner_circle && (
                   <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-purple flex items-center justify-center z-10">
                     <Star size={10} className="text-white" fill="white" />
                   </div>
@@ -536,7 +536,7 @@ export default function ProfilePage() {
                 size="xl"
                 shape="rounded"
                 variant="gradient"
-                showInnerRing={profile.is_founding_member}
+                showInnerRing={profile.is_inner_circle}
               />
             )}
 
@@ -560,7 +560,7 @@ export default function ProfilePage() {
                     </span>
                   )
                 )}
-                {profile.is_founding_member && (
+                {profile.is_inner_circle && (
                   <span className="vs-badge vs-badge-purple text-[9px]">
                     <Star size={8} /> Inner Circle
                   </span>

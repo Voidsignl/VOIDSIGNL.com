@@ -331,7 +331,7 @@ export default function BuddyCoachPage() {
                       size="md"
                       shape="rounded"
                       variant="gradient"
-                      showInnerRing={(match as any).is_founding_member}
+                      showInnerRing={(match as any).is_inner_circle}
                     />
                     <div className="flex-1 min-w-0">
                       <Link href={`/profile/${match.username}`} className="text-sm font-medium hover:text-cyan transition-colors">{match.display_name || match.username}</Link>
@@ -409,7 +409,7 @@ export default function BuddyCoachPage() {
                         size="lg"
                         shape="rounded"
                         variant="gradient"
-                        showInnerRing={p?.is_founding_member}
+                        showInnerRing={p?.is_inner_circle}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -528,7 +528,7 @@ export default function BuddyCoachPage() {
                   size="md"
                   shape="rounded"
                   variant="gradient"
-                  showInnerRing={(bookingCoach.profile as any)?.is_founding_member}
+                  showInnerRing={(bookingCoach.profile as any)?.is_inner_circle}
                 />
                 <div>
                   <p className="text-sm font-medium">{(bookingCoach.profile as any)?.display_name || (bookingCoach.profile as any)?.username}</p>

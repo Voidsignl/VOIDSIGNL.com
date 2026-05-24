@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
           id, created_at,
           follower:profiles!follows_follower_id_fkey(
             id, username, display_name, avatar_url,
-            accent_color, is_verified, is_founding_member,
+            accent_color, is_verified, is_inner_circle,
             level_name, follower_count
           )
         `, { count: 'exact' })
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
           id, created_at,
           following:profiles!follows_following_id_fkey(
             id, username, display_name, avatar_url,
-            accent_color, is_verified, is_founding_member,
+            accent_color, is_verified, is_inner_circle,
             level_name, follower_count
           )
         `, { count: 'exact' })

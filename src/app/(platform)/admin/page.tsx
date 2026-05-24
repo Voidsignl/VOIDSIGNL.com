@@ -59,7 +59,7 @@ export default function AdminPage() {
       .eq('id', user.id)
       .maybeSingle()
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator' && !profile.is_founding_member)) {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'moderator' && !profile.is_inner_circle)) {
       router.push('/dashboard')
       return
     }
@@ -137,8 +137,8 @@ export default function AdminPage() {
   }
 
   async function toggleFounder(userId: string, current: boolean) {
-    await supabase.from('profiles').update({ is_founding_member: !current }).eq('id', userId)
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_founding_member: !current } as any : u))
+    await supabase.from('profiles').update({ is_inner_circle: !current }).eq('id', userId)
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_inner_circle: !current } as any : u))
   }
 
   async function setAsSpotlight(userId: string) {
@@ -221,7 +221,7 @@ export default function AdminPage() {
   if (loading) return <div className="flex items-center justify-center h-64"><div className="text-text-dim text-sm animate-pulse">Checking access...</div></div>
 
   const isAdmin = (currentUser as any)?.role === 'admin'
-  const canGrantXP = isAdmin || (currentUser as any)?.is_founding_member
+  const canGrantXP = isAdmin || (currentUser as any)?.is_inner_circle
 
   const TABS: { id: AdminTab; label: string; icon: any; adminOnly?: boolean }[] = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -353,7 +353,7 @@ export default function AdminPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <Link href={`/profile/${user.username}`} className="text-xs font-medium truncate hover:text-purple transition-colors">{user.display_name || user.username}</Link>
-                      {user.is_founding_member && <Star size={9} className="text-purple shrink-0" fill="currentColor" />}
+                      {user.is_inner_circle && <Star size={9} className="text-purple shrink-0" fill="currentColor" />}
                     </div>
                     <p className="text-[10px] text-text-dim truncate">@{user.username}</p>
                   </div>
@@ -385,10 +385,10 @@ export default function AdminPage() {
                     </button>
                   )}
                   {isAdmin && (
-                    <button onClick={() => toggleFounder(user.id, user.is_founding_member)}
-                      className={`p-1.5 rounded text-[10px] transition-colors ${user.is_founding_member ? 'text-purple bg-purple/10' : 'text-text-dim hover:text-purple'}`}
-                      title={user.is_founding_member ? 'Remove from Inner Circle' : 'Add to Inner Circle'}>
-                      <Star size={11} fill={user.is_founding_member ? 'currentColor' : 'none'} />
+                    <button onClick={() => toggleFounder(user.id, user.is_inner_circle)}
+                      className={`p-1.5 rounded text-[10px] transition-colors ${user.is_inner_circle ? 'text-purple bg-purple/10' : 'text-text-dim hover:text-purple'}`}
+                      title={user.is_inner_circle ? 'Remove from Inner Circle' : 'Add to Inner Circle'}>
+                      <Star size={11} fill={user.is_inner_circle ? 'currentColor' : 'none'} />
                     </button>
                   )}
                   {isAdmin && (

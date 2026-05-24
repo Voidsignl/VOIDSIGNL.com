@@ -17,7 +17,7 @@ interface FeaturedProfile {
   avatar_url: string | null
   bio: string | null
   level_name: string
-  is_founding_member: boolean
+  is_inner_circle: boolean
 }
 
 export function SpotlightCard() {
@@ -44,7 +44,7 @@ export function SpotlightCard() {
 
       const { data: p } = await supabase
         .from('profiles')
-        .select('id, username, display_name, avatar_url, bio, level_name, is_founding_member')
+        .select('id, username, display_name, avatar_url, bio, level_name, is_inner_circle')
         .eq('id', featuredId)
         .maybeSingle()
 
@@ -75,7 +75,7 @@ export function SpotlightCard() {
           size="xl"
           shape="rounded"
           variant="gradient-ring"
-          showInnerRing={profile.is_founding_member}
+          showInnerRing={profile.is_inner_circle}
         />
         <div className="flex-1 min-w-0">
           <p className="vs-counter text-[10px] tabular-nums text-purple-light flex items-center gap-1">
@@ -83,7 +83,7 @@ export function SpotlightCard() {
           </p>
           <h3 className="text-lg font-semibold tracking-wide mt-1 truncate flex items-center gap-2">
             {profile.display_name || profile.username}
-            {profile.is_founding_member && (
+            {profile.is_inner_circle && (
               <Star size={11} className="text-purple-light shrink-0" fill="currentColor" />
             )}
           </h3>

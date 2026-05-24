@@ -76,6 +76,21 @@ export async function GET(
       .eq('user_id', user.id)
       .maybeSingle()
 
+    // XP regels — alleen voor leden zichtbaar (RLS handhaaft dit ook)
+    let xpRules: Array<{
+      action: string
+      xp_amount: number
+      is_enabled: boolean
+    }> | null = null
+    if (membership) {
+      const { data: rules } = await supabase
+        .from('clan_xp_rules')
+        .select('action, xp_amount, is_enabled')
+        .eq('clan_id', clan.id)
+        .order('action')
+      xpRules = rules
+    }
+
     return NextResponse.json({
       clan,
       members: members ?? [],
@@ -83,6 +98,7 @@ export async function GET(
       activeWar,
       xpHistory: xpHistory ?? [],
       membership,
+      xpRules,
     })
   } catch (error) {
     await logApiError('/api/clans/[slug]', 'GET', 500, error)

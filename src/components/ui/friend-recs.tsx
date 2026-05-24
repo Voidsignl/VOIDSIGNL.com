@@ -16,7 +16,7 @@ interface Rec {
   display_name: string | null
   avatar_url: string | null
   level_name: string
-  is_founding_member: boolean
+  is_inner_circle: boolean
   reason: string
   score: number
 }
@@ -82,7 +82,7 @@ export function FriendRecs({ userId }: FriendRecsProps) {
                 name={r.display_name || r.username}
                 size="sm"
                 variant="gradient"
-                showInnerRing={r.is_founding_member}
+                showInnerRing={r.is_inner_circle}
               />
               <div className="flex-1 min-w-0">
                 <Link

@@ -235,7 +235,7 @@ export default function DashboardPage() {
                         >
                           {(post.profile as any)?.display_name || (post.profile as any)?.username}
                         </Link>
-                        {(post.profile as any)?.is_founding_member && (
+                        {(post.profile as any)?.is_inner_circle && (
                           <span className="vs-badge vs-badge-purple text-[9px]">Inner</span>
                         )}
                         {post.game && (

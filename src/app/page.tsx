@@ -24,7 +24,7 @@ interface TopPlayer {
   display_name: string | null
   xp: number
   level_name: string
-  is_founding_member: boolean
+  is_inner_circle: boolean
 }
 
 function AnimatedCounter({ target }: { target: number }) {
@@ -78,7 +78,7 @@ export default function HomePage() {
 
     const { data: players } = await supabase
       .from('profiles')
-      .select('username, display_name, xp, level_name, is_founding_member')
+      .select('username, display_name, xp, level_name, is_inner_circle')
       .eq('is_onboarded', true)
       .order('xp', { ascending: false })
       .limit(5)

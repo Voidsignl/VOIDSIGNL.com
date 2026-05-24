@@ -11,7 +11,7 @@ export interface RankingRowUser {
   level_name: string
   rank?: number
   is_verified?: boolean
-  is_founding_member?: boolean
+  is_inner_circle?: boolean
   follower_count?: number
   clip_count?: number
   post_count?: number
@@ -107,10 +107,9 @@ export default function RankingRow({ rank, user, isOwn, maxXp = 1 }: RankingRowP
 
             {user.is_verified && <span className="text-cyan text-xs">✓</span>}
 
-            {user.is_founding_member && (
+            {user.is_inner_circle && (
               <span className="font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border bg-cyan/10 border-cyan/25 text-cyan">
-                Founding
-              </span>
+                Inner Circle              </span>
             )}
 
             {(user.cotw_count ?? 0) > 0 && (

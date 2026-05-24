@@ -19,7 +19,7 @@ export interface ReplyCardData {
     avatar_url?: string | null
     accent_color?: string | null
     is_verified?: boolean
-    is_founding_member?: boolean
+    is_inner_circle?: boolean
     level_name?: string
     post_count?: number
   }

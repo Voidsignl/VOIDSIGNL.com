@@ -1,13 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, use } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase-browser'
 import ClanChat from '@/components/clans/ClanChat'
-import ClanQuestCard from '@/components/clans/ClanQuestCard'
 import ClanWarCard from '@/components/clans/ClanWarCard'
+import ClanOverviewTab from '@/components/clans/ClanOverviewTab'
+import ClanMembersTab from '@/components/clans/ClanMembersTab'
+import ClanXpRules from '@/components/clans/ClanXpRules'
+import ClanQuestCard from '@/components/clans/ClanQuestCard'
+
+type Tab = 'overview' | 'members' | 'quests' | 'war' | 'chat' | 'settings'
 
 interface ClanData {
   id: string
@@ -20,11 +25,18 @@ interface ClanData {
   member_count: number
   max_members: number
   xp_total: number
+  created_at: string
+  owner?: {
+    id: string
+    username: string
+    display_name?: string | null
+    avatar_url?: string | null
+  } | null
 }
 
 interface MemberRow {
   id: string
-  role: string
+  role: 'owner' | 'officer' | 'member'
   joined_at: string
   user: {
     id: string
@@ -32,8 +44,10 @@ interface MemberRow {
     display_name?: string | null
     avatar_url?: string | null
     accent_color?: string | null
-    level_name?: string | null
-    xp?: number | null
+    level_name?: string
+    xp?: number
+    last_seen_at?: string | null
+    is_inner_circle?: boolean
   } | null
 }
 
@@ -42,11 +56,24 @@ interface QuestRow {
   title: string
   description: string
   quest_type: string
-  target_value: number
   current_value: number
+  target_value: number
   xp_reward: number
   is_completed: boolean
   week_start: string
+}
+
+interface XpEvent {
+  id: string
+  amount: number
+  source: string
+  user: { username: string; avatar_url?: string | null } | null
+}
+
+interface XpRule {
+  action: string
+  xp_amount: number
+  is_enabled: boolean
 }
 
 interface ActiveWar {
@@ -54,46 +81,74 @@ interface ActiveWar {
   status: string
   challenger_score: number
   challenged_score: number
+  starts_at?: string | null
   ends_at?: string | null
-  challenger: { id: string; name: string; slug: string; avatar_url?: string | null }
-  challenged: { id: string; name: string; slug: string; avatar_url?: string | null }
+  challenger: {
+    id: string
+    name: string
+    slug: string
+    avatar_url?: string | null
+  }
+  challenged: {
+    id: string
+    name: string
+    slug: string
+    avatar_url?: string | null
+  }
 }
 
-interface XpEvent {
-  id: string
-  amount: number
-  source: string
-  created_at: string
-  user: { username: string; avatar_url?: string | null } | null
-}
-
-interface ClanResponse {
+interface ClanApiResponse {
   clan: ClanData
   members: MemberRow[]
   quests: QuestRow[]
   activeWar: ActiveWar | null
   xpHistory: XpEvent[]
-  membership: { id: string; role: string } | null
+  membership: { id: string; role: 'owner' | 'officer' | 'member' } | null
+  xpRules: XpRule[] | null
 }
 
 interface CurrentUser {
   id: string
   username: string
-  role: string
-  clan_id: string | null
+  clan_id?: string | null
+  accent_color?: string | null
 }
 
-export default function ClanDetailPage() {
-  const params = useParams<{ slug: string }>()
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'members', label: 'Leden' },
+  { key: 'quests', label: 'Quests' },
+  { key: 'war', label: 'War' },
+  { key: 'chat', label: 'Chat' },
+  { key: 'settings', label: 'Instellingen' },
+]
+
+const ACTION_LABELS: Record<string, string> = {
+  clip_upload: 'Clip uploaden',
+  achievement_unlock: 'Achievement behalen',
+  cotw_win: 'Clip of the Week winnen',
+  forum_post: 'Forum post plaatsen',
+  forum_reply: 'Forum reply plaatsen',
+  buddy_accepted: 'Buddy request accepteren',
+  war_won: 'War winnen',
+  quest_completed: 'Quest voltooien',
+  daily_login: 'Dagelijks inloggen',
+}
+
+export default function ClanDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
+  const { slug } = use(params)
   const router = useRouter()
   const supabase = createClient()
-  const slug = params?.slug as string
 
-  const [data, setData] = useState<ClanResponse | null>(null)
+  const [tab, setTab] = useState<Tab>('overview')
+  const [data, setData] = useState<ClanApiResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [joining, setJoining] = useState(false)
-  const [activeTab, setActiveTab] = useState<'members' | 'quests' | 'war' | 'chat'>('members')
 
   const fetchClan = useCallback(async () => {
     setLoading(true)
@@ -103,8 +158,7 @@ export default function ClanDetailPage() {
         router.push('/clans')
         return
       }
-      const json = (await res.json()) as ClanResponse
-      setData(json)
+      setData((await res.json()) as ClanApiResponse)
     } finally {
       setLoading(false)
     }
@@ -115,20 +169,20 @@ export default function ClanDetailPage() {
       if (!authData.user) return
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, username, role, clan_id')
+        .select('id, username, clan_id, accent_color')
         .eq('id', authData.user.id)
-        .maybeSingle()
-      if (profile) setCurrentUser(profile as CurrentUser)
+        .maybeSingle<CurrentUser>()
+      setCurrentUser(profile)
     })
-    fetchClan()
-  }, [slug, fetchClan, supabase])
+    void fetchClan()
+  }, [fetchClan, supabase])
 
   async function handleJoin() {
     setJoining(true)
     try {
       const res = await fetch(`/api/clans/${slug}/join`, { method: 'POST' })
       const json = await res.json()
-      if (res.ok) fetchClan()
+      if (res.ok) await fetchClan()
       else alert(json.error)
     } finally {
       setJoining(false)
@@ -141,172 +195,236 @@ export default function ClanDetailPage() {
     router.push('/clans')
   }
 
-  if (loading || !data) {
+  async function handleWarChallenge() {
+    const clanId = prompt('Clan ID van tegenstander:')
+    if (!clanId) return
+    const res = await fetch(`/api/clans/${slug}/war`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ challenged_clan_id: clanId }),
+    })
+    if (res.ok) await fetchClan()
+    else alert((await res.json()).error)
+  }
+
+  if (loading && !data) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 animate-pulse space-y-4">
-        <div className="h-40 bg-surface rounded-xl" />
-        <div className="h-20 bg-surface rounded-xl" />
+      <div className="max-w-5xl mx-auto px-4 py-8 animate-pulse space-y-4">
+        <div className="h-48 bg-surface rounded-2xl" />
+        <div className="h-12 bg-surface rounded-xl" />
       </div>
     )
   }
 
-  const { clan, members, quests, activeWar, xpHistory, membership } = data
+  if (!data) return null
+
+  const { clan, members, quests, activeWar, xpHistory, membership, xpRules } =
+    data
   const isMember = !!membership
   const isOfficer = ['owner', 'officer'].includes(membership?.role ?? '')
   const isOwner = membership?.role === 'owner'
   const canJoin = !isMember && !currentUser?.clan_id
 
+  const visibleTabs = TABS.filter((t) => {
+    if (t.key === 'chat' || t.key === 'settings') return isMember
+    return true
+  })
+
+  const questsCompleted = quests.filter((q) => q.is_completed).length
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Banner */}
-      <div className="relative h-40 rounded-xl overflow-hidden bg-surface mb-0">
-        {clan.banner_url ? (
-          <Image
-            src={clan.banner_url}
-            alt={clan.name}
-            fill
-            sizes="(max-width: 1024px) 100vw, 900px"
-            className="object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full"
-            style={{ background: 'linear-gradient(135deg, #0e0e12 0%, rgba(107,63,224,0.3) 100%)' }}
-          />
-        )}
-      </div>
-
-      {/* Clan info */}
-      <div className="bg-surface border border-border rounded-xl p-5 mb-6 -mt-6 relative">
-        <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-xl overflow-hidden bg-surface-2 border-2 border-surface flex-shrink-0 -mt-10">
-            {clan.avatar_url ? (
-              <Image
-                src={clan.avatar_url}
-                alt={clan.name}
-                width={64}
-                height={64}
-                className="object-cover w-full h-full"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-purple/20">
-                <span className="font-mono text-2xl text-purple">{clan.name[0].toUpperCase()}</span>
-              </div>
-            )}
+    <div className="max-w-5xl mx-auto px-4 py-8 pb-24 md:pb-8">
+      {/* HERO */}
+      <div
+        className="relative rounded-2xl overflow-hidden mb-6 border border-border"
+        style={{
+          background: clan.banner_url
+            ? 'transparent'
+            : 'linear-gradient(135deg, rgba(107,63,224,0.2) 0%, #0e0e12 60%)',
+        }}
+      >
+        {clan.banner_url && (
+          <div className="absolute inset-0">
+            <Image
+              src={clan.banner_url}
+              alt=""
+              fill
+              className="object-cover opacity-20"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-void via-void/90 to-void/70" />
           </div>
+        )}
 
-          <div className="flex-1 min-w-0 mt-0">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h1 className="font-mono text-xl font-bold text-text mb-0.5">{clan.name}</h1>
-                {clan.description && (
-                  <p className="text-text-dim text-sm">{clan.description}</p>
-                )}
-              </div>
-
-              {canJoin && (
-                <button
-                  onClick={handleJoin}
-                  disabled={joining}
-                  className="px-5 py-2.5 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40 flex-shrink-0"
-                >
-                  {joining ? '...' : clan.is_open ? 'Joinen' : 'Aanvragen'}
-                </button>
-              )}
-              {isMember && !isOwner && (
-                <button
-                  onClick={handleLeave}
-                  className="px-4 py-2 border border-border text-text-dim font-mono text-xs uppercase tracking-wider rounded-lg hover:border-danger hover:text-danger transition-colors duration-200 flex-shrink-0"
-                >
-                  Verlaten
-                </button>
+        <div className="relative z-10 p-6">
+          <div className="flex gap-5 items-start flex-col sm:flex-row">
+            {/* Avatar */}
+            <div className="relative z-10 w-16 h-16 rounded-2xl bg-purple/20 border-2 border-purple/40 flex items-center justify-center shrink-0 overflow-hidden">
+              {clan.avatar_url ? (
+                <Image
+                  src={clan.avatar_url}
+                  alt={clan.name}
+                  width={64}
+                  height={64}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <span className="font-mono text-2xl font-bold text-purple">
+                  {clan.name[0].toUpperCase()}
+                </span>
               )}
             </div>
 
-            <div className="flex items-center gap-6 mt-3">
-              <div>
-                <p className="font-mono text-lg font-bold text-text">{clan.member_count}</p>
-                <p className="font-mono text-[10px] text-text-dim uppercase tracking-wider">Leden</p>
-              </div>
-              <div>
-                <p className="font-mono text-lg font-bold text-purple">
-                  {clan.xp_total.toLocaleString()}
-                </p>
-                <p className="font-mono text-[10px] text-text-dim uppercase tracking-wider">Clan XP</p>
-              </div>
-              <div>
-                <p className="font-mono text-lg font-bold text-text">{clan.max_members}</p>
-                <p className="font-mono text-[10px] text-text-dim uppercase tracking-wider">Max</p>
-              </div>
-              <div>
-                <p
-                  className={`font-mono text-xs font-bold ${
-                    clan.is_open ? 'text-success' : 'text-text-dim'
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <h1 className="font-mono text-2xl font-bold text-text">
+                  {clan.name}
+                </h1>
+                <span
+                  className={`font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                    clan.is_open
+                      ? 'bg-success/10 border-success/20 text-success'
+                      : 'bg-surface-2 border-border text-text-muted'
                   }`}
                 >
                   {clan.is_open ? 'Open' : 'Gesloten'}
+                </span>
+              </div>
+
+              {clan.description && (
+                <p className="text-text-muted text-sm mb-4 leading-relaxed max-w-lg">
+                  {clan.description}
                 </p>
-                <p className="font-mono text-[10px] text-text-dim uppercase tracking-wider">Type</p>
+              )}
+
+              {/* Stats */}
+              <div className="flex items-center gap-5 flex-wrap mb-4">
+                {[
+                  { num: clan.member_count, label: 'Leden', color: '#fff' },
+                  {
+                    num: clan.xp_total.toLocaleString(),
+                    label: 'Clan XP',
+                    color: '#6B3FE0',
+                  },
+                  {
+                    num: questsCompleted,
+                    label: 'Quests',
+                    color: '#22c55e',
+                  },
+                  {
+                    num: members.length,
+                    label: 'Actief',
+                    color: '#fff',
+                  },
+                ].map((s, i) => (
+                  <div key={s.label} className="flex items-center gap-3">
+                    {i > 0 && <div className="w-px h-8 bg-border" />}
+                    <div>
+                      <p
+                        className="font-mono text-lg font-bold leading-none"
+                        style={{ color: s.color }}
+                      >
+                        {s.num}
+                      </p>
+                      <p className="font-mono text-[9px] text-text-muted uppercase tracking-wider mt-0.5">
+                        {s.label}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Acties */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {canJoin && (
+                  <button
+                    onClick={handleJoin}
+                    disabled={joining}
+                    className="px-5 py-2.5 bg-purple text-white font-mono text-xs uppercase tracking-wider rounded-lg hover:bg-purple/85 transition-colors disabled:opacity-40"
+                  >
+                    {joining
+                      ? '...'
+                      : clan.is_open
+                        ? '+ Joinen'
+                        : '+ Aanvragen'}
+                  </button>
+                )}
+                {isOfficer && (
+                  <button
+                    onClick={handleWarChallenge}
+                    className="px-4 py-2.5 border border-border text-text-muted font-mono text-xs uppercase tracking-wider rounded-lg hover:border-purple/40 hover:text-text transition-colors duration-200"
+                  >
+                    ⚔ War uitdagen
+                  </button>
+                )}
+                {isMember && !isOwner && (
+                  <button
+                    onClick={handleLeave}
+                    className="px-4 py-2.5 border border-border text-text-muted font-mono text-xs uppercase tracking-wider rounded-lg hover:border-danger/40 hover:text-danger transition-colors duration-200"
+                  >
+                    Verlaten
+                  </button>
+                )}
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Officer acties */}
-        {isOfficer && (
-          <div className="mt-4 pt-4 border-t border-border flex gap-3 flex-wrap">
-            {isOwner && (
-              <Link
-                href={`/clans/${slug}/settings`}
-                className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
-              >
-                Instellingen
-              </Link>
+          {/* Owner footer */}
+          <div className="mt-4 pt-4 border-t border-border/40 flex items-center gap-6 flex-wrap">
+            {clan.owner && (
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[9px] text-text-dim uppercase tracking-widest">
+                  Owner
+                </span>
+                <Link
+                  href={`/profile/${clan.owner.username}`}
+                  className="font-mono text-[10px] text-text-muted hover:text-text transition-colors duration-200"
+                >
+                  {clan.owner.username}
+                </Link>
+              </div>
             )}
-            <button
-              onClick={async () => {
-                const clanId = prompt('Clan ID van tegenstander:')
-                if (!clanId) return
-                const res = await fetch(`/api/clans/${slug}/war`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ challenged_clan_id: clanId }),
-                })
-                if (res.ok) fetchClan()
-                else alert((await res.json()).error)
-              }}
-              className="px-4 py-2 border border-border text-text-dim font-mono text-xs rounded-lg hover:border-purple hover:text-text transition-colors duration-200"
-            >
-              ⚔ War uitdagen
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[9px] text-text-dim uppercase tracking-widest">
+                Opgericht
+              </span>
+              <span className="font-mono text-[10px] text-text-muted">
+                {new Date(clan.created_at).toLocaleDateString('nl-NL', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[9px] text-text-dim uppercase tracking-widest">
+                Capaciteit
+              </span>
+              <span className="font-mono text-[10px] text-text-muted">
+                {clan.member_count}/{clan.max_members}
+              </span>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Active war */}
-      {activeWar && (
-        <div className="mb-6">
+      {/* Active war banner */}
+      {activeWar && tab !== 'war' && (
+        <div className="mb-5">
           <ClanWarCard war={activeWar} myClanId={clan.id} />
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-surface border border-border rounded-xl p-1 mb-6">
-        {(
-          [
-            { key: 'members', label: `Leden (${members.length})` },
-            { key: 'quests', label: `Quests (${quests.length})` },
-            { key: 'war', label: 'War Historie' },
-            ...(isMember ? [{ key: 'chat', label: 'Chat' }] : []),
-          ] as { key: 'members' | 'quests' | 'war' | 'chat'; label: string }[]
-        ).map((t) => (
+      {/* TABS */}
+      <div className="flex gap-0.5 bg-surface border border-border rounded-xl p-1 mb-6 overflow-x-auto">
+        {visibleTabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setActiveTab(t.key)}
-            className={`flex-1 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider transition-colors duration-200 ${
-              activeTab === t.key
+            onClick={() => setTab(t.key)}
+            className={`flex-1 min-w-[100px] py-2.5 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-colors duration-200 ${
+              tab === t.key
                 ? 'bg-purple text-white'
-                : 'text-text-dim hover:text-text'
+                : 'text-text-muted hover:text-text'
             }`}
           >
             {t.label}
@@ -314,94 +432,74 @@ export default function ClanDetailPage() {
         ))}
       </div>
 
-      {activeTab === 'members' && (
-        <div className="space-y-2">
-          {members.map((member) =>
-            member.user ? (
-              <Link key={member.id} href={`/profile/${member.user.username}`}>
-                <div className="flex items-center gap-4 bg-surface border border-border rounded-xl px-4 py-3 hover:border-purple transition-colors duration-200">
-                  <div
-                    className="w-9 h-9 rounded-full overflow-hidden bg-surface-2 border-2 flex-shrink-0"
-                    style={{ borderColor: member.user.accent_color ?? '#6B3FE0' }}
-                  >
-                    {member.user.avatar_url ? (
-                      <Image
-                        src={member.user.avatar_url}
-                        alt={member.user.username}
-                        width={36}
-                        height={36}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="font-mono text-xs text-text-dim">
-                          {member.user.username?.[0]?.toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-bold text-text truncate">
-                        {member.user.display_name ?? member.user.username}
-                      </span>
-                      {member.role !== 'member' && (
-                        <span
-                          className={`font-mono text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
-                            member.role === 'owner'
-                              ? 'bg-cyan/10 text-cyan border border-cyan/20'
-                              : 'bg-purple/10 text-purple border border-purple/20'
-                          }`}
-                        >
-                          {member.role}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-mono text-[10px] text-text-dim">
-                      {member.user.level_name}
-                    </span>
-                  </div>
-                  <span className="font-mono text-xs text-purple flex-shrink-0">
-                    {(member.user.xp ?? 0).toLocaleString()} XP
-                  </span>
-                </div>
-              </Link>
-            ) : null,
-          )}
-        </div>
+      {/* TAB CONTENT */}
+      {tab === 'overview' && (
+        <ClanOverviewTab
+          clan={clan}
+          members={members}
+          quests={quests}
+          xpHistory={xpHistory}
+          xpRules={xpRules}
+          currentUserId={currentUser?.id}
+          canJoin={canJoin}
+          onJoin={handleJoin}
+          joining={joining}
+        />
       )}
 
-      {activeTab === 'quests' && (
+      {tab === 'members' && (
+        <ClanMembersTab
+          members={members}
+          currentUserId={currentUser?.id}
+          isOfficer={isOfficer}
+          isOwner={isOwner}
+          clanSlug={slug}
+          onRefresh={fetchClan}
+        />
+      )}
+
+      {tab === 'quests' && (
         <div className="space-y-3">
           {quests.length === 0 ? (
-            <p className="text-center text-text-dim font-mono text-sm py-8">
-              Geen actieve quests deze week.
-            </p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-text-dim mb-2">
+                Geen quests
+              </p>
+              <p className="text-text-muted text-sm">
+                Quests worden wekelijks aangemaakt.
+              </p>
+            </div>
           ) : (
-            quests.map((quest) => <ClanQuestCard key={quest.id} quest={quest} />)
+            quests.map((quest) => (
+              <ClanQuestCard key={quest.id} quest={quest} />
+            ))
           )}
           {xpHistory.length > 0 && (
             <div className="mt-6">
-              <p className="font-mono text-[10px] tracking-[0.2em] text-purple uppercase mb-3">
-                Recente XP
+              <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-purple mb-3">
+                Recente clan XP
               </p>
-              <div className="space-y-2">
+              <div className="bg-surface border border-border rounded-xl overflow-hidden">
                 {xpHistory.map((event) => (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-2.5"
+                    className="flex items-center gap-4 px-5 py-3 border-b border-border last:border-0"
                   >
-                    <div className="flex items-center gap-2">
-                      {event.user && (
-                        <span className="font-mono text-xs text-text-dim">
-                          {event.user.username}
-                        </span>
-                      )}
-                      <span className="font-mono text-[10px] text-text-dim/60">
-                        {event.source.replace(/_/g, ' ')}
-                      </span>
+                    <div className="w-7 h-7 rounded-lg bg-purple/12 flex items-center justify-center shrink-0 font-mono text-xs text-purple">
+                      ⬡
                     </div>
-                    <span className="font-mono text-xs font-bold text-purple">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-text-muted">
+                        {event.user?.username && (
+                          <span className="font-mono text-text">
+                            {event.user.username}{' '}
+                          </span>
+                        )}
+                        {ACTION_LABELS[event.source] ??
+                          event.source.replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                    <span className="font-mono text-xs font-bold text-purple shrink-0">
                       +{event.amount} XP
                     </span>
                   </div>
@@ -412,15 +510,44 @@ export default function ClanDetailPage() {
         </div>
       )}
 
-      {activeTab === 'war' && (
-        <div className="text-center py-12">
-          <p className="text-text-dim font-mono text-sm">
-            {activeWar ? 'Actieve war hierboven zichtbaar.' : 'Geen war geschiedenis.'}
-          </p>
+      {tab === 'war' && (
+        <div className="space-y-4">
+          {activeWar ? (
+            <ClanWarCard war={activeWar} myClanId={clan.id} />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="font-mono text-[10px] tracking-[0.2em] uppercase text-text-dim mb-2">
+                Geen actieve war
+              </p>
+              <p className="text-text-muted text-sm mb-6">
+                Daag een andere clan uit.
+              </p>
+              {isOfficer && (
+                <button
+                  onClick={handleWarChallenge}
+                  className="px-5 py-2.5 bg-purple text-white font-mono text-xs uppercase rounded-lg hover:bg-purple/85 transition-colors duration-200"
+                >
+                  ⚔ War starten
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {activeTab === 'chat' && isMember && <ClanChat clanSlug={slug} clanId={clan.id} />}
+      {tab === 'chat' && isMember && (
+        <ClanChat clanSlug={slug} clanId={clan.id} />
+      )}
+
+      {tab === 'settings' && isMember && (
+        <ClanXpRules
+          clanSlug={slug}
+          rules={xpRules ?? []}
+          canEdit={isOfficer}
+          actionLabels={ACTION_LABELS}
+          onSaved={fetchClan}
+        />
+      )}
     </div>
   )
 }

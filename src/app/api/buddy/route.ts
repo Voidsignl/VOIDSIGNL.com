@@ -76,10 +76,10 @@ export async function GET(req: NextRequest) {
       .select(`
         id, status, message, created_at,
         sender:profiles!buddy_requests_sender_id_fkey(
-          id, username, display_name, avatar_url, level, level_name, is_verified, is_founding_member, accent_color, last_seen_at, platforms, buddy_playtimes, preferred_language
+          id, username, display_name, avatar_url, level, level_name, is_verified, is_inner_circle, accent_color, last_seen_at, platforms, buddy_playtimes, preferred_language
         ),
         receiver:profiles!buddy_requests_receiver_id_fkey(
-          id, username, display_name, avatar_url, level, level_name, is_verified, is_founding_member, accent_color, last_seen_at, platforms, buddy_playtimes, preferred_language
+          id, username, display_name, avatar_url, level, level_name, is_verified, is_inner_circle, accent_color, last_seen_at, platforms, buddy_playtimes, preferred_language
         )
       `)
 
