@@ -15,7 +15,7 @@ const POST_SELECT = `
     is_verified, is_founding_member, level_name
   ),
   game:games(id, name),
-  repost:posts!posts_repost_id_fkey(
+  repost:posts!repost_id(
     id, content, images, post_type, created_at,
     user:profiles!posts_user_id_fkey(
       id, username, display_name, avatar_url, accent_color
